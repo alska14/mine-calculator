@@ -1381,7 +1381,7 @@ function IngotPage({ s, setS, feeRate }) {
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>사용된 재료 가치(선택 기준)</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>제작 순이익</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>재료 그대로 판매 실수령</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>순이익차이(제작-재료판매)</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>추천</th>
               </tr>
             </thead>
             <tbody>
@@ -1407,7 +1407,7 @@ function IngotPage({ s, setS, feeRate }) {
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>{fmt(x.profit)}</td>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(x.sellIndivNet)}</td>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
-                      {fmt(x.deltaRevenueVsIndiv)}
+                      {x.profit - x.sellIndivNet >= 0 ? "제작 이득" : "재료 판매 이득"}
                     </td>
                   </tr>
                 );
