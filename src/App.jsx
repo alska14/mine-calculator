@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   addDoc,
   collection,
@@ -52,9 +52,9 @@ function getClientId() {
 }
 
 /**
- * 숫자 입력 안정화용
- * - 상태는 string으로 저장(빈값/입력중 상태 보호)
- * - 계산할 때만 숫자 변환
+ * ?レ옄 ?낅젰 ?덉젙?붿슜
+ * - ?곹깭??string?쇰줈 ???鍮덇컪/?낅젰以??곹깭 蹂댄샇)
+ * - 怨꾩궛???뚮쭔 ?レ옄 蹂??
  */
 function toNum(v, fallback = 0) {
   if (typeof v === "number") return Number.isFinite(v) ? v : fallback;
@@ -102,12 +102,12 @@ function migrateState(raw, defaults) {
     };
   }
 
-  // v1 -> v2 : prices 구조를 {grossSell,buy} -> {market} 로 정규화
+  // v1 -> v2 : prices 援ъ“瑜?{grossSell,buy} -> {market} 濡??뺢퇋??
   if (incomingVer < 2) {
     const oldPrices = s.prices || {};
     const normalized = {};
     for (const [k, v] of Object.entries(oldPrices)) {
-      // 기존 구조면 grossSell 우선, 없으면 buy, 없으면 0
+      // 湲곗〈 援ъ“硫?grossSell ?곗꽑, ?놁쑝硫?buy, ?놁쑝硫?0
       if (isPlainObject(v)) {
         const market = v.market ?? v.grossSell ?? v.buy ?? 0;
         normalized[k] = { market: String(market ?? "") };
@@ -118,7 +118,7 @@ function migrateState(raw, defaults) {
     s = { ...s, prices: deepMerge(defaults.prices, normalized) };
   }
 
-  // v2 -> v3 : feedbacks 기본값 추가
+  // v2 -> v3 : feedbacks 湲곕낯媛?異붽?
   if (incomingVer < 3) {
     s = {
       ...s,
@@ -130,7 +130,7 @@ function migrateState(raw, defaults) {
     };
   }
 
-  // v3 -> v4 : adminMode 기본값 추가
+  // v3 -> v4 : adminMode 湲곕낯媛?異붽?
   if (incomingVer < 4) {
     s = {
       ...s,
@@ -185,7 +185,7 @@ function Field({ label, value, onChange, min, max, suffix, placeholder }) {
   const sanitizeOnBlur = () => {
     const n = toNum(value, NaN);
     if (!Number.isFinite(n)) {
-      onChange(""); // 빈값 유지
+      onChange(""); // 鍮덇컪 ?좎?
       return;
     }
     let v = n;
@@ -332,7 +332,7 @@ function ToggleButton({ isOn, onClick, labelOn, labelOff }) {
  * =========================
  */
 
-// 세이지 곡괭이 강화 단계별 조각 드랍 수
+// ?몄씠吏 怨↔눌??媛뺥솕 ?④퀎蹂?議곌컖 ?쒕엻 ??
 const SAGE_SHARDS_BY_ENH = {
   5: 4,
   6: 4,
@@ -347,7 +347,7 @@ const SAGE_SHARDS_BY_ENH = {
   15: 12,
 };
 
-// 보석 전문가 레벨별 (확률, 개수)
+// 蹂댁꽍 ?꾨Ц媛 ?덈꺼蹂?(?뺣쪧, 媛쒖닔)
 function gemExpertRule(level) {
   if (level === 1) return { prob: 0.03, count: 1 };
   if (level === 2) return { prob: 0.07, count: 1 };
@@ -355,8 +355,8 @@ function gemExpertRule(level) {
   return { prob: 0, count: 0 };
 }
 
-// 불붙은 곡괭이 레벨별 (확률, 주괴 1개 직드랍)
-// 1~9레벨: 1~9% / 10레벨: 15%
+// 遺덈텤? 怨↔눌???덈꺼蹂?(?뺣쪧, 二쇨눼 1媛?吏곷뱶??
+// 1~9?덈꺼: 1~9% / 10?덈꺼: 15%
 function flamingPickRule(level) {
   if (!Number.isFinite(level) || level <= 0) return { prob: 0, ingots: 1 };
   if (level >= 10) return { prob: 0.15, ingots: 1 };
@@ -367,9 +367,9 @@ function flamingPickRule(level) {
  * ======================
  * Expected value function
  * ======================
- * 핵심 규칙(확정):
- * - 불붙은 곡괭이가 발동하면: 조각 0개 + 주괴 1개(대체)
- * - 보석 드랍 판정(보석 전문가)은 불붙은이 떠도 그대로 유지
+ * ?듭떖 洹쒖튃(?뺤젙):
+ * - 遺덈텤? 怨↔눌?닿? 諛쒕룞?섎㈃: 議곌컖 0媛?+ 二쇨눼 1媛??泥?
+ * - 蹂댁꽍 ?쒕엻 ?먯젙(蹂댁꽍 ?꾨Ц媛)? 遺덈텤????좊룄 洹몃?濡??좎?
  */
 function miningEVBreakdown({
   staminaPerDig,
@@ -390,14 +390,14 @@ function miningEVBreakdown({
   const ingotNet = netSell(Math.max(0, ingotGrossPrice), sellFeeRate);
   const gemNet = netSell(Math.max(0, gemGrossPrice), sellFeeRate);
 
-  // ✅ 불붙은은 "추가"가 아니라 "대체"
+  // ??遺덈텤?? "異붽?"媛 ?꾨땲??"?泥?
   const ingotFromShardsPerDig = (1 - p) * (Math.max(0, shardsPerDig) / spi);
   const ingotFromShardsValuePerDig = ingotFromShardsPerDig * ingotNet;
 
   const ingotFromFlamePerDig = p * 1;
   const ingotFromFlameValuePerDig = ingotFromFlamePerDig * ingotNet;
 
-  // 보석은 불붙은 여부와 무관하게 그대로 판정
+  // 蹂댁꽍? 遺덈텤? ?щ?? 臾닿??섍쾶 洹몃?濡??먯젙
   const gemValuePerDig = clamp01(gemDropProb) * Math.max(0, gemDropCount) * gemNet;
 
   const totalPerDig = ingotFromShardsValuePerDig + ingotFromFlameValuePerDig + gemValuePerDig;
@@ -423,15 +423,15 @@ function miningEVBreakdown({
  * ======================
  * Crafting profit helpers
  * ======================
- * 변경점(중요):
- * - 재료 가격은 market 1개만 입력
- * - 판매 시에는 수수료 반영(실수령)
- * - 구매 비용은 market 그대로(수수료 없음)
+ * 蹂寃쎌젏(以묒슂):
+ * - ?щ즺 媛寃⑹? market 1媛쒕쭔 ?낅젰
+ * - ?먮ℓ ?쒖뿉???섏닔猷?諛섏쁺(?ㅼ닔??
+ * - 援щℓ 鍮꾩슜? market 洹몃?濡??섏닔猷??놁쓬)
  */
 function unitCostByMode({ mode, marketPrice, feeRate }) {
   if (mode === "owned") return 0;
-  if (mode === "buy") return Math.max(0, marketPrice); // 구매 비용 = 시장가(수수료 없음)
-  // opportunity(기회비용) = 해당 재료를 팔았을 때 받는 실수령을 포기한 값
+  if (mode === "buy") return Math.max(0, marketPrice); // 援щℓ 鍮꾩슜 = ?쒖옣媛(?섏닔猷??놁쓬)
+  // opportunity(湲고쉶鍮꾩슜) = ?대떦 ?щ즺瑜??붿븯????諛쏅뒗 ?ㅼ닔?뱀쓣 ?ш린??媛?
   return netSell(Math.max(0, marketPrice), feeRate);
 }
 
@@ -453,18 +453,18 @@ const defaultState = {
   feePct: "5",
   themeMode: "light", // light | dark
 
-  // 내정보
+  // ?댁젙蹂?
   sageEnhLevel: 15, // 5~15
   gemExpertLevel: 3, // 0~3
   flamingPickLevel: 0, // 0~10
   staminaPerDig: "10",
   shardsPerIngot: "16",
 
-  // 시세(시장가, gross)
+  // ?쒖꽭(?쒖옣媛, gross)
   ingotGrossPrice: "6000",
   gemGrossPrice: "12000",
 
-  // 포션 가격(구매가)
+  // ?ъ뀡 媛寃?援щℓ媛)
   potionPrices: {
     p100: "14000",
     p300: "70000",
@@ -472,7 +472,7 @@ const defaultState = {
     p700: "210000",
   },
 
-  // 포션 결과 행별 세부내역 오픈 상태
+  // ?ъ뀡 寃곌낵 ?됰퀎 ?몃??댁뿭 ?ㅽ뵂 ?곹깭
   potionRowDetailsOpen: {
     p100: false,
     p300: false,
@@ -480,19 +480,19 @@ const defaultState = {
     p700: false,
   },
 
-  // 제작/판매가 (gross)
+  // ?쒖옉/?먮ℓ媛 (gross)
   abilityGrossSell: "18000",
   lifeGrossSell: {
-    low: "9000", // 하급
-    mid: "30000", // 중급
-    high: "60000", // 상급
+    low: "9000", // ?섍툒
+    mid: "30000", // 以묎툒
+    high: "60000", // ?곴툒
   },
 
-  // 재료 시세(개당, 시장가 1개만)
+  // ?щ즺 ?쒖꽭(媛쒕떦, ?쒖옣媛 1媛쒕쭔)
   prices: {
     ingot: { market: "6000" },
-    stone: { market: "773" }, // 돌뭉치(하급)
-    deepCobble: { market: "281" }, // 심층암 조약돌 뭉치(중급)
+    stone: { market: "773" }, // ?뚮춬移??섍툒)
+    deepCobble: { market: "281" }, // ?ъ링??議곗빟??萸됱튂(以묎툒)
     redstone: { market: "97" },
     copper: { market: "100" },
     diamond: { market: "2900" },
@@ -502,7 +502,7 @@ const defaultState = {
     amethyst: { market: "78" },
   },
 
-  // 재료 처리 방식(직접수급/구매/고급:포기한 판매수익)
+  // ?щ즺 泥섎━ 諛⑹떇(吏곸젒?섍툒/援щℓ/怨좉툒:?ш린???먮ℓ?섏씡)
   modes: {
     ingot: "opportunity",
     stone: "owned",
@@ -516,7 +516,7 @@ const defaultState = {
     amethyst: "owned",
   },
 
-  // 레시피(기본값)
+  // ?덉떆??湲곕낯媛?
   recipes: {
     ability: { ingot: 3 },
     low: { ingot: 1, stone: 2, redstone: 3, copper: 8 },
@@ -532,7 +532,7 @@ const defaultState = {
   adminMode: false,
 };
 
-function Sidebar({ active, onSelect }) {
+function Sidebar({ active, onSelect, onlineUsers }) {
   const itemStyle = (key) => ({
     padding: "10px 12px",
     borderRadius: 10,
@@ -545,27 +545,45 @@ function Sidebar({ active, onSelect }) {
   });
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 6 }}>메뉴</div>
+      <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 6 }}>硫붾돱</div>
       <div style={{ fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>
         {"\ub2e4\ud06c\ubaa8\ub4dc\ub294 \ub0b4\uc815\ubcf4\uc5d0\uc11c \uc124\uc815\ud560 \uc218 \uc788\uace0, \ubb38\uc81c\uc810\uc740 \ubb38\uc758/\ud53c\ub4dc\ubc31\uc5d0 \ub0a8\uaca8\uc8fc\uc138\uc694."}
       </div>
+      <div style={{ marginTop: 8, paddingTop: 10, borderTop: "1px solid var(--soft-border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 900 }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#2ecc71", boxShadow: "0 0 6px rgba(46, 204, 113, 0.8)", display: "inline-block" }} />
+          {`온라인 ${onlineUsers.length}명`}
+        </div>
+        {onlineUsers.length === 0 ? (
+          <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>접속 중인 사용자가 없습니다.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+            {onlineUsers.map((user) => (
+              <div key={user.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }} />
+                <span>{user.displayName || user.email || "익명"}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       <div style={itemStyle("potion")} onClick={() => onSelect("potion")}>
-        스테미나 포션 효율 계산
+        ?ㅽ뀒誘몃굹 ?ъ뀡 ?⑥쑉 怨꾩궛
       </div>
       <div style={itemStyle("ingot")} onClick={() => onSelect("ingot")}>
-        주괴/가공 비교
+        二쇨눼/媛怨?鍮꾧탳
       </div>
       <div style={itemStyle("profile")} onClick={() => onSelect("profile")}>
-        내정보 + 시세 입력
+        ?댁젙蹂?+ ?쒖꽭 ?낅젰
       </div>
       <div style={itemStyle("feedback")} onClick={() => onSelect("feedback")}>
-        문의/피드백
+        臾몄쓽/?쇰뱶諛?
       </div>
       <div style={itemStyle("village")} onClick={() => onSelect("village")}>
-        마을 건의함
+        留덉쓣 嫄댁쓽??
       </div>
       <div style={{ marginTop: 12, fontSize: 12, opacity: 0.75, lineHeight: 1.4 }}>
-        입력값은 브라우저에 자동 저장됩니다.
+        ?낅젰媛믪? 釉뚮씪?곗????먮룞 ??λ맗?덈떎.
       </div>
     </div>
   );
@@ -580,23 +598,23 @@ function Sidebar({ active, onSelect }) {
 function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
   const sageOptions = useMemo(() => {
     const values = Object.keys(SAGE_SHARDS_BY_ENH).map(Number).sort((a, b) => a - b);
-    return values.map((v) => ({ value: v, label: `${v}강 (조각 ${SAGE_SHARDS_BY_ENH[v]}개)` }));
+    return values.map((v) => ({ value: v, label: `${v}媛?(議곌컖 ${SAGE_SHARDS_BY_ENH[v]}媛?` }));
   }, []);
 
   const gemOptions = [
-    { value: 0, label: "0레벨 (스킬 없음)" },
-    { value: 1, label: "1레벨 (3% 확률, 1개)" },
-    { value: 2, label: "2레벨 (7% 확률, 1개)" },
-    { value: 3, label: "3레벨 (10% 확률, 2개)" },
+    { value: 0, label: "0?덈꺼 (?ㅽ궗 ?놁쓬)" },
+    { value: 1, label: "1?덈꺼 (3% ?뺣쪧, 1媛?" },
+    { value: 2, label: "2?덈꺼 (7% ?뺣쪧, 1媛?" },
+    { value: 3, label: "3?덈꺼 (10% ?뺣쪧, 2媛?" },
   ];
 
   const flameOptions = [
-    { value: 0, label: "0레벨 (스킬 없음)" },
+    { value: 0, label: "0?덈꺼 (?ㅽ궗 ?놁쓬)" },
     ...Array.from({ length: 9 }, (_, i) => {
       const lv = i + 1;
-      return { value: lv, label: `${lv}레벨 (${lv}% 확률, 조각→주괴 1개 대체)` };
+      return { value: lv, label: `${lv}?덈꺼 (${lv}% ?뺣쪧, 議곌컖?믪＜愿?1媛??泥?` };
     }),
-    { value: 10, label: "10레벨 (15% 확률, 조각→주괴 1개 대체)" },
+    { value: 10, label: "10?덈꺼 (15% ?뺣쪧, 議곌컖?믪＜愿?1媛??泥?" },
   ];
 
   const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
@@ -631,7 +649,7 @@ function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <Card title="내 정보 입력">
+      <Card title="???뺣낫 ?낅젰">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
           <Select
             label={"\ud14c\ub9c8"}
@@ -644,71 +662,70 @@ function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
             ]}
           />
           <Select
-            label="세이지 곡괭이 강화 단계"
+            label="?몄씠吏 怨↔눌??媛뺥솕 ?④퀎"
             value={s.sageEnhLevel}
             onChange={(v) => setS((p) => ({ ...p, sageEnhLevel: v }))}
             options={sageOptions}
           />
           <Select
-            label="보석 전문가 레벨"
+            label="蹂댁꽍 ?꾨Ц媛 ?덈꺼"
             value={s.gemExpertLevel}
             onChange={(v) => setS((p) => ({ ...p, gemExpertLevel: v }))}
             options={gemOptions}
           />
           <Select
-            label="불붙은 곡괭이 레벨"
+            label="遺덈텤? 怨↔눌???덈꺼"
             value={s.flamingPickLevel}
             onChange={(v) => setS((p) => ({ ...p, flamingPickLevel: v }))}
             options={flameOptions}
           />
           <Field
-            label="광질 1회 스태미나"
+            label="愿묒쭏 1???ㅽ깭誘몃굹"
             value={s.staminaPerDig}
             onChange={(v) => setS((p) => ({ ...p, staminaPerDig: v }))}
-            placeholder="예: 10"
+            placeholder="?? 10"
             min={1}
           />
           <Field
-            label="조각→주괴 필요 조각"
+            label="議곌컖?믪＜愿??꾩슂 議곌컖"
             value={s.shardsPerIngot}
             onChange={(v) => setS((p) => ({ ...p, shardsPerIngot: v }))}
-            placeholder="예: 16"
+            placeholder="?? 16"
             min={1}
           />
         </div>
 
         <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
-          <div style={{ fontWeight: 900, marginBottom: 6 }}>현재 내정보 요약</div>
+          <div style={{ fontWeight: 900, marginBottom: 6 }}>?꾩옱 ?댁젙蹂??붿빟</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13 }}>
             <div>
-              조각/회(불붙은 미발동 시): <b>{fmt(shardsPerDig)}</b>
+              議곌컖/??遺덈텤? 誘몃컻????: <b>{fmt(shardsPerDig)}</b>
             </div>
             <div>
-              보석: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>개
+              蹂댁꽍: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>媛?
             </div>
             <div>
-              불붙은(대체): <b>{fmt(flameRule.prob * 100)}%</b> 확률, <b>주괴 1개</b>
-            </div>
+              遺덈텤?(?泥?: <b>{fmt(flameRule.prob * 100)}%</b> ?뺣쪧, <b>二쇨눼 1媛?</b>)</div>
             <div>
-              판매 수수료: <b>{fmt(toNum(s.feePct))}%</b>
+              ?먮ℓ ?섏닔猷? <b>{fmt(toNum(s.feePct))}%</b>
             </div>
           </div>
         </div>
       </Card>
 
-      <Card title="시세 입력 (공통)">
+      <Card title="?쒖꽭 ?낅젰 (怨듯넻)">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
           <Field
-            label="판매 수수료(%)"
+            label="?먮ℓ ?섏닔猷?%)"
             value={s.feePct}
             onChange={(v) => setS((p) => ({ ...p, feePct: v }))}
-            placeholder="예: 5"
+            placeholder="?? 5"
             min={0}
             max={50}
             suffix="%"
           />
           <Field
-            label="주괴 시장가(원)"
+            label="二쇨눼 ?쒖옣媛(??"
             value={s.ingotGrossPrice}
             onChange={(v) =>
               setS((p) => ({
@@ -717,26 +734,26 @@ function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
                 prices: { ...p.prices, ingot: { market: v } },
               }))
             }
-            placeholder="예: 6000"
+            placeholder="?? 6000"
             min={0}
-            suffix="원"
+            suffix="?"
           />
           <Field
-            label="보석 시장가(원)"
+            label="蹂댁꽍 ?쒖옣媛(??"
             value={s.gemGrossPrice}
             onChange={(v) => setS((p) => ({ ...p, gemGrossPrice: v }))}
-            placeholder="예: 12000"
+            placeholder="?? 12000"
             min={0}
-            suffix="원"
+            suffix="?"
           />
         </div>
 
         <div style={{ marginTop: 12, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
-          판매 실수령(수수료 반영):
-          <br />- 주괴 {fmt(toNum(s.ingotGrossPrice))} → <b>{fmt(netSell(toNum(s.ingotGrossPrice), feeRate))}</b>원
-          <br />- 보석 {fmt(toNum(s.gemGrossPrice))} → <b>{fmt(netSell(toNum(s.gemGrossPrice), feeRate))}</b>원
+          ?먮ℓ ?ㅼ닔???섏닔猷?諛섏쁺):
+          <br />- 二쇨눼 {fmt(toNum(s.ingotGrossPrice))} ??<b>{fmt(netSell(toNum(s.ingotGrossPrice), feeRate))}</b>??
+          <br />- 蹂댁꽍 {fmt(toNum(s.gemGrossPrice))} ??<b>{fmt(netSell(toNum(s.gemGrossPrice), feeRate))}</b>??
           <br />
-          구매 비용(수수료 없음): <b>시장가 그대로</b>
+          援щℓ 鍮꾩슜(?섏닔猷??놁쓬): <b>?쒖옣媛 洹몃?濡?</b>
         </div>
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
           {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
@@ -744,14 +761,14 @@ function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
         </div>
       </Card>
 
-      <Card title="재료 시세(시장가) + 수급 방식 입력">
+      <Card title="?щ즺 ?쒖꽭(?쒖옣媛) + ?섍툒 諛⑹떇 ?낅젰">
         <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10, lineHeight: 1.5 }}>
-          재료는 <b>시장가 1개만</b> 입력합니다.
-          <br />- 판매 실수령 = 시장가 × (1-수수료)
-          <br />- 구매 비용 = 시장가(수수료 없음)
+          ?щ즺??<b>?쒖옣媛 1媛쒕쭔</b> ?낅젰?⑸땲??
+          <br />- ?먮ℓ ?ㅼ닔??= ?쒖옣媛 횞 (1-?섏닔猷?
+          <br />- 援щℓ 鍮꾩슜 = ?쒖옣媛(?섏닔猷??놁쓬)
           <br />
-          수급 방식:
-          <br />- 직접 수급(0) / 구매 필요 / (고급) 포기한 판매 수익
+          ?섍툒 諛⑹떇:
+          <br />- 吏곸젒 ?섍툒(0) / 援щℓ ?꾩슂 / (怨좉툒) ?ш린???먮ℓ ?섏씡
         </div>
         <div style={{ marginBottom: 12 }}>
           <Select
@@ -781,7 +798,7 @@ function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
                 value={s.prices[k]?.market ?? ""}
                 onChange={(v) => setS((p) => ({ ...p, prices: { ...p.prices, [k]: { market: v } } }))}
                 min={0}
-                suffix="원"
+                suffix="?"
               />
               <Select
                 label={`${materialLabels[k] ?? k} \uc218\uae09 \ubc29\uc2dd`}
@@ -799,9 +816,9 @@ function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
                   setS((p) => ({ ...p, modes: { ...p.modes, [k]: mode } }));
                 }}
                 options={[
-                  { value: 0, label: "직접 수급(0)" },
-                  { value: 1, label: "구매 필요" },
-                  { value: 2, label: "포기한 판매 수익(고급)" },
+                  { value: 0, label: "吏곸젒 ?섍툒(0)" },
+                  { value: 1, label: "援щℓ ?꾩슂" },
+                  { value: 2, label: "?ш린???먮ℓ ?섏씡(怨좉툒)" },
                 ]}
               />
             </React.Fragment>
@@ -894,26 +911,26 @@ function FeedbackPage({ s, setS }) {
   };
 
   const typeLabel = (type) => {
-    if (type === "bug") return "오류/잘못된 점";
-    if (type === "other") return "기타";
-    return "개선";
+    if (type === "bug") return "?ㅻ쪟/?섎せ????";
+    if (type === "other") return "湲고?";
+    return "媛쒖꽑";
   };
 
   const statusLabel = (status) => {
-    if (status === "progress") return "진행중";
-    if (status === "done") return "완료";
-    return "접수";
+    if (status === "progress") return "吏꾪뻾以?";
+    if (status === "done") return "?꾨즺";
+    return "?묒닔";
   };
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <Card title="개선점/오류 제보">
+      <Card title="媛쒖꽑???ㅻ쪟 ?쒕낫">
         <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
-          사용 중 문제점이나 개선 아이디어가 있으면 문의/피드백에 남겨주세요.
+          ?ъ슜 以?臾몄젣?먯씠??媛쒖꽑 ?꾩씠?붿뼱媛 ?덉쑝硫?臾몄쓽/?쇰뱶諛깆뿉 ?④꺼二쇱꽭??
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>유형</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>?좏삎</div>
             <select
               value={form.type}
               onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
@@ -927,40 +944,40 @@ function FeedbackPage({ s, setS }) {
                 color: "var(--text)",
               }}
             >
-              <option value="improve">개선</option>
-              <option value="bug">오류/잘못된 점</option>
-              <option value="other">기타</option>
+              <option value="improve">媛쒖꽑</option>
+              <option value="bug">?ㅻ쪟/?섎せ????</option>
+              <option value="other">湲고?</option>
             </select>
           </div>
           <TextField
-            label="연락처(선택)"
+            label="?곕씫泥??좏깮)"
             value={form.contact}
             onChange={(v) => setForm((p) => ({ ...p, contact: v }))}
-            placeholder="이메일/디스코드 등"
+            placeholder="?대찓???붿뒪肄붾뱶 ??"
           />
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
           <Select
-            label={"공개 설정"}
+            label={"怨듦컻 ?ㅼ젙"}
             value={form.visibility}
             onChange={(v) => setForm((p) => ({ ...p, visibility: v }))}
             options={[
-              { value: "public", label: "공개" },
-              { value: "private", label: "비공개(관리자만)" },
+              { value: "public", label: "怨듦컻" },
+              { value: "private", label: "鍮꾧났媛?愿由ъ옄留?" },
             ]}
           />
           <TextField
-            label="제목"
+            label="?쒕ぉ"
             value={form.title}
             onChange={(v) => setForm((p) => ({ ...p, title: v }))}
-            placeholder="예: 재료 시세 입력이 불편해요"
+            placeholder="?? ?щ즺 ?쒖꽭 ?낅젰??遺덊렪?댁슂"
           />
           <TextArea
-            label="내용"
+            label="?댁슜"
             value={form.body}
             onChange={(v) => setForm((p) => ({ ...p, body: v }))}
-            placeholder="어떤 문제가 있었는지, 개선 아이디어를 자세히 적어주세요."
+            placeholder="?대뼡 臾몄젣媛 ?덉뿀?붿?, 媛쒖꽑 ?꾩씠?붿뼱瑜??먯꽭???곸뼱二쇱꽭??"
             rows={5}
           />
         </div>
@@ -980,14 +997,14 @@ function FeedbackPage({ s, setS }) {
               fontSize: 13,
             }}
           >
-            제보 등록
+            ?쒕낫 ?깅줉
           </button>
         </div>
       </Card>
 
-      <Card title="문의 관리">
+      <Card title="臾몄쓽 愿由">
         {items.length === 0 ? (
-          <div style={{ fontSize: 13, opacity: 0.8 }}>등록된 문의가 없습니다.</div>
+          <div style={{ fontSize: 13, opacity: 0.8 }}>?깅줉??臾몄쓽媛 ?놁뒿?덈떎.</div>
         ) : (
           <div style={{ display: "grid", gap: 12 }}>
             {items.map((item) => (
@@ -1012,24 +1029,24 @@ function FeedbackPage({ s, setS }) {
                 </div>
                 <div style={{ fontSize: 13, lineHeight: 1.5 }}>{item.body}</div>
                 {item.contact ? (
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>연락처: {item.contact}</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>?곕씫泥? {item.contact}</div>
                 ) : null}
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                   <div style={{ fontSize: 12, opacity: 0.7 }}>
-                    공개: {item.visibility === "private" ? "비공개" : "공개"}
+                    怨듦컻: {item.visibility === "private" ? "鍮꾧났媛?" : "怨듦컻"}
                   </div>
                   {item.reply ? (
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>관리자 답변 완료</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>愿由ъ옄 ?듬? ?꾨즺</div>
                   ) : null}
                 </div>
                 {item.reply ? (
                   <div style={{ padding: 10, borderRadius: 10, background: "var(--soft-bg)", border: "1px solid var(--soft-border)", fontSize: 13 }}>
-                    <div style={{ fontWeight: 900, marginBottom: 4 }}>관리자 답변</div>
+                    <div style={{ fontWeight: 900, marginBottom: 4 }}>愿由ъ옄 ?듬?</div>
                     <div style={{ whiteSpace: "pre-wrap" }}>{item.reply}</div>
                   </div>
                 ) : null}
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>상태</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>?곹깭</div>
                   {isAdmin ? (
                     <select
                       value={item.status || "new"}
@@ -1044,9 +1061,9 @@ function FeedbackPage({ s, setS }) {
                         color: "var(--text)",
                       }}
                     >
-                      <option value="new">접수</option>
-                      <option value="progress">진행중</option>
-                      <option value="done">완료</option>
+                      <option value="new">?묒닔</option>
+                      <option value="progress">吏꾪뻾以?</option>
+                      <option value="done">?꾨즺</option>
                     </select>
                   ) : (
                     <div style={{ fontSize: 12, opacity: 0.7 }}>{statusLabel(item.status)}</div>
@@ -1065,17 +1082,17 @@ function FeedbackPage({ s, setS }) {
                         fontWeight: 700,
                       }}
                     >
-                      삭제
+                      ??젣
                     </button>
                   ) : null}
                 </div>
                 {isAdmin ? (
                   <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
                     <TextArea
-                      label="관리자 답변"
+                      label="愿由ъ옄 ?듬?"
                       value={replyDrafts[item.id] ?? ""}
                       onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
-                      placeholder="답변을 입력하세요"
+                      placeholder="?듬????낅젰?섏꽭??"
                       rows={3}
                     />
                     <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -1094,7 +1111,7 @@ function FeedbackPage({ s, setS }) {
                           fontWeight: 900,
                         }}
                       >
-                        답변 저장
+                        ?듬? ???
                       </button>
                     </div>
                   </div>
@@ -1108,7 +1125,7 @@ function FeedbackPage({ s, setS }) {
   );
 }
 
-function VillageSuggestionPage({ s, onlineUsers }) {
+function VillageSuggestionPage({ s }) {
   const [form, setForm] = useState({
     type: "improve",
     title: "",
@@ -1152,7 +1169,7 @@ function VillageSuggestionPage({ s, onlineUsers }) {
 
   const submit = () => {
     if (!canSubmit) return;
-    const finalType = form.type === "other" ? customType.trim() || "기타" : form.type;
+    const finalType = form.type === "other" ? customType.trim() || "湲고?" : form.type;
     addDoc(collection(db, "villageSuggestions"), {
       type: finalType,
       title: form.title.trim(),
@@ -1203,7 +1220,7 @@ function VillageSuggestionPage({ s, onlineUsers }) {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>유형</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>?좏삎</div>
             <select
               value={form.type}
               onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
@@ -1217,51 +1234,51 @@ function VillageSuggestionPage({ s, onlineUsers }) {
                 color: "var(--text)",
               }}
             >
-              <option value="improve">개선</option>
-              <option value="bug">오류/잘못된 점</option>
-              <option value="other">기타(직접 입력)</option>
+              <option value="improve">媛쒖꽑</option>
+              <option value="bug">?ㅻ쪟/?섎せ????</option>
+              <option value="other">湲고?(吏곸젒 ?낅젰)</option>
             </select>
           </div>
           <TextField
-            label="연락처(선택)"
+            label="?곕씫泥??좏깮)"
             value={form.contact}
             onChange={(v) => setForm((p) => ({ ...p, contact: v }))}
-            placeholder="이메일/디스코드 등"
+            placeholder="?대찓???붿뒪肄붾뱶 ??"
           />
         </div>
 
         {form.type === "other" ? (
           <div style={{ marginTop: 12 }}>
             <TextField
-              label="기타 유형"
+              label="湲고? ?좏삎"
               value={customType}
               onChange={(v) => setCustomType(v)}
-              placeholder="예: 이벤트/시설/상점"
+              placeholder="?? ?대깽???쒖꽕/?곸젏"
             />
           </div>
         ) : null}
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
           <Select
-            label={"공개 설정"}
+            label={"怨듦컻 ?ㅼ젙"}
             value={form.visibility}
             onChange={(v) => setForm((p) => ({ ...p, visibility: v }))}
             options={[
-              { value: "public", label: "공개" },
-              { value: "private", label: "비공개(관리자만)" },
+              { value: "public", label: "怨듦컻" },
+              { value: "private", label: "鍮꾧났媛?愿由ъ옄留?" },
             ]}
           />
           <TextField
-            label="제목"
+            label="?쒕ぉ"
             value={form.title}
             onChange={(v) => setForm((p) => ({ ...p, title: v }))}
-            placeholder="예: 마을 상점에 아이템 추가 요청"
+            placeholder="?? 留덉쓣 ?곸젏???꾩씠??異붽? ?붿껌"
           />
           <TextArea
-            label="내용"
+            label="?댁슜"
             value={form.body}
             onChange={(v) => setForm((p) => ({ ...p, body: v }))}
-            placeholder="건의 내용을 자세히 적어주세요."
+            placeholder="嫄댁쓽 ?댁슜???먯꽭???곸뼱二쇱꽭??"
             rows={5}
           />
         </div>
@@ -1281,14 +1298,14 @@ function VillageSuggestionPage({ s, onlineUsers }) {
               fontSize: 13,
             }}
           >
-            등록
+            ?깅줉
           </button>
         </div>
       </Card>
 
       <Card title={"\uac74\uc758 \uad00\ub9ac"}>
         {items.length === 0 ? (
-          <div style={{ fontSize: 13, opacity: 0.8 }}>등록된 건의가 없습니다.</div>
+          <div style={{ fontSize: 13, opacity: 0.8 }}>?깅줉??嫄댁쓽媛 ?놁뒿?덈떎.</div>
         ) : (
           <div style={{ display: "grid", gap: 12 }}>
             {items.map((item) => (
@@ -1313,15 +1330,15 @@ function VillageSuggestionPage({ s, onlineUsers }) {
                 </div>
                 <div style={{ fontSize: 13, lineHeight: 1.5 }}>{item.body}</div>
                 {item.contact ? (
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>연락처: {item.contact}</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>?곕씫泥? {item.contact}</div>
                 ) : null}
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                   <div style={{ fontSize: 12, opacity: 0.7 }}>
-                    공개: {item.visibility === "private" ? "비공개" : "공개"}
+                    怨듦컻: {item.visibility === "private" ? "鍮꾧났媛?" : "怨듦컻"}
                   </div>
                   {item.reply ? (
                     <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>
-                      관리자 답변 완료
+                      愿由ъ옄 ?듬? ?꾨즺
                     </div>
                   ) : null}
                 </div>
@@ -1335,12 +1352,12 @@ function VillageSuggestionPage({ s, onlineUsers }) {
                       fontSize: 13,
                     }}
                   >
-                    <div style={{ fontWeight: 900, marginBottom: 4 }}>관리자 답변</div>
+                    <div style={{ fontWeight: 900, marginBottom: 4 }}>愿由ъ옄 ?듬?</div>
                     <div style={{ whiteSpace: "pre-wrap" }}>{item.reply}</div>
                   </div>
                 ) : null}
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>상태</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>?곹깭</div>
                   {isAdmin ? (
                     <select
                       value={item.status || "new"}
@@ -1355,9 +1372,9 @@ function VillageSuggestionPage({ s, onlineUsers }) {
                         color: "var(--text)",
                       }}
                     >
-                      <option value="new">접수</option>
-                      <option value="progress">진행중</option>
-                      <option value="done">완료</option>
+                      <option value="new">?묒닔</option>
+                      <option value="progress">吏꾪뻾以?</option>
+                      <option value="done">?꾨즺</option>
                     </select>
                   ) : (
                     <div style={{ fontSize: 12, opacity: 0.7 }}>{statusLabel(item.status)}</div>
@@ -1376,17 +1393,17 @@ function VillageSuggestionPage({ s, onlineUsers }) {
                         fontWeight: 700,
                       }}
                     >
-                      삭제
+                      ??젣
                     </button>
                   ) : null}
                 </div>
                 {isAdmin ? (
                   <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
                     <TextArea
-                      label="관리자 답변"
+                      label="愿由ъ옄 ?듬?"
                       value={replyDrafts[item.id] ?? ""}
                       onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
-                      placeholder="답변을 입력하세요"
+                      placeholder="?듬????낅젰?섏꽭??"
                       rows={3}
                     />
                     <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -1403,7 +1420,7 @@ function VillageSuggestionPage({ s, onlineUsers }) {
                           fontWeight: 900,
                         }}
                       >
-                        답변 저장
+                        ?듬? ???
                       </button>
                     </div>
                   </div>
@@ -1414,32 +1431,6 @@ function VillageSuggestionPage({ s, onlineUsers }) {
         )}
       </Card>
 
-      <Card title={"현재 접속 중"}>
-        <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
-          {`현재 접속: ${onlineUsers.length}명`}
-        </div>
-        {onlineUsers.length === 0 ? (
-          <div style={{ fontSize: 12, opacity: 0.7 }}>접속 중인 사용자가 없습니다.</div>
-        ) : (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {onlineUsers.map((user) => (
-              <div
-                key={user.id}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 999,
-                  border: "1px solid var(--soft-border)",
-                  background: "var(--panel-bg)",
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                {user.displayName || user.email || "익명"}
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
     </div>
   );
 }
@@ -1457,65 +1448,65 @@ function PotionRowDetails({ feeRate, ev, row, shardsPerDig, gemRule, flameRule }
 
   return (
     <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "var(--panel-bg)", border: "1px solid var(--soft-border)" }}>
-      <div style={{ fontWeight: 900, marginBottom: 8 }}>세부내역: {row.label}</div>
+      <div style={{ fontWeight: 900, marginBottom: 8 }}>?몃??댁뿭: {row.label}</div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
-        <div>기준 스태미나</div>
+        <div>湲곗? ?ㅽ깭誘몃굹</div>
         <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(stamina)}</div>
 
-        <div>광질 1회 스태미나</div>
+        <div>愿묒쭏 1???ㅽ깭誘몃굹</div>
         <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(spd)}</div>
 
-        <div>예상 광질 횟수(스태미나/회)</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{digs.toFixed(4)}회</div>
+        <div>?덉긽 愿묒쭏 ?잛닔(?ㅽ깭誘몃굹/??</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{digs.toFixed(4)}??</div>
 
-        <div>주괴 실수령 단가</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.ingotNet)}원</div>
+        <div>二쇨눼 ?ㅼ닔???④?</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.ingotNet)}??</div>
 
-        <div>보석 실수령 단가</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.gemNet)}원</div>
+        <div>蹂댁꽍 ?ㅼ닔???④?</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.gemNet)}??</div>
 
-        <div>불붙은 확률 p(대체)</div>
+        <div>遺덈텤? ?뺣쪧 p(?泥?</div>
         <div style={{ textAlign: "right", fontWeight: 900 }}>{(ev.pFlame * 100).toFixed(2)}%</div>
 
-        <div>회당 조각(불붙은 미발동 시)</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(shardsPerDig)}개</div>
+        <div>?뚮떦 議곌컖(遺덈텤? 誘몃컻????</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(shardsPerDig)}媛?</div>
 
-        <div>보석 전문가</div>
+        <div>蹂댁꽍 ?꾨Ц媛</div>
         <div style={{ textAlign: "right", fontWeight: 900 }}>
-          {fmt(gemRule.prob * 100)}% / {fmt(gemRule.count)}개
+          {fmt(gemRule.prob * 100)}% / {fmt(gemRule.count)}媛?
         </div>
 
-        <div>불붙은</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(flameRule.prob * 100)}% / 주괴 1개(조각 0 대체)</div>
+        <div>遺덈텤?</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(flameRule.prob * 100)}% / 二쇨눼 1媛?議곌컖 0 ?泥?</div>
 
-        <div style={{ marginTop: 6, fontWeight: 900 }}>포션 스태미나 기준 기대매출(실수령) 분해</div>
+        <div style={{ marginTop: 6, fontWeight: 900 }}>?ъ뀡 ?ㅽ깭誘몃굹 湲곗? 湲곕?留ㅼ텧(?ㅼ닔?? 遺꾪빐</div>
         <div />
 
-        <div>조각→주괴 기대가치</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ingotFromShardsValue)}원</div>
+        <div>議곌컖?믪＜愿?湲곕?媛移?</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ingotFromShardsValue)}??</div>
 
-        <div>불붙은(대체) 주괴 기대가치</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ingotFromFlameValue)}원</div>
+        <div>遺덈텤?(?泥? 二쇨눼 湲곕?媛移?</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ingotFromFlameValue)}??</div>
 
-        <div>보석 기대가치(불붙은과 무관)</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(gemValue)}원</div>
+        <div>蹂댁꽍 湲곕?媛移?遺덈텤?怨?臾닿?)</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(gemValue)}??</div>
 
-        <div>합계 기대매출(실수령)</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(total)}원</div>
+        <div>?⑷퀎 湲곕?留ㅼ텧(?ㅼ닔??</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(total)}??</div>
 
-        <div>구매가</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(row.cost)}원</div>
+        <div>援щℓ媛</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(row.cost)}??</div>
 
-        <div>순이익</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(total - row.cost)}원</div>
+        <div>?쒖씠??</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(total - row.cost)}??</div>
       </div>
 
       <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>
-        계산식 요약(불붙은=대체):
-        <br />- 회당 주괴 기대량 = <b>(1-p)×(조각/필요조각)</b> + <b>p×1</b>
-        <br />- 회당 보석 기대가치 = (보석확률 × 보석개수 × 보석실수령단가) <b>(불붙은과 무관)</b>
-        <br />- 포션 기준 기대매출 = (회당 기대가치) × (스태미나 / 광질1회스태미나)
+        怨꾩궛???붿빟(遺덈텤?=?泥?:
+        <br />- ?뚮떦 二쇨눼 湲곕???= <b>(1-p)횞(議곌컖/?꾩슂議곌컖)</b> + <b>p횞1</b>
+        <br />- ?뚮떦 蹂댁꽍 湲곕?媛移?= (蹂댁꽍?뺣쪧 횞 蹂댁꽍媛쒖닔 횞 蹂댁꽍?ㅼ닔?밸떒媛) <b>(遺덈텤?怨?臾닿?)</b>
+        <br />- ?ъ뀡 湲곗? 湲곕?留ㅼ텧 = (?뚮떦 湲곕?媛移? 횞 (?ㅽ깭誘몃굹 / 愿묒쭏1?뚯뒪?쒕???
       </div>
     </div>
   );
@@ -1553,10 +1544,10 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
   const results = useMemo(() => {
     const p = s.potionPrices;
     const rows = [
-      { key: "p100", label: "100 포션", stamina: 100, cost: toNum(p.p100) },
-      { key: "p300", label: "300 포션", stamina: 300, cost: toNum(p.p300) },
-      { key: "p500", label: "500 포션", stamina: 500, cost: toNum(p.p500) },
-      { key: "p700", label: "700 포션", stamina: 700, cost: toNum(p.p700) },
+      { key: "p100", label: "100 ?ъ뀡", stamina: 100, cost: toNum(p.p100) },
+      { key: "p300", label: "300 ?ъ뀡", stamina: 300, cost: toNum(p.p300) },
+      { key: "p500", label: "500 ?ъ뀡", stamina: 500, cost: toNum(p.p500) },
+      { key: "p700", label: "700 ?ъ뀡", stamina: 700, cost: toNum(p.p700) },
     ].map((r) => {
       const revenue = ev.totalPerStamina * r.stamina;
       const profit = revenue - r.cost;
@@ -1578,23 +1569,23 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <Card title="스테미나 포션 효율 계산">
+      <Card title="?ㅽ뀒誘몃굹 ?ъ뀡 ?⑥쑉 怨꾩궛">
         <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13 }}>
-            <div>조각/회(미발동 시): <b>{fmt(shardsPerDig)}</b></div>
-            <div>보석: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>개</div>
-            <div>불붙은(대체): <b>{fmt(flameRule.prob * 100)}%</b> (주괴 1개)</div>
-            <div>스태미나 1당 기대 수익(실수령): <b>{fmt(ev.totalPerStamina)}</b>원</div>
+            <div>議곌컖/??誘몃컻????: <b>{fmt(shardsPerDig)}</b></div>
+            <div>蹂댁꽍: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>媛?</div>
+            <div>遺덈텤?(?泥?: <b>{fmt(flameRule.prob * 100)}%</b> (二쇨눼 1媛??)</div>
+            <div>?ㅽ깭誘몃굹 1??湲곕? ?섏씡(?ㅼ닔??: <b>{fmt(ev.totalPerStamina)}</b>??</div>
           </div>
         </div>
       </Card>
 
-      <Card title="포션 가격 입력">
+      <Card title="?ъ뀡 媛寃??낅젰">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-          <Field label="100 포션 가격" value={s.potionPrices.p100} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p100: v } }))} min={0} suffix="원" />
-          <Field label="300 포션 가격" value={s.potionPrices.p300} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p300: v } }))} min={0} suffix="원" />
-          <Field label="500 포션 가격" value={s.potionPrices.p500} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p500: v } }))} min={0} suffix="원" />
-          <Field label="700 포션 가격" value={s.potionPrices.p700} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p700: v } }))} min={0} suffix="원" />
+          <Field label="100 ?ъ뀡 媛寃?" value={s.potionPrices.p100} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p100: v } }))} min={0} suffix="?" />
+          <Field label="300 ?ъ뀡 媛寃?" value={s.potionPrices.p300} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p300: v } }))} min={0} suffix="?" />
+          <Field label="500 ?ъ뀡 媛寃?" value={s.potionPrices.p500} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p500: v } }))} min={0} suffix="?" />
+          <Field label="700 ?ъ뀡 媛寃?" value={s.potionPrices.p700} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p700: v } }))} min={0} suffix="?" />
         </div>
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
           {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
@@ -1602,17 +1593,17 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
         </div>
       </Card>
 
-      <Card title="결과 (순이익 기준) — 포션별 세부내역 펼치기">
+      <Card title="寃곌낵 (?쒖씠??湲곗?) ???ъ뀡蹂??몃??댁뿭 ?쇱튂湲?">
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr>
-                <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>포션</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>스태미나</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>기대매출(실수령)</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>구매가</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>순이익</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>세부</th>
+                <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>?ъ뀡</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>?ㅽ깭誘몃굹</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>湲곕?留ㅼ텧(?ㅼ닔??</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>援щℓ媛</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>?쒖씠??</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>?몃?</th>
               </tr>
             </thead>
             <tbody>
@@ -1627,7 +1618,7 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
                       <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(r.cost)}</td>
                       <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>{fmt(r.profit)}</td>
                       <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
-                        <ToggleButton isOn={open} onClick={() => toggleRow(r.key)} labelOn="닫기" labelOff="보기" />
+                        <ToggleButton isOn={open} onClick={() => toggleRow(r.key)} labelOn="?リ린" labelOff="蹂닿린" />
                       </td>
                     </tr>
                     {open ? (
@@ -1652,7 +1643,7 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
         </div>
 
         <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
-          순이익 추천: <b>{results.best.label}</b>
+          ?쒖씠??異붿쿇: <b>{results.best.label}</b>
         </div>
       </Card>
     </div>
@@ -1697,7 +1688,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
       .join(", ");
   };
 
-  // 내정보 기반 기대값(주괴/보석)
+  // ?댁젙蹂?湲곕컲 湲곕?媛?二쇨눼/蹂댁꽍)
   const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
   const flameRule = flamingPickRule(s.flamingPickLevel);
@@ -1726,7 +1717,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
     feeRate,
   ]);
 
-  // 비교 계산(제작 vs 재료판매)
+  // 鍮꾧탳 怨꾩궛(?쒖옉 vs ?щ즺?먮ℓ)
   const compare = useMemo(() => {
     const sellIndivNet = (recipe) => {
       return sum(
@@ -1788,7 +1779,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
     };
   }, [s.prices, s.modes, s.recipes, s.abilityGrossSell, s.lifeGrossSell, feeRate]);
 
-  // 자세히보기(포기한 판매 수익) 토글: 화면을 복잡하게 만들지 않기 위해 여기만 둠
+  // ?먯꽭?덈낫湲??ш린???먮ℓ ?섏씡) ?좉?: ?붾㈃??蹂듭옟?섍쾶 留뚮뱾吏 ?딄린 ?꾪빐 ?ш린留???
   const [detailOpen, setDetailOpen] = useState(false);
 
   const explain = (x) => {
@@ -1811,43 +1802,43 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <Card title="주괴/보석 기대값 (내정보 기반)">
+      <Card title="二쇨눼/蹂댁꽍 湲곕?媛?(?댁젙蹂?湲곕컲)">
         <div style={{ marginBottom: 10, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
-          아래 기대값은 모두 <b>실수령 기준</b>입니다. (판매 수수료 {fmt(toNum(s.feePct))}% 반영)
+          ?꾨옒 湲곕?媛믪? 紐⑤몢 <b>?ㅼ닔??湲곗?</b>?낅땲?? (?먮ℓ ?섏닔猷?{fmt(toNum(s.feePct))}% 諛섏쁺)
         </div>
 
         <div style={{ padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
-            <div>회당 조각(미발동 시)</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(shardsPerDig)}개</div>
-            <div>불붙은 확률 p(대체)</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(flameRule.prob * 100)}%</div>
-            <div>회당 주괴(조각→환산) 기대</div><div style={{ textAlign: "right", fontWeight: 900 }}>{ev.ingotFromShardsPerDig.toFixed(4)}개</div>
-            <div>회당 주괴(불붙은 대체) 기대</div><div style={{ textAlign: "right", fontWeight: 900 }}>{ev.ingotFromFlamePerDig.toFixed(4)}개</div>
-            <div>회당 보석 기대가치</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.gemValuePerDig)}원</div>
-            <div>회당 총 기대가치</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.totalPerDig)}원</div>
-            <div>스태미나 1당 기대가치</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.totalPerStamina)}원</div>
+            <div>?뚮떦 議곌컖(誘몃컻????</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(shardsPerDig)}媛?</div>
+            <div>遺덈텤? ?뺣쪧 p(?泥?</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(flameRule.prob * 100)}%</div>
+            <div>?뚮떦 二쇨눼(議곌컖?믫솚?? 湲곕?</div><div style={{ textAlign: "right", fontWeight: 900 }}>{ev.ingotFromShardsPerDig.toFixed(4)}媛?</div>
+            <div>?뚮떦 二쇨눼(遺덈텤? ?泥? 湲곕?</div><div style={{ textAlign: "right", fontWeight: 900 }}>{ev.ingotFromFlamePerDig.toFixed(4)}媛?</div>
+            <div>?뚮떦 蹂댁꽍 湲곕?媛移?</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.gemValuePerDig)}??</div>
+            <div>?뚮떦 珥?湲곕?媛移?</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.totalPerDig)}??</div>
+            <div>?ㅽ깭誘몃굹 1??湲곕?媛移?</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.totalPerStamina)}??</div>
           </div>
         </div>
       </Card>
 
-      <Card title="가공 비교: 재료 그대로 판매 vs 어빌/라이프스톤">
+      <Card title="媛怨?鍮꾧탳: ?щ즺 洹몃?濡??먮ℓ vs ?대퉴/?쇱씠?꾩뒪??">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
           <Field
-            label="어빌리티 스톤 판매가(시장가)"
+            label="?대퉴由ы떚 ?ㅽ넠 ?먮ℓ媛(?쒖옣媛)"
             value={s.abilityGrossSell}
             onChange={(v) => setS((p) => ({ ...p, abilityGrossSell: v }))}
           />
           <Field
-            label="하급 라이프스톤 판매가(시장가)"
+            label="?섍툒 ?쇱씠?꾩뒪???먮ℓ媛(?쒖옣媛)"
             value={s.lifeGrossSell.low}
             onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, low: v } }))}
           />
           <Field
-            label="중급 라이프스톤 판매가(시장가)"
+            label="以묎툒 ?쇱씠?꾩뒪???먮ℓ媛(?쒖옣媛)"
             value={s.lifeGrossSell.mid}
             onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, mid: v } }))}
           />
           <Field
-            label="상급 라이프스톤 판매가(시장가)"
+            label="?곴툒 ?쇱씠?꾩뒪???먮ℓ媛(?쒖옣媛)"
             value={s.lifeGrossSell.high}
             onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, high: v } }))}
           />
@@ -1858,32 +1849,32 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
         </div>
 
         <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
-          표의 의미:
-          <br />- <b>재료 그대로 판매 실수령</b>: 같은 재료를 그냥 팔았을 때(기준선)
-          <br />- <b>제작 판매 실수령</b>: 결과물을 만들어 팔았을 때
-          <br />- <b>제작 순이익</b>: 선택한 수급 방식(직접수급/구매/포기한 판매수익)에 따른 “현재 내 상황 기준” 결과
+          ?쒖쓽 ?섎?:
+          <br />- <b>?щ즺 洹몃?濡??먮ℓ ?ㅼ닔??</b>: 媛숈? ?щ즺瑜?洹몃깷 ?붿븯????湲곗???
+          <br />- <b>?쒖옉 ?먮ℓ ?ㅼ닔??</b>: 寃곌낵臾쇱쓣 留뚮뱾???붿븯????
+          <br />- <b>?쒖옉 ?쒖씠??</b>: ?좏깮???섍툒 諛⑹떇(吏곸젒?섍툒/援щℓ/?ш린???먮ℓ?섏씡)???곕Ⅸ ?쒗쁽?????곹솴 湲곗???寃곌낵
         </div>
 
         <div style={{ marginTop: 12, overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr>
-                <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>항목</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>제작 판매 실수령</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>사용된 재료 가치(선택 기준)</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>제작 순이익</th>
+                <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>??ぉ</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>?쒖옉 ?먮ℓ ?ㅼ닔??</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>?ъ슜???щ즺 媛移??좏깮 湲곗?)</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>?쒖옉 ?쒖씠??</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>
-                  재료 그대로 판매 실수령(구매 제외)
+                  ?щ즺 洹몃?濡??먮ℓ ?ㅼ닔??援щℓ ?쒖쇅)
                 </th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>추천</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>異붿쿇</th>
               </tr>
             </thead>
             <tbody>
               {[
-                { name: "어빌리티 스톤", key: "ability" },
-                { name: "하급 라이프스톤", key: "low" },
-                { name: "중급 라이프스톤", key: "mid" },
-                { name: "상급 라이프스톤", key: "high" },
+                { name: "?대퉴由ы떚 ?ㅽ넠", key: "ability" },
+                { name: "?섍툒 ?쇱씠?꾩뒪??", key: "low" },
+                { name: "以묎툒 ?쇱씠?꾩뒪??", key: "mid" },
+                { name: "?곴툒 ?쇱씠?꾩뒪??", key: "high" },
               ].map((row) => {
                 const x = compare[row.key];
                 return (
@@ -1906,7 +1897,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
                       </span>
                     </td>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
-                      {x.profit - x.sellIndivNet >= 0 ? "제작 이득" : "재료 판매 이득"}
+                      {x.profit - x.sellIndivNet >= 0 ? "?쒖옉 ?대뱷" : "?щ즺 ?먮ℓ ?대뱷"}
                     </td>
                   </tr>
                 );
@@ -1919,31 +1910,31 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
           <ToggleButton
             isOn={detailOpen}
             onClick={() => setDetailOpen((v) => !v)}
-            labelOn="자세히보기 닫기"
-            labelOff="자세히보기(포기한 판매 수익)"
+            labelOn="?먯꽭?덈낫湲??リ린"
+            labelOff="?먯꽭?덈낫湲??ш린???먮ℓ ?섏씡)"
           />
         </div>
 
         {detailOpen ? (
           <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
             {[
-              { name: "어빌리티 스톤", key: "ability" },
-              { name: "하급 라이프스톤", key: "low" },
-              { name: "중급 라이프스톤", key: "mid" },
-              { name: "상급 라이프스톤", key: "high" },
+              { name: "?대퉴由ы떚 ?ㅽ넠", key: "ability" },
+              { name: "?섍툒 ?쇱씠?꾩뒪??", key: "low" },
+              { name: "以묎툒 ?쇱씠?꾩뒪??", key: "mid" },
+              { name: "?곴툒 ?쇱씠?꾩뒪??", key: "high" },
             ].map((row) => {
               const x = compare[row.key];
               const ex = explain(x);
               return (
                 <div key={row.key} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
-                  <div style={{ fontWeight: 900, marginBottom: 6 }}>{row.name} — 비용 분해(선택 기준)</div>
+                  <div style={{ fontWeight: 900, marginBottom: 6 }}>{row.name} ??鍮꾩슜 遺꾪빐(?좏깮 湲곗?)</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
-                    <div>구매로 나간 돈(실지출)</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.buySpend)}원</div>
-                    <div>포기한 판매 수익(기회비용)</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.foregone)}원</div>
-                    <div>직접 수급 재료 수량 합</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.ownedQty)}개</div>
+                    <div>援щℓ濡??섍컙 ???ㅼ?異?</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.buySpend)}??</div>
+                    <div>?ш린???먮ℓ ?섏씡(湲고쉶鍮꾩슜)</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.foregone)}??</div>
+                    <div>吏곸젒 ?섍툒 ?щ즺 ?섎웾 ??</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.ownedQty)}媛?</div>
                   </div>
                 </div>
               );
@@ -1961,7 +1952,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
  * ==========
  */
 export default function App() {
-  // 키를 v4->v6로 변경(이전 값 충돌 최소화) + 마이그레이션으로 흡수
+  // ?ㅻ? v4->v6濡?蹂寃??댁쟾 媛?異⑸룎 理쒖냼?? + 留덉씠洹몃젅?댁뀡?쇰줈 ?≪닔
   const [s, setS] = useLocalStorageState("miner_eff_v6", defaultState);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [adminPass, setAdminPass] = useState("");
@@ -2180,7 +2171,7 @@ export default function App() {
       closeAdminModal();
       return;
     }
-    setAdminError("비밀번호가 올바르지 않습니다.");
+    setAdminError("鍮꾨?踰덊샇媛 ?щ컮瑜댁? ?딆뒿?덈떎.");
   };
 
   const logoutAdmin = () => {
@@ -2222,8 +2213,8 @@ export default function App() {
     setIntroOpen(false);
   };
 
-  // IngotPage에서 판매가 입력을 막고(placeholder), 실제 입력은 profile에서만 하려고
-  // 단, 기존 구조를 크게 바꾸지 않기 위해 “입력 위치 이동”만 하고, 값은 그대로 사용합니다.
+  // IngotPage?먯꽌 ?먮ℓ媛 ?낅젰??留됯퀬(placeholder), ?ㅼ젣 ?낅젰? profile?먯꽌留??섎젮怨?
+  // ?? 湲곗〈 援ъ“瑜??ш쾶 諛붽씀吏 ?딄린 ?꾪빐 ?쒖엯???꾩튂 ?대룞?앸쭔 ?섍퀬, 媛믪? 洹몃?濡??ъ슜?⑸땲??
   const setActive = (key) => setS((p) => ({ ...p, activeMenu: key }));
   const canUseApp = !!authUser && userDoc?.status === "approved";
   const isPending = !!authUser && !canUseApp && userDoc?.status !== "rejected";
@@ -2245,7 +2236,7 @@ export default function App() {
     >
       {showSidebar ? (
         <div style={{ padding: 16, borderRight: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
-          <Sidebar active={s.activeMenu} onSelect={setActive} />
+          <Sidebar active={s.activeMenu} onSelect={setActive} onlineUsers={onlineUsers} />
         </div>
       ) : null}
 
@@ -2556,7 +2547,7 @@ export default function App() {
             ) : null}
             {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
             {s.activeMenu === "village" ? (
-              <VillageSuggestionPage s={s} onlineUsers={onlineUsers} />
+              <VillageSuggestionPage s={s} />
             ) : null}
           </div>
 
@@ -2698,3 +2689,4 @@ export default function App() {
     </div>
   );
 }
+
