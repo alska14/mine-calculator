@@ -1250,10 +1250,10 @@ function IngotPage({ s, setS, feeRate }) {
     const highSellIndiv = sellIndivNet(s.recipes.high);
 
     return {
-      ability: { ...ability, sellIndivNet: abilitySellIndiv, deltaRevenueVsIndiv: ability.revenue - abilitySellIndiv },
-      low: { ...low, sellIndivNet: lowSellIndiv, deltaRevenueVsIndiv: low.revenue - lowSellIndiv },
-      mid: { ...mid, sellIndivNet: midSellIndiv, deltaRevenueVsIndiv: mid.revenue - midSellIndiv },
-      high: { ...high, sellIndivNet: highSellIndiv, deltaRevenueVsIndiv: high.revenue - highSellIndiv },
+      ability: { ...ability, sellIndivNet: abilitySellIndiv, deltaRevenueVsIndiv: ability.profit - abilitySellIndiv },
+      low: { ...low, sellIndivNet: lowSellIndiv, deltaRevenueVsIndiv: low.profit - lowSellIndiv },
+      mid: { ...mid, sellIndivNet: midSellIndiv, deltaRevenueVsIndiv: mid.profit - midSellIndiv },
+      high: { ...high, sellIndivNet: highSellIndiv, deltaRevenueVsIndiv: high.profit - highSellIndiv },
     };
   }, [s.prices, s.modes, s.recipes, s.abilityGrossSell, s.lifeGrossSell, feeRate]);
 
@@ -1338,7 +1338,7 @@ function IngotPage({ s, setS, feeRate }) {
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>사용된 재료 가치(선택 기준)</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>제작 순이익</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>재료 그대로 판매 실수령</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>매출차이(제작-재료판매)</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>순이익차이(제작-재료판매)</th>
               </tr>
             </thead>
             <tbody>
