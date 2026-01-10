@@ -1180,11 +1180,7 @@ function VillageSuggestionPage({ s }) {
     });
   };
 
-  const typeLabel = (type) => {
-    if (type === "bug") return "\uc624\ub958/\uc798\ubabb\ub41c \uc810";
-    if (type === "other") return "\uae30\ud0c0";
-    return "\uac1c\uc120";
-  };
+  const typeLabel = (type) => (type ? String(type) : "\uae30\ud0c0");
 
   const statusLabel = (status) => {
     if (status === "progress") return "\uc9c4\ud589\uc911";
@@ -1199,26 +1195,12 @@ function VillageSuggestionPage({ s }) {
           {"\ub9c8\uc744 \uad00\ub828 \uac74\uc758/\ubb38\uc758\ub294 \uc5ec\uae30\uc5d0 \ub0a8\uaca8\uc8fc\uc138\uc694."}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>유형</div>
-            <select
-              value={form.type}
-              onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--input-border)",
-                outline: "none",
-                fontSize: 14,
-                background: "var(--input-bg)",
-                color: "var(--text)",
-              }}
-            >
-              <option value="improve">개선</option>
-              <option value="bug">오류/잘못된 점</option>
-              <option value="other">기타</option>
-            </select>
-          </div>
+          <TextField
+            label="유형(직접 입력)"
+            value={form.type}
+            onChange={(v) => setForm((p) => ({ ...p, type: v }))}
+            placeholder="예: 이벤트/시설/상점"
+          />
           <TextField
             label="연락처(선택)"
             value={form.contact}
