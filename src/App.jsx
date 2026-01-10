@@ -729,6 +729,25 @@ function ProfilePage({ s, setS, feeRate }) {
           수급 방식:
           <br />- 직접 수급(0) / 구매 필요 / (고급) 포기한 판매 수익
         </div>
+        <div style={{ marginBottom: 12 }}>
+          <Select
+            label={"\uc218\uae09 \ubc29\uc2dd \uc77c\uad04 \uc124\uc815"}
+            value="custom"
+            onChange={(v) => {
+              if (v === "custom") return;
+              const mode = v === "all_buy" ? "buy" : "owned";
+              setS((p) => ({
+                ...p,
+                modes: materialKeysForUI.reduce((acc, key) => ({ ...acc, [key]: mode }), { ...p.modes }),
+              }));
+            }}
+            options={[
+              { value: "custom", label: "\ucee4\uc2a4\ud140(\uac1c\ubcc4 \uc124\uc815)" },
+              { value: "all_owned", label: "\uc804\ubd80 \uc9c1\uc811 \uc218\uae09" },
+              { value: "all_buy", label: "\uc804\ubd80 \uad6c\ub9e4" },
+            ]}
+          />
+        </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
           {materialKeysForUI.map((k) => (
