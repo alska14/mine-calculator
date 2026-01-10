@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   addDoc,
   collection,
@@ -8,6 +8,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -557,7 +558,7 @@ function Sidebar({ active, onSelect }) {
  * =======================
  */
 
-function ProfilePage({ s, setS, feeRate }) {
+function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
   const sageOptions = useMemo(() => {
     const values = Object.keys(SAGE_SHARDS_BY_ENH).map(Number).sort((a, b) => a - b);
     return values.map((v) => ({ value: v, label: `${v}강 (조각 ${SAGE_SHARDS_BY_ENH[v]}개)` }));
@@ -717,6 +718,10 @@ function ProfilePage({ s, setS, feeRate }) {
           <br />- 보석 {fmt(toNum(s.gemGrossPrice))} → <b>{fmt(netSell(toNum(s.gemGrossPrice), feeRate))}</b>원
           <br />
           구매 비용(수수료 없음): <b>시장가 그대로</b>
+        </div>
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
+          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
         </div>
       </Card>
 
@@ -1589,6 +1594,8 @@ export default function App() {
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [adminPass, setAdminPass] = useState("");
   const [adminError, setAdminError] = useState("");
+  const [priceUpdatedAt, setPriceUpdatedAt] = useState(null);
+  const priceUpdateTimer = useRef(null);
 
   const feeRate = useMemo(() => {
     const v = toNum(s.feePct, 0) / 100;
@@ -1603,6 +1610,37 @@ export default function App() {
     }
     setS(defaultState);
   };
+
+  useEffect(() => {
+    const ref = doc(db, "meta", "marketPrices");
+    const unsub = onSnapshot(ref, (snap) => {
+      const data = snap.data();
+      const ts = data?.updatedAt?.toDate ? data.updatedAt.toDate() : null;
+      setPriceUpdatedAt(ts);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (priceUpdateTimer.current) {
+      clearTimeout(priceUpdateTimer.current);
+    }
+    priceUpdateTimer.current = setTimeout(() => {
+      setDoc(
+        doc(db, "meta", "marketPrices"),
+        {
+          ingotGrossPrice: s.ingotGrossPrice,
+          gemGrossPrice: s.gemGrossPrice,
+          prices: s.prices,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }, 800);
+    return () => {
+      if (priceUpdateTimer.current) clearTimeout(priceUpdateTimer.current);
+    };
+  }, [s.ingotGrossPrice, s.gemGrossPrice, s.prices]);
 
   const openAdminModal = () => {
     setAdminModalOpen(true);
@@ -1729,7 +1767,9 @@ export default function App() {
           </div>
 
           <div style={{ marginTop: 14 }}>
-            {s.activeMenu === "profile" ? <ProfilePage s={s} setS={setS} feeRate={feeRate} /> : null}
+            {s.activeMenu === "profile" ? (
+              <ProfilePage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
+            ) : null}
             {s.activeMenu === "potion" ? <PotionPage s={s} setS={setS} feeRate={feeRate} /> : null}
             {s.activeMenu === "ingot" ? <IngotPage s={s} setS={setS} feeRate={feeRate} /> : null}
             {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
