@@ -2023,7 +2023,7 @@ export default function App() {
   }, [authUser, s.adminMode]);
 
   useEffect(() => {
-    const ref = doc(db, "meta", "marketPrices");
+    const ref = doc(db, "shared", "prices");
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.data();
       const ts = data?.updatedAt?.toDate ? data.updatedAt.toDate() : null;
@@ -2053,7 +2053,7 @@ export default function App() {
     }
     priceUpdateTimer.current = setTimeout(() => {
       setDoc(
-        doc(db, "meta", "marketPrices"),
+        doc(db, "shared", "prices"),
         {
           ingotGrossPrice: s.ingotGrossPrice,
           gemGrossPrice: s.gemGrossPrice,
