@@ -1,4 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { db } from "./firebase";
 
 /**
  * =========
@@ -760,54 +772,40 @@ function FeedbackPage({ s, setS }) {
     contact: "",
   });
 
-  const items = s.feedbacks?.items || [];
+  const [items, setItems] = useState([]);
   const isAdmin = s.adminMode === true;
   const canSubmit = form.title.trim() && form.body.trim();
 
+  useEffect(() => {
+    const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setItems(rows);
+    });
+    return () => unsub();
+  }, []);
+
   const submit = () => {
     if (!canSubmit) return;
-    setS((p) => {
-      const nextId = p.feedbacks?.nextId ?? 1;
-      const newItem = {
-        id: nextId,
-        type: form.type,
-        title: form.title.trim(),
-        body: form.body.trim(),
-        contact: form.contact.trim(),
-        status: "new",
-        createdAt: Date.now(),
-      };
-      return {
-        ...p,
-        feedbacks: {
-          nextId: nextId + 1,
-          items: [newItem, ...(p.feedbacks?.items || [])],
-        },
-      };
+    addDoc(collection(db, "feedbacks"), {
+      type: form.type,
+      title: form.title.trim(),
+      body: form.body.trim(),
+      contact: form.contact.trim(),
+      status: "new",
+      createdAt: serverTimestamp(),
     });
     setForm({ type: "improve", title: "", body: "", contact: "" });
   };
 
   const updateStatus = (id, status) => {
     if (!isAdmin) return;
-    setS((p) => ({
-      ...p,
-      feedbacks: {
-        ...p.feedbacks,
-        items: (p.feedbacks?.items || []).map((item) => (item.id === id ? { ...item, status } : item)),
-      },
-    }));
+    updateDoc(doc(db, "feedbacks", id), { status });
   };
 
   const removeItem = (id) => {
     if (!isAdmin) return;
-    setS((p) => ({
-      ...p,
-      feedbacks: {
-        ...p.feedbacks,
-        items: (p.feedbacks?.items || []).filter((item) => item.id !== id),
-      },
-    }));
+    deleteDoc(doc(db, "feedbacks", id));
   };
 
   const typeLabel = (type) => {
@@ -915,7 +913,7 @@ function FeedbackPage({ s, setS }) {
                     [{typeLabel(item.type)}] {item.title}
                   </div>
                   <div style={{ fontSize: 12, opacity: 0.75 }}>
-                    {new Date(item.createdAt).toLocaleString("ko-KR")}
+                    {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString("ko-KR") : "-"}
                   </div>
                 </div>
                 <div style={{ fontSize: 13, lineHeight: 1.5 }}>{item.body}</div>
