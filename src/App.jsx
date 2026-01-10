@@ -2399,6 +2399,7 @@ export default function App() {
   const [nicknameSaving, setNicknameSaving] = useState(false);
   const [nicknameError, setNicknameError] = useState("");
   const presenceWriteAtRef = useRef(0);
+  const presenceEnabled = false;
 
   const feeRate = useMemo(() => {
     const v = toNum(s.feePct, 0) / 100;
@@ -2460,6 +2461,11 @@ export default function App() {
       setOnlineUsers([]);
       return undefined;
     }
+    if (!presenceEnabled) {
+      setPresenceDocs([]);
+      setOnlineUsers([]);
+      return undefined;
+    }
     const ref = doc(db, "presence", authUser.uid);
     const writePresence = () => {
       const now = Date.now();
@@ -2498,6 +2504,10 @@ export default function App() {
   }, [authUser, userDoc]);
 
   useEffect(() => {
+    if (!presenceEnabled) {
+      setPresenceDocs([]);
+      return undefined;
+    }
     const unsub = onSnapshot(collection(db, "presence"), (snap) => {
       const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setPresenceDocs(rows);
@@ -2506,6 +2516,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!presenceEnabled) {
+      setOnlineUsers([]);
+      return undefined;
+    }
     const getUpdatedAtMs = (u) => {
       if (!u?.updatedAt) return null;
       if (typeof u.updatedAt?.toDate === "function") return u.updatedAt.toDate().getTime();
