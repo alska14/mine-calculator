@@ -1108,7 +1108,7 @@ function FeedbackPage({ s, setS }) {
   );
 }
 
-function VillageSuggestionPage({ s }) {
+function VillageSuggestionPage({ s, onlineUsers }) {
   const [form, setForm] = useState({
     type: "improve",
     title: "",
@@ -1408,6 +1408,33 @@ function VillageSuggestionPage({ s }) {
                     </div>
                   </div>
                 ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card title={"현재 접속 중"}>
+        <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
+          {`현재 접속: ${onlineUsers.length}명`}
+        </div>
+        {onlineUsers.length === 0 ? (
+          <div style={{ fontSize: 12, opacity: 0.7 }}>접속 중인 사용자가 없습니다.</div>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {onlineUsers.map((user) => (
+              <div
+                key={user.id}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 999,
+                  border: "1px solid var(--soft-border)",
+                  background: "var(--panel-bg)",
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                {user.displayName || user.email || "익명"}
               </div>
             ))}
           </div>
@@ -1947,6 +1974,8 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [userDoc, setUserDoc] = useState(null);
   const [pendingUsers, setPendingUsers] = useState([]);
+  const [presenceDocs, setPresenceDocs] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   const feeRate = useMemo(() => {
     const v = toNum(s.feePct, 0) / 100;
@@ -1970,6 +1999,51 @@ export default function App() {
     });
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    if (!authUser) {
+      setPresenceDocs([]);
+      setOnlineUsers([]);
+      return undefined;
+    }
+    const ref = doc(db, "presence", authUser.uid);
+    const writePresence = () =>
+      setDoc(
+        ref,
+        {
+          uid: authUser.uid,
+          displayName: authUser.displayName || "",
+          email: authUser.email || "",
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    writePresence();
+    const timer = setInterval(writePresence, 30000);
+    return () => clearInterval(timer);
+  }, [authUser]);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "presence"), (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setPresenceDocs(rows);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const update = () => {
+      const cutoff = Date.now() - 2 * 60 * 1000;
+      const online = presenceDocs.filter((u) => {
+        if (!u.updatedAt?.toDate) return false;
+        return u.updatedAt.toDate().getTime() >= cutoff;
+      });
+      setOnlineUsers(online);
+    };
+    update();
+    const timer = setInterval(update, 30000);
+    return () => clearInterval(timer);
+  }, [presenceDocs]);
 
   useEffect(() => {
     if (!authUser) {
@@ -2481,7 +2555,9 @@ export default function App() {
               <IngotPage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
             ) : null}
             {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
-            {s.activeMenu === "village" ? <VillageSuggestionPage s={s} /> : null}
+            {s.activeMenu === "village" ? (
+              <VillageSuggestionPage s={s} onlineUsers={onlineUsers} />
+            ) : null}
           </div>
 
             <div style={{ marginTop: 14, fontSize: 12, opacity: 0.7 }}>
