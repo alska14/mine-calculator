@@ -2073,8 +2073,7 @@ export default function App() {
               alt="성북구 마을 배너"
               style={{
                 width: "100%",
-                height: 220,
-                objectFit: "cover",
+                height: "auto",
                 borderRadius: 16,
                 border: "1px solid var(--soft-border)",
                 background: "var(--panel-bg)",
