@@ -1414,7 +1414,9 @@ function IngotPage({ s, setS, feeRate }) {
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>제작 판매 실수령</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>사용된 재료 가치(선택 기준)</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>제작 순이익</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>재료 그대로 판매 실수령</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>
+                  재료 그대로 판매 실수령(구매 제외)
+                </th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>추천</th>
               </tr>
             </thead>
