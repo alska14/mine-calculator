@@ -1113,6 +1113,7 @@ function VillageSuggestionPage({ s }) {
     contact: "",
     visibility: "public",
   });
+  const [customType, setCustomType] = useState("");
 
   const [items, setItems] = useState([]);
   const [replyDrafts, setReplyDrafts] = useState({});
