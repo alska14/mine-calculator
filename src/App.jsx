@@ -2046,6 +2046,20 @@ export default function App() {
         { merge: true }
       );
     writePresence();
+    setPresenceDocs((prev) => {
+      const next = Array.isArray(prev) ? [...prev] : [];
+      const idx = next.findIndex((u) => u.id === authUser.uid);
+      const fallback = {
+        id: authUser.uid,
+        uid: authUser.uid,
+        displayName: authUser.displayName || "",
+        email: authUser.email || "",
+        updatedAt: new Date(),
+      };
+      if (idx >= 0) next[idx] = { ...next[idx], ...fallback };
+      else next.push(fallback);
+      return next;
+    });
     const timer = setInterval(writePresence, 30000);
     return () => clearInterval(timer);
   }, [authUser]);
@@ -2059,18 +2073,37 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const getUpdatedAtMs = (u) => {
+      if (!u?.updatedAt) return null;
+      if (typeof u.updatedAt?.toDate === "function") return u.updatedAt.toDate().getTime();
+      if (u.updatedAt instanceof Date) return u.updatedAt.getTime();
+      if (typeof u.updatedAt === "number") return u.updatedAt;
+      return null;
+    };
     const update = () => {
       const cutoff = Date.now() - 2 * 60 * 1000;
-      const online = presenceDocs.filter((u) => {
-        if (!u.updatedAt?.toDate) return false;
-        return u.updatedAt.toDate().getTime() >= cutoff;
+      let online = presenceDocs.filter((u) => {
+        const ms = getUpdatedAtMs(u);
+        return ms != null && ms >= cutoff;
       });
+      if (authUser && !online.some((u) => u.id === authUser.uid)) {
+        online = [
+          ...online,
+          {
+            id: authUser.uid,
+            uid: authUser.uid,
+            displayName: authUser.displayName || "",
+            email: authUser.email || "",
+            updatedAt: new Date(),
+          },
+        ];
+      }
       setOnlineUsers(online);
     };
     update();
     const timer = setInterval(update, 30000);
     return () => clearInterval(timer);
-  }, [presenceDocs]);
+  }, [presenceDocs, authUser]);
 
   useEffect(() => {
     if (!authUser) {
