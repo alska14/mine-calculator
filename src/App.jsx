@@ -1187,6 +1187,30 @@ function PotionPage({ s, setS, feeRate }) {
 }
 
 function IngotPage({ s, setS, feeRate }) {
+  const materialLabels = {
+    ingot: "\uc8fc\uad34",
+    stone: "\uc870\uc57d\ub3cc",
+    deepCobble: "\uc2ec\uce35 \uc870\uc57d\ub3cc",
+    redstone: "\ub808\ub4dc\uc2a4\ud1a4",
+    copper: "\uad6c\ub9ac",
+    diamond: "\ub2e4\uc774\uc544\ubaac\ub4dc \ube14\ub7ed",
+    iron: "\ucca0",
+    lapis: "\uccad\uae08\uc11d",
+    gold: "\uae08 \ube14\ub7ed",
+    amethyst: "\uc790\uc218\uc815",
+  };
+
+  const formatBuySummary = (list) => {
+    const items = (list || []).filter((x) => (x.qty || 0) > 0);
+    if (items.length === 0) return "";
+    return items
+      .map((x) => {
+        const name = materialLabels[x.key] ?? x.key;
+        return `${name} ${x.qty}\uac1c`;
+      })
+      .join(", ");
+  };
+
   // 내정보 기반 기대값(주괴/보석)
   const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
@@ -1234,7 +1258,8 @@ function IngotPage({ s, setS, feeRate }) {
         const unitCost = unitCostByMode({ mode, marketPrice: market, feeRate });
         return { key: k, qty: qty || 0, unitCost, mode, market };
       });
-      return { ...craftProfit({ productGrossSellPrice: toNum(productGrossPrice), feeRate, costs }), costs };
+      const buyList = costs.filter((c) => c.mode === "buy").map((c) => ({ key: c.key, qty: c.qty || 0 }));
+      return { ...craftProfit({ productGrossSellPrice: toNum(productGrossPrice), feeRate, costs }), costs, buyList };
     };
 
     const ability = craft(s.abilityGrossSell, s.recipes.ability);
@@ -1371,7 +1396,14 @@ function IngotPage({ s, setS, feeRate }) {
                   <tr key={row.key}>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", fontWeight: 900 }}>{row.name}</td>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(x.revenue)}</td>
-                    <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(x.totalCost)}</td>
+                    <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
+                      {fmt(x.totalCost)}
+                      {formatBuySummary(x.buyList) ? (
+                        <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.75 }}>
+                          &rarr; {formatBuySummary(x.buyList)}
+                        </span>
+                      ) : null}
+                    </td>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>{fmt(x.profit)}</td>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(x.sellIndivNet)}</td>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
