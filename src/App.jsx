@@ -788,6 +788,10 @@ function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
             </React.Fragment>
           ))}
         </div>
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
+          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+        </div>
       </Card>
     </div>
   );
@@ -1291,7 +1295,7 @@ function PotionPage({ s, setS, feeRate }) {
   );
 }
 
-function IngotPage({ s, setS, feeRate }) {
+function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
   const materialLabels = {
     ingot: "\uc8fc\uad34",
     stone: "\uc870\uc57d\ub3cc",
@@ -1484,6 +1488,10 @@ function IngotPage({ s, setS, feeRate }) {
             onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, high: v } }))}
           />
         </div>
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
+          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+        </div>
 
         <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
           표의 의미:
@@ -1632,6 +1640,8 @@ export default function App() {
           ingotGrossPrice: s.ingotGrossPrice,
           gemGrossPrice: s.gemGrossPrice,
           prices: s.prices,
+          abilityGrossSell: s.abilityGrossSell,
+          lifeGrossSell: s.lifeGrossSell,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -1640,7 +1650,7 @@ export default function App() {
     return () => {
       if (priceUpdateTimer.current) clearTimeout(priceUpdateTimer.current);
     };
-  }, [s.ingotGrossPrice, s.gemGrossPrice, s.prices]);
+  }, [s.ingotGrossPrice, s.gemGrossPrice, s.prices, s.abilityGrossSell, s.lifeGrossSell]);
 
   const openAdminModal = () => {
     setAdminModalOpen(true);
@@ -1771,7 +1781,9 @@ export default function App() {
               <ProfilePage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
             ) : null}
             {s.activeMenu === "potion" ? <PotionPage s={s} setS={setS} feeRate={feeRate} /> : null}
-            {s.activeMenu === "ingot" ? <IngotPage s={s} setS={setS} feeRate={feeRate} /> : null}
+            {s.activeMenu === "ingot" ? (
+              <IngotPage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
+            ) : null}
             {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
           </div>
 
