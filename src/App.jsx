@@ -1249,11 +1249,29 @@ function IngotPage({ s, setS, feeRate }) {
     const high = craft(s.lifeGrossSell.high, s.recipes.high);
     const highSellIndiv = sellIndivNet(s.recipes.high);
 
+    const deltaByRounded = (profit, sellIndivNet) => Math.round(profit) - Math.round(sellIndivNet);
+
     return {
-      ability: { ...ability, sellIndivNet: abilitySellIndiv, deltaRevenueVsIndiv: ability.profit - abilitySellIndiv },
-      low: { ...low, sellIndivNet: lowSellIndiv, deltaRevenueVsIndiv: low.profit - lowSellIndiv },
-      mid: { ...mid, sellIndivNet: midSellIndiv, deltaRevenueVsIndiv: mid.profit - midSellIndiv },
-      high: { ...high, sellIndivNet: highSellIndiv, deltaRevenueVsIndiv: high.profit - highSellIndiv },
+      ability: {
+        ...ability,
+        sellIndivNet: abilitySellIndiv,
+        deltaRevenueVsIndiv: deltaByRounded(ability.profit, abilitySellIndiv),
+      },
+      low: {
+        ...low,
+        sellIndivNet: lowSellIndiv,
+        deltaRevenueVsIndiv: deltaByRounded(low.profit, lowSellIndiv),
+      },
+      mid: {
+        ...mid,
+        sellIndivNet: midSellIndiv,
+        deltaRevenueVsIndiv: deltaByRounded(mid.profit, midSellIndiv),
+      },
+      high: {
+        ...high,
+        sellIndivNet: highSellIndiv,
+        deltaRevenueVsIndiv: deltaByRounded(high.profit, highSellIndiv),
+      },
     };
   }, [s.prices, s.modes, s.recipes, s.abilityGrossSell, s.lifeGrossSell, feeRate]);
 
