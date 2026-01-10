@@ -821,6 +821,7 @@ function FeedbackPage({ s, setS }) {
     contact: "",
     visibility: "public",
   });
+  const [customType, setCustomType] = useState("");
 
   const [items, setItems] = useState([]);
   const [replyDrafts, setReplyDrafts] = useState({});
@@ -1147,8 +1148,9 @@ function VillageSuggestionPage({ s }) {
 
   const submit = () => {
     if (!canSubmit) return;
+    const finalType = form.type === "other" ? customType.trim() || "기타" : form.type;
     addDoc(collection(db, "villageSuggestions"), {
-      type: form.type,
+      type: finalType,
       title: form.title.trim(),
       body: form.body.trim(),
       contact: form.contact.trim(),
@@ -1158,6 +1160,7 @@ function VillageSuggestionPage({ s }) {
       createdAt: serverTimestamp(),
     });
     setForm({ type: "improve", title: "", body: "", contact: "", visibility: "public" });
+    setCustomType("");
   };
 
   const updateStatus = (id, status) => {
@@ -1195,12 +1198,26 @@ function VillageSuggestionPage({ s }) {
           {"\ub9c8\uc744 \uad00\ub828 \uac74\uc758/\ubb38\uc758\ub294 \uc5ec\uae30\uc5d0 \ub0a8\uaca8\uc8fc\uc138\uc694."}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-          <TextField
-            label="유형(직접 입력)"
-            value={form.type}
-            onChange={(v) => setForm((p) => ({ ...p, type: v }))}
-            placeholder="예: 이벤트/시설/상점"
-          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>유형</div>
+            <select
+              value={form.type}
+              onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--input-border)",
+                outline: "none",
+                fontSize: 14,
+                background: "var(--input-bg)",
+                color: "var(--text)",
+              }}
+            >
+              <option value="improve">개선</option>
+              <option value="bug">오류/잘못된 점</option>
+              <option value="other">기타(직접 입력)</option>
+            </select>
+          </div>
           <TextField
             label="연락처(선택)"
             value={form.contact}
@@ -1208,6 +1225,17 @@ function VillageSuggestionPage({ s }) {
             placeholder="이메일/디스코드 등"
           />
         </div>
+
+        {form.type === "other" ? (
+          <div style={{ marginTop: 12 }}>
+            <TextField
+              label="기타 유형"
+              value={customType}
+              onChange={(v) => setCustomType(v)}
+              placeholder="예: 이벤트/시설/상점"
+            />
+          </div>
+        ) : null}
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
           <Select
