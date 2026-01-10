@@ -53,3 +53,16 @@ body {
   color: var(--text);
 }
 a { color: inherit; }
+
+.readonly-lock input,
+.readonly-lock select,
+.readonly-lock textarea,
+.readonly-lock button {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.readonly-lock .unlock-control {
+  pointer-events: auto;
+  opacity: 1;
+}

@@ -2154,7 +2154,8 @@ export default function App() {
   const canUseApp = !!authUser && userDoc?.status === "approved";
   const isPending = !!authUser && !canUseApp && userDoc?.status !== "rejected";
   const isRejected = userDoc?.status === "rejected";
-  const showSidebar = canUseApp;
+  const uiLocked = !canUseApp;
+  const showSidebar = true;
 
   return (
     <div
@@ -2180,59 +2181,37 @@ export default function App() {
             <Card title={"\uB85C\uADF8\uC778 \uD655\uC778 \uC911"}>
               <div style={{ fontSize: 13, opacity: 0.8 }}>{"\uB85C\uADF8\uC778 \uC0C1\uD0DC\uB97C \uD655\uC778\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4."}</div>
             </Card>
-          ) : !authUser ? (
-            <Card title={"\uB85C\uADF8\uC778 \uD544\uC694"}>
-              <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
-                {"\uB85C\uADF8\uC778\uB41C \uC0AC\uC6A9\uC790\uB9CC \uC774\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."}
-              </div>
-              {authError ? <div style={{ fontSize: 12, color: "#c0392b", marginBottom: 8 }}>{authError}</div> : null}
-              <button
-                onClick={handleLogin}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  border: "1px solid var(--input-border)",
-                  background: "var(--accent)",
-                  color: "var(--accent-text)",
-                  cursor: "pointer",
-                  fontWeight: 900,
-                  fontSize: 13,
-                }}
-              >
-                {"\uAD6C\uAE00\uB85C \uB85C\uADF8\uC778"}
-              </button>
-            </Card>
-          ) : isRejected ? (
-            <Card title={"\uC811\uADFC \uBD88\uAC00"}>
-              <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
-                {"\uC2B9\uC778\uC774 \uAC70\uC808\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uAD00\uB9AC\uC790\uC5D0\uAC8C \uBB38\uC758\uD574\uC8FC\uC138\uC694."}
-              </div>
-              <button
-                onClick={handleLogout}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  border: "1px solid var(--input-border)",
-                  background: "var(--panel-bg)",
-                  cursor: "pointer",
-                  fontWeight: 900,
-                  fontSize: 13,
-                }}
-              >
-                {"\uB85C\uADF8\uC544\uC6C3"}
-              </button>
-            </Card>
-          ) : isPending ? (
-            <div style={{ display: "grid", gap: 12 }}>
-              <Card title={"\uC2B9\uC778 \uB300\uAE30"}>
-                <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
-                  {"\uAD00\uB9AC\uC790 \uC2B9\uC778 \uD6C4 \uC0AC\uC6A9 \uAC00\uB2A5\uD569\uB2C8\uB2E4."}
-                </div>
-                <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 10 }}>
-                  {"\uB0B4 \uACC4\uC815: "}
-                  {authUser.email || "-"}
-                </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          ) : null}
+
+          {!authLoading && !canUseApp ? (
+            <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
+              {!authUser ? (
+                <Card title={"\uB85C\uADF8\uC778 \uD544\uC694"}>
+                  <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
+                    {"\uB85C\uADF8\uC778\uB41C \uC0AC\uC6A9\uC790\uB9CC \uC2DC\uC138\uC640 \uC635\uC158\uC744 \uBCC0\uACBD\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."}
+                  </div>
+                  {authError ? <div style={{ fontSize: 12, color: "#c0392b", marginBottom: 8 }}>{authError}</div> : null}
+                  <button
+                    onClick={handleLogin}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      border: "1px solid var(--input-border)",
+                      background: "var(--accent)",
+                      color: "var(--accent-text)",
+                      cursor: "pointer",
+                      fontWeight: 900,
+                      fontSize: 13,
+                    }}
+                  >
+                    {"\uAD6C\uAE00\uB85C \uB85C\uADF8\uC778"}
+                  </button>
+                </Card>
+              ) : isRejected ? (
+                <Card title={"\uC811\uADFC \uBD88\uAC00"}>
+                  <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
+                    {"\uC2B9\uC778\uC774 \uAC70\uC808\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uAD00\uB9AC\uC790\uC5D0\uAC8C \uBB38\uC758\uD574\uC8FC\uC138\uC694."}
+                  </div>
                   <button
                     onClick={handleLogout}
                     style={{
@@ -2247,9 +2226,19 @@ export default function App() {
                   >
                     {"\uB85C\uADF8\uC544\uC6C3"}
                   </button>
-                  {!s.adminMode ? (
+                </Card>
+              ) : isPending ? (
+                <Card title={"\uC2B9\uC778 \uB300\uAE30"}>
+                  <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
+                    {"\uAD00\uB9AC\uC790 \uC2B9\uC778 \uD6C4 \uC0AC\uC6A9 \uAC00\uB2A5\uD569\uB2C8\uB2E4."}
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 10 }}>
+                    {"\uB0B4 \uACC4\uC815: "}
+                    {authUser.email || "-"}
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button
-                      onClick={openAdminModal}
+                      onClick={handleLogout}
                       style={{
                         padding: "10px 14px",
                         borderRadius: 10,
@@ -2260,12 +2249,29 @@ export default function App() {
                         fontSize: 13,
                       }}
                     >
-                      {"\uAD00\uB9AC\uC790 \uB85C\uADF8\uC778"}
+                      {"\uB85C\uADF8\uC544\uC6C3"}
                     </button>
-                  ) : null}
-                </div>
-              </Card>
-              {s.adminMode ? (
+                    {!s.adminMode ? (
+                      <button
+                        onClick={openAdminModal}
+                        style={{
+                          padding: "10px 14px",
+                          borderRadius: 10,
+                          border: "1px solid var(--input-border)",
+                          background: "var(--panel-bg)",
+                          cursor: "pointer",
+                          fontWeight: 900,
+                          fontSize: 13,
+                        }}
+                      >
+                        {"\uAD00\uB9AC\uC790 \uB85C\uADF8\uC778"}
+                      </button>
+                    ) : null}
+                  </div>
+                </Card>
+              ) : null}
+
+              {isPending && s.adminMode ? (
                 <Card title={"\uAC00\uC785 \uC2B9\uC778 \uAD00\uB9AC"}>
                   {pendingUsers.length === 0 ? (
                     <div style={{ fontSize: 13, opacity: 0.8 }}>
@@ -2329,12 +2335,13 @@ export default function App() {
                 </Card>
               ) : null}
             </div>
-          ) : (
-            <>
-          <div style={{ marginBottom: 14 }}>
-                <img
-                  src="/banner.png"
-                  alt="\uC131\uBD81\uAD6C \uB9C8\uC744 \uBC30\uB108"
+          ) : null}
+
+          <div className={uiLocked ? "readonly-lock" : undefined}>
+            <div style={{ marginBottom: 14 }}>
+              <img
+                src="/banner.png"
+                alt="\uC131\uBD81\uAD6C \uB9C8\uC744 \uBC30\uB108"
               style={{
                 width: "100%",
                 height: "min(40vw, 220px)",
@@ -2348,7 +2355,7 @@ export default function App() {
               }}
             />
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                 <div>
                   <div style={{ fontSize: 20, fontWeight: 900 }}>{"\uAD11\uBD80 \uD6A8\uC728 \uACC4\uC0B0\uAE30"}</div>
                   <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
@@ -2357,7 +2364,7 @@ export default function App() {
                     {"% \uC801\uC6A9(\uD310\uB9E4 \uC2E4\uC218\uB839 \uAE30\uC900)"}
                   </div>
                 </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <button
                 onClick={reset}
                 style={{
@@ -2407,10 +2414,46 @@ export default function App() {
                   {"\uad00\ub9ac\uc790"}
                 </button>
               )}
+              {authUser ? (
+                <button
+                  onClick={handleLogout}
+                  className="unlock-control"
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: 10,
+                    border: "1px solid var(--input-border)",
+                    background: "var(--panel-bg)",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: 12,
+                  }}
+                  title={"\uB85C\uADF8\uC544\uC6C3"}
+                >
+                  {"\uB85C\uADF8\uC544\uC6C3"}
+                </button>
+              ) : (
+                <button
+                  onClick={handleLogin}
+                  className="unlock-control"
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: 10,
+                    border: "1px solid var(--input-border)",
+                    background: "var(--accent)",
+                    color: "var(--accent-text)",
+                    cursor: "pointer",
+                    fontWeight: 900,
+                    fontSize: 12,
+                  }}
+                  title={"\uB85C\uADF8\uC778"}
+                >
+                  {"\uB85C\uADF8\uC778"}
+                </button>
+              ) : null}
             </div>
           </div>
 
-          <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 14 }}>
             {s.activeMenu === "profile" ? (
               <ProfilePage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
             ) : null}
@@ -2424,11 +2467,10 @@ export default function App() {
             {s.activeMenu === "village" ? <VillageSuggestionPage s={s} /> : null}
           </div>
 
-          <div style={{ marginTop: 14, fontSize: 12, opacity: 0.7 }}>
-            {"\ub0b4\uc815\ubcf4/\uc2dc\uc138 \ubcc0\uacbd\uc740 \ud3ec\uc158/\uc8fc\uad34 \ud6a8\uc728 \uacc4\uc0b0\uc5d0\ub3c4 \uc790\ub3d9 \ubc18\uc601\ub429\ub2c8\ub2e4. \u00b7 made by mirae24"}
+            <div style={{ marginTop: 14, fontSize: 12, opacity: 0.7 }}>
+              {"\ub0b4\uc815\ubcf4/\uc2dc\uc138 \ubcc0\uacbd\uc740 \ud3ec\uc158/\uc8fc\uad34 \ud6a8\uc728 \uacc4\uc0b0\uc5d0\ub3c4 \uc790\ub3d9 \ubc18\uc601\ub429\ub2c8\ub2e4. \u00b7 made by mirae24"}
+            </div>
           </div>
-            </>
-          )}
         </div>
       </div>
 
