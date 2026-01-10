@@ -925,6 +925,21 @@ function FeedbackPage({ s, setS }) {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
+  const [profiles, setProfiles] = useState([]);
+  const [profileForm, setProfileForm] = useState({
+    nickname: "",
+    mcNickname: "",
+    birthday: "",
+    age: "",
+    mbti: "",
+    job: "",
+    likes: "",
+    dislikes: "",
+  });
+  const [profileTouched, setProfileTouched] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
   useEffect(() => {
     const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
@@ -998,6 +1013,68 @@ function FeedbackPage({ s, setS }) {
     if (status === "done") return "완료";
     return "접수";
   };
+
+  const handleProfileChange = (key, value) => {
+    setProfileTouched(true);
+    setProfileForm((p) => ({ ...p, [key]: value }));
+  };
+
+  const saveProfile = async () => {
+    if (!authUser) return;
+    setProfileSaving(true);
+    setProfileError("");
+    const existing = profiles.find((p) => p.uid === authUser.uid);
+    const payload = {
+      uid: authUser.uid,
+      nickname: profileForm.nickname.trim(),
+      mcNickname: profileForm.mcNickname.trim(),
+      birthday: profileForm.birthday.trim(),
+      age: profileForm.age.trim(),
+      mbti: profileForm.mbti.trim(),
+      job: profileForm.job.trim(),
+      likes: profileForm.likes.trim(),
+      dislikes: profileForm.dislikes.trim(),
+      updatedAt: serverTimestamp(),
+    };
+    if (!existing?.createdAt) {
+      payload.createdAt = serverTimestamp();
+    }
+    try {
+      await setDoc(doc(db, "villageProfiles", authUser.uid), payload, { merge: true });
+      setProfileTouched(false);
+    } catch {
+      setProfileError("프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const birthdayMap = useMemo(() => {
+    const map = {};
+    profiles.forEach((p) => {
+      if (!p.birthday) return;
+      const parts = String(p.birthday).split("-");
+      if (parts.length < 3) return;
+      const key = `${parts[1]}-${parts[2]}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(p);
+    });
+    return map;
+  }, [profiles]);
+
+  const calendarInfo = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const monthIndex = calendarMonth.getMonth();
+    const start = new Date(year, monthIndex, 1);
+    const end = new Date(year, monthIndex + 1, 0);
+    const daysInMonth = end.getDate();
+    const startDay = start.getDay();
+    const cells = [];
+    for (let i = 0; i < startDay; i += 1) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
+    while (cells.length < 42) cells.push(null);
+    return { year, month: monthIndex + 1, cells };
+  }, [calendarMonth]);
 
   const handleProfileChange = (key, value) => {
     setProfileTouched(true);
@@ -1391,13 +1468,13 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
   return (
     <div style={{ display: "grid", gap: 12 }}>
       {!showProfiles ? (
-        <Card title={"?? ???"}>
+        <Card title={"마을 건의함"}>
           <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
-            {"?? ?? ??/??? ??? ?????."}
+            {"마을 관련 건의/문의는 여기에 남겨주세요."}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>??</div>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>유형</div>
               <select
                 value={form.type}
                 onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
@@ -1411,51 +1488,51 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                   color: "var(--text)",
                 }}
               >
-                <option value="improve">??</option>
-                <option value="bug">??/??? ?</option>
-                <option value="other">??(?? ??)</option>
+                <option value="improve">개선</option>
+                <option value="bug">오류/잘못된 점</option>
+                <option value="other">기타(직접 입력)</option>
               </select>
             </div>
             <TextField
-              label="???(??)"
+              label="연락처(선택)"
               value={form.contact}
               onChange={(v) => setForm((p) => ({ ...p, contact: v }))}
-              placeholder="???/???? ?"
+              placeholder="이메일/디스코드 등"
             />
           </div>
 
           {form.type === "other" ? (
             <div style={{ marginTop: 12 }}>
               <TextField
-                label="?? ??"
+                label="기타 유형"
                 value={customType}
                 onChange={(v) => setCustomType(v)}
-                placeholder="?: ???/??/??"
+                placeholder="예: 이벤트/시설/상점"
               />
             </div>
           ) : null}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
             <Select
-              label={"?? ??"}
+              label={"공개 설정"}
               value={form.visibility}
               onChange={(v) => setForm((p) => ({ ...p, visibility: v }))}
               options={[
-                { value: "public", label: "??" },
-                { value: "private", label: "???(????)" },
+                { value: "public", label: "공개" },
+                { value: "private", label: "비공개(관리자만)" },
               ]}
             />
             <TextField
-              label="??"
+              label="제목"
               value={form.title}
               onChange={(v) => setForm((p) => ({ ...p, title: v }))}
-              placeholder="?: ?? ??? ??? ?? ??"
+              placeholder="예: 마을 상점에 아이템 추가 요청"
             />
             <TextArea
-              label="??"
+              label="내용"
               value={form.body}
               onChange={(v) => setForm((p) => ({ ...p, body: v }))}
-              placeholder="?? ??? ??? ?????."
+              placeholder="건의 내용을 자세히 적어주세요."
               rows={5}
             />
           </div>
@@ -1475,14 +1552,14 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                 fontSize: 13,
               }}
             >
-              ??
+              등록
             </button>
           </div>
         </Card>
       ) : null}
 
       {showProfiles ? (
-        <Card title="??? ???">
+        <Card title="마을원 프로필">
           <div style={{ display: "grid", gap: 12 }}>
             <div style={{ padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -1498,9 +1575,9 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                     fontWeight: 700,
                   }}
                 >
-                  ??
+                  이전
                 </button>
-                <div style={{ fontWeight: 900 }}>{`${calendarInfo.year}? ${calendarInfo.month}? ??`}</div>
+                <div style={{ fontWeight: 900 }}>{`${calendarInfo.year}년 ${calendarInfo.month}월 생일`}</div>
                 <button
                   onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
                   style={{
@@ -1513,11 +1590,11 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                     fontWeight: 700,
                   }}
                 >
-                  ??
+                  다음
                 </button>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
-                {["?", "?", "?", "?", "?", "?", "?"].map((d) => (
+                {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
                   <div key={d} style={{ fontSize: 12, fontWeight: 900, textAlign: "center", opacity: 0.7 }}>
                     {d}
                   </div>
@@ -1548,10 +1625,10 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                           {list.slice(0, 3).map((p) => (
                             <div key={p.uid} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                               <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }} />
-                              <span style={{ fontSize: 11, opacity: 0.9 }}>{p.nickname || p.mcNickname || "?? ??"}</span>
+                              <span style={{ fontSize: 11, opacity: 0.9 }}>{p.nickname || p.mcNickname || "이름 없음"}</span>
                             </div>
                           ))}
-                          {list.length > 3 ? <div style={{ fontSize: 11, opacity: 0.7 }}>{`+${list.length - 3}?`}</div> : null}
+                          {list.length > 3 ? <div style={{ fontSize: 11, opacity: 0.7 }}>{`+${list.length - 3}명`}</div> : null}
                         </div>
                       ) : null}
                     </div>
@@ -1561,63 +1638,63 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
             </div>
 
             <div style={{ fontSize: 12, opacity: 0.8 }}>
-              {authUser ? "? ???? ????? ??? ? ????." : "??? ? ???? ??? ? ????."}
+              {authUser ? "내 프로필을 입력하거나 수정할 수 있습니다." : "로그인 후 프로필을 입력할 수 있습니다."}
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
               <TextField
-                label="???"
+                label="닉네임"
                 value={profileForm.nickname}
                 onChange={(v) => handleProfileChange("nickname", v)}
-                placeholder="?: ??24"
+                placeholder="예: 미래24"
               />
               <TextField
-                label="?? ???"
+                label="마크 닉네임"
                 value={profileForm.mcNickname}
                 onChange={(v) => handleProfileChange("mcNickname", v)}
-                placeholder="?: Mirae24"
+                placeholder="예: Mirae24"
               />
               <TextField
-                label="??"
+                label="생일"
                 type="date"
                 value={profileForm.birthday}
                 onChange={(v) => handleProfileChange("birthday", v)}
                 placeholder="YYYY-MM-DD"
               />
               <TextField
-                label="??"
+                label="나이"
                 type="number"
                 value={profileForm.age}
                 onChange={(v) => handleProfileChange("age", v)}
-                placeholder="?: 21"
+                placeholder="예: 21"
               />
               <TextField
                 label="MBTI"
                 value={profileForm.mbti}
                 onChange={(v) => handleProfileChange("mbti", v)}
-                placeholder="?: INFP"
+                placeholder="예: INFP"
               />
               <TextField
-                label="?? ??"
+                label="마크 직업"
                 value={profileForm.job}
                 onChange={(v) => handleProfileChange("job", v)}
-                placeholder="?: ???"
+                placeholder="예: 건축가"
               />
               <div style={{ gridColumn: "1 / -1" }}>
                 <TextArea
-                  label="???? ?"
+                  label="좋아하는 것"
                   value={profileForm.likes}
                   onChange={(v) => handleProfileChange("likes", v)}
-                  placeholder="???? ?? ?? ???."
+                  placeholder="좋아하는 것을 적어 주세요."
                   rows={3}
                 />
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
                 <TextArea
-                  label="???? ?"
+                  label="싫어하는 것"
                   value={profileForm.dislikes}
                   onChange={(v) => handleProfileChange("dislikes", v)}
-                  placeholder="???? ?? ?? ???."
+                  placeholder="싫어하는 것을 적어 주세요."
                   rows={3}
                 />
               </div>
@@ -1641,13 +1718,13 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                   opacity: !authUser || profileSaving ? 0.6 : 1,
                 }}
               >
-                {profileSaving ? "?? ?..." : "??? ??"}
+                {profileSaving ? "저장 중..." : "프로필 저장"}
               </button>
             </div>
 
             <div style={{ display: "grid", gap: 10 }}>
               {profiles.length === 0 ? (
-                <div style={{ fontSize: 13, opacity: 0.7 }}>??? ??? ???? ????.</div>
+                <div style={{ fontSize: 13, opacity: 0.7 }}>등록된 마을원 프로필이 없습니다.</div>
               ) : (
                 profiles.map((p) => (
                   <div
@@ -1662,17 +1739,17 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                     }}
                   >
                     <div style={{ fontWeight: 900 }}>
-                      {p.nickname || p.mcNickname || "?? ??"}
+                      {p.nickname || p.mcNickname || "이름 없음"}
                       {p.mcNickname ? ` (${p.mcNickname})` : ""}
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, fontSize: 12 }}>
-                      <div>??: {p.birthday || "-"}</div>
-                      <div>??: {p.age || "-"}</div>
+                      <div>생일: {p.birthday || "-"}</div>
+                      <div>나이: {p.age || "-"}</div>
                       <div>MBTI: {p.mbti || "-"}</div>
-                      <div>?? ??: {p.job || "-"}</div>
+                      <div>마크 직업: {p.job || "-"}</div>
                     </div>
-                    {p.likes ? <div style={{ fontSize: 12 }}>???? ?: {p.likes}</div> : null}
-                    {p.dislikes ? <div style={{ fontSize: 12 }}>???? ?: {p.dislikes}</div> : null}
+                    {p.likes ? <div style={{ fontSize: 12 }}>좋아하는 것: {p.likes}</div> : null}
+                    {p.dislikes ? <div style={{ fontSize: 12 }}>싫어하는 것: {p.dislikes}</div> : null}
                   </div>
                 ))
               )}
@@ -1683,9 +1760,9 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
 
       {!showProfiles ? (
         <>
-          <Card title={"?? ??"}>
+          <Card title={"건의 관리"}>
             {items.length === 0 ? (
-              <div style={{ fontSize: 13, opacity: 0.8 }}>??? ??? ????.</div>
+              <div style={{ fontSize: 13, opacity: 0.8 }}>등록된 건의가 없습니다.</div>
             ) : (
               <div style={{ display: "grid", gap: 12 }}>
                 {items.map((item) => (
@@ -1710,15 +1787,15 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                     </div>
                     <div style={{ fontSize: 13, lineHeight: 1.5 }}>{item.body}</div>
                     {item.contact ? (
-                      <div style={{ fontSize: 12, opacity: 0.8 }}>???: {item.contact}</div>
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>연락처: {item.contact}</div>
                     ) : null}
                     <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                       <div style={{ fontSize: 12, opacity: 0.7 }}>
-                        ??: {item.visibility === "private" ? "???" : "??"}
+                        공개: {item.visibility === "private" ? "비공개" : "공개"}
                       </div>
                       {item.reply ? (
                         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>
-                          ??? ?? ??
+                          관리자 답변 완료
                         </div>
                       ) : null}
                     </div>
@@ -1732,12 +1809,12 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                           fontSize: 13,
                         }}
                       >
-                        <div style={{ fontWeight: 900, marginBottom: 4 }}>??? ??</div>
+                        <div style={{ fontWeight: 900, marginBottom: 4 }}>관리자 답변</div>
                         <div style={{ whiteSpace: "pre-wrap" }}>{item.reply}</div>
                       </div>
                     ) : null}
                     <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                      <div style={{ fontSize: 12, opacity: 0.8 }}>??</div>
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>상태</div>
                       {isAdmin ? (
                         <select
                           value={item.status || "new"}
@@ -1752,9 +1829,9 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                             color: "var(--text)",
                           }}
                         >
-                          <option value="new">??</option>
-                          <option value="progress">???</option>
-                          <option value="done">??</option>
+                          <option value="new">접수</option>
+                          <option value="progress">진행중</option>
+                          <option value="done">완료</option>
                         </select>
                       ) : (
                         <div style={{ fontSize: 12, opacity: 0.7 }}>{statusLabel(item.status)}</div>
@@ -1773,17 +1850,17 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                             fontWeight: 700,
                           }}
                         >
-                          ??
+                          삭제
                         </button>
                       ) : null}
                     </div>
                     {isAdmin ? (
                       <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
                         <TextArea
-                          label="??? ??"
+                          label="관리자 답변"
                           value={replyDrafts[item.id] ?? ""}
                           onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
-                          placeholder="??? ?????"
+                          placeholder="답변을 입력하세요"
                           rows={3}
                         />
                         <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -1800,7 +1877,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                               fontWeight: 900,
                             }}
                           >
-                            ?? ??
+                            답변 저장
                           </button>
                         </div>
                       </div>
@@ -1811,12 +1888,12 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
             )}
           </Card>
 
-          <Card title={"?? ?? ?"}>
+          <Card title={"현재 접속 중"}>
             <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
-              {`?? ??: ${onlineUsers.length}?`}
+              {`현재 접속: ${onlineUsers.length}명`}
             </div>
             {onlineUsers.length === 0 ? (
-              <div style={{ fontSize: 12, opacity: 0.7 }}>?? ?? ???? ????.</div>
+              <div style={{ fontSize: 12, opacity: 0.7 }}>접속 중인 사용자가 없습니다.</div>
             ) : (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {onlineUsers.map((user) => (
@@ -1831,7 +1908,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                       fontWeight: 700,
                     }}
                   >
-                    {user.displayName || user.email || "??"}
+                    {user.displayName || user.email || "익명"}
                   </div>
                 ))}
               </div>
