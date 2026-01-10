@@ -891,7 +891,6 @@ function ProfilePage({
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
         </div>
       </Card>
-      ) : null}
     </div>
   );
 }
@@ -1261,7 +1260,6 @@ function FeedbackPage({ s, setS }) {
           </div>
         )}
       </Card>
-      ) : null}
     </div>
   );
 }
@@ -1393,455 +1391,457 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
   return (
     <div style={{ display: "grid", gap: 12 }}>
       {!showProfiles ? (
-        <Card title={"\ub9c8\uc744 \uac74\uc758\ud568"}>
-        <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
-          {"\ub9c8\uc744 \uad00\ub828 \uac74\uc758/\ubb38\uc758\ub294 \uc5ec\uae30\uc5d0 \ub0a8\uaca8\uc8fc\uc138\uc694."}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>유형</div>
-            <select
-              value={form.type}
-              onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
-              style={{
-                padding: "10px 12px",
-                borderRadius: 10,
-                border: "1px solid var(--input-border)",
-                outline: "none",
-                fontSize: 14,
-                background: "var(--input-bg)",
-                color: "var(--text)",
-              }}
-            >
-              <option value="improve">개선</option>
-              <option value="bug">오류/잘못된 점</option>
-              <option value="other">기타(직접 입력)</option>
-            </select>
+        <Card title={"?? ???"}>
+          <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
+            {"?? ?? ??/??? ??? ?????."}
           </div>
-          <TextField
-            label="연락처(선택)"
-            value={form.contact}
-            onChange={(v) => setForm((p) => ({ ...p, contact: v }))}
-            placeholder="이메일/디스코드 등"
-          />
-        </div>
-
-        {form.type === "other" ? (
-          <div style={{ marginTop: 12 }}>
-            <TextField
-              label="기타 유형"
-              value={customType}
-              onChange={(v) => setCustomType(v)}
-              placeholder="예: 이벤트/시설/상점"
-            />
-          </div>
-        ) : null}
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
-          <Select
-            label={"공개 설정"}
-            value={form.visibility}
-            onChange={(v) => setForm((p) => ({ ...p, visibility: v }))}
-            options={[
-              { value: "public", label: "공개" },
-              { value: "private", label: "비공개(관리자만)" },
-            ]}
-          />
-          <TextField
-            label="제목"
-            value={form.title}
-            onChange={(v) => setForm((p) => ({ ...p, title: v }))}
-            placeholder="예: 마을 상점에 아이템 추가 요청"
-          />
-          <TextArea
-            label="내용"
-            value={form.body}
-            onChange={(v) => setForm((p) => ({ ...p, body: v }))}
-            placeholder="건의 내용을 자세히 적어주세요."
-            rows={5}
-          />
-        </div>
-
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10 }}>
-          <button
-            onClick={submit}
-            disabled={!canSubmit}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 10,
-              border: "1px solid var(--input-border)",
-              background: canSubmit ? "var(--accent)" : "var(--panel-bg)",
-              color: canSubmit ? "var(--accent-text)" : "var(--muted)",
-              cursor: canSubmit ? "pointer" : "not-allowed",
-              fontWeight: 900,
-              fontSize: 13,
-            }}
-          >
-            등록
-          </button>
-        </div>
-        </Card>
-      ) : null}
-
-      {showProfiles ? (
-        <Card title="마을원 프로필">
-        <div style={{ display: "grid", gap: 12 }}>
-          <div style={{ padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <button
-                onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 10,
-                  border: "1px solid var(--input-border)",
-                  background: "var(--panel-bg)",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                이전
-              </button>
-              <div style={{ fontWeight: 900 }}>{`${calendarInfo.year}년 ${calendarInfo.month}월 생일`}</div>
-              <button
-                onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 10,
-                  border: "1px solid var(--input-border)",
-                  background: "var(--panel-bg)",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                다음
-              </button>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
-              {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
-                <div key={d} style={{ fontSize: 12, fontWeight: 900, textAlign: "center", opacity: 0.7 }}>
-                  {d}
-                </div>
-              ))}
-              {calendarInfo.cells.map((day, idx) => {
-                if (!day) {
-                  return <div key={`empty-${idx}`} style={{ minHeight: 56 }} />;
-                }
-                const monthKey = String(calendarInfo.month).padStart(2, "0");
-                const dayKey = String(day).padStart(2, "0");
-                const key = `${monthKey}-${dayKey}`;
-                const list = birthdayMap[key] || [];
-                return (
-                  <div
-                    key={`day-${day}`}
-                    style={{
-                      minHeight: 56,
-                      borderRadius: 10,
-                      border: "1px solid var(--soft-border)",
-                      padding: 6,
-                      fontSize: 12,
-                      background: list.length ? "rgba(46, 204, 113, 0.08)" : "transparent",
-                    }}
-                  >
-                    <div style={{ fontWeight: 900 }}>{day}</div>
-                    {list.length ? (
-                      <div style={{ marginTop: 4, display: "grid", gap: 2 }}>
-                        {list.slice(0, 3).map((p) => (
-                          <div key={p.uid} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }} />
-                            <span style={{ fontSize: 11, opacity: 0.9 }}>{p.nickname || p.mcNickname || "이름 없음"}</span>
-                          </div>
-                        ))}
-                        {list.length > 3 ? <div style={{ fontSize: 11, opacity: 0.7 }}>{`+${list.length - 3}명`}</div> : null}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={{ fontSize: 12, opacity: 0.8 }}>
-            {authUser ? "내 프로필을 입력하거나 수정할 수 있습니다." : "로그인 후 프로필을 입력할 수 있습니다."}
-          </div>
-
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-            <TextField
-              label="닉네임"
-              value={profileForm.nickname}
-              onChange={(v) => handleProfileChange("nickname", v)}
-              placeholder="예: 미래24"
-            />
-            <TextField
-              label="마크 닉네임"
-              value={profileForm.mcNickname}
-              onChange={(v) => handleProfileChange("mcNickname", v)}
-              placeholder="예: Mirae24"
-            />
-            <TextField
-              label="생일"
-              type="date"
-              value={profileForm.birthday}
-              onChange={(v) => handleProfileChange("birthday", v)}
-              placeholder="YYYY-MM-DD"
-            />
-            <TextField
-              label="나이"
-              type="number"
-              value={profileForm.age}
-              onChange={(v) => handleProfileChange("age", v)}
-              placeholder="예: 21"
-            />
-            <TextField
-              label="MBTI"
-              value={profileForm.mbti}
-              onChange={(v) => handleProfileChange("mbti", v)}
-              placeholder="예: INFP"
-            />
-            <TextField
-              label="마크 직업"
-              value={profileForm.job}
-              onChange={(v) => handleProfileChange("job", v)}
-              placeholder="예: 건축가"
-            />
-            <div style={{ gridColumn: "1 / -1" }}>
-              <TextArea
-                label="좋아하는 것"
-                value={profileForm.likes}
-                onChange={(v) => handleProfileChange("likes", v)}
-                placeholder="좋아하는 것을 적어 주세요."
-                rows={3}
-              />
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>??</div>
+              <select
+                value={form.type}
+                onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  outline: "none",
+                  fontSize: 14,
+                  background: "var(--input-bg)",
+                  color: "var(--text)",
+                }}
+              >
+                <option value="improve">??</option>
+                <option value="bug">??/??? ?</option>
+                <option value="other">??(?? ??)</option>
+              </select>
             </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <TextArea
-                label="싫어하는 것"
-                value={profileForm.dislikes}
-                onChange={(v) => handleProfileChange("dislikes", v)}
-                placeholder="싫어하는 것을 적어 주세요."
-                rows={3}
-              />
-            </div>
+            <TextField
+              label="???(??)"
+              value={form.contact}
+              onChange={(v) => setForm((p) => ({ ...p, contact: v }))}
+              placeholder="???/???? ?"
+            />
           </div>
 
-          {profileError ? <div style={{ fontSize: 12, color: "#c0392b" }}>{profileError}</div> : null}
+          {form.type === "other" ? (
+            <div style={{ marginTop: 12 }}>
+              <TextField
+                label="?? ??"
+                value={customType}
+                onChange={(v) => setCustomType(v)}
+                placeholder="?: ???/??/??"
+              />
+            </div>
+          ) : null}
 
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
+            <Select
+              label={"?? ??"}
+              value={form.visibility}
+              onChange={(v) => setForm((p) => ({ ...p, visibility: v }))}
+              options={[
+                { value: "public", label: "??" },
+                { value: "private", label: "???(????)" },
+              ]}
+            />
+            <TextField
+              label="??"
+              value={form.title}
+              onChange={(v) => setForm((p) => ({ ...p, title: v }))}
+              placeholder="?: ?? ??? ??? ?? ??"
+            />
+            <TextArea
+              label="??"
+              value={form.body}
+              onChange={(v) => setForm((p) => ({ ...p, body: v }))}
+              placeholder="?? ??? ??? ?????."
+              rows={5}
+            />
+          </div>
+
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10 }}>
             <button
-              onClick={saveProfile}
-              disabled={!authUser || profileSaving}
+              onClick={submit}
+              disabled={!canSubmit}
               style={{
                 padding: "10px 14px",
                 borderRadius: 10,
                 border: "1px solid var(--input-border)",
-                background: "var(--accent)",
-                color: "var(--accent-text)",
-                cursor: !authUser || profileSaving ? "not-allowed" : "pointer",
+                background: canSubmit ? "var(--accent)" : "var(--panel-bg)",
+                color: canSubmit ? "var(--accent-text)" : "var(--muted)",
+                cursor: canSubmit ? "pointer" : "not-allowed",
                 fontWeight: 900,
                 fontSize: 13,
-                opacity: !authUser || profileSaving ? 0.6 : 1,
               }}
             >
-              {profileSaving ? "저장 중..." : "프로필 저장"}
+              ??
             </button>
           </div>
+        </Card>
+      ) : null}
 
-          <div style={{ display: "grid", gap: 10 }}>
-            {profiles.length === 0 ? (
-              <div style={{ fontSize: 13, opacity: 0.7 }}>등록된 마을원 프로필이 없습니다.</div>
-            ) : (
-              profiles.map((p) => (
-                <div
-                  key={p.uid}
+      {showProfiles ? (
+        <Card title="??? ???">
+          <div style={{ display: "grid", gap: 12 }}>
+            <div style={{ padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <button
+                  onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
                   style={{
-                    padding: 12,
-                    borderRadius: 12,
-                    border: "1px solid var(--soft-border)",
+                    padding: "6px 10px",
+                    borderRadius: 10,
+                    border: "1px solid var(--input-border)",
                     background: "var(--panel-bg)",
-                    display: "grid",
-                    gap: 6,
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 700,
                   }}
                 >
-                  <div style={{ fontWeight: 900 }}>
-                    {p.nickname || p.mcNickname || "이름 없음"}
-                    {p.mcNickname ? ` (${p.mcNickname})` : ""}
+                  ??
+                </button>
+                <div style={{ fontWeight: 900 }}>{`${calendarInfo.year}? ${calendarInfo.month}? ??`}</div>
+                <button
+                  onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
+                  style={{
+                    padding: "6px 10px",
+                    borderRadius: 10,
+                    border: "1px solid var(--input-border)",
+                    background: "var(--panel-bg)",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  ??
+                </button>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+                {["?", "?", "?", "?", "?", "?", "?"].map((d) => (
+                  <div key={d} style={{ fontSize: 12, fontWeight: 900, textAlign: "center", opacity: 0.7 }}>
+                    {d}
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, fontSize: 12 }}>
-                    <div>생일: {p.birthday || "-"}</div>
-                    <div>나이: {p.age || "-"}</div>
-                    <div>MBTI: {p.mbti || "-"}</div>
-                    <div>마크 직업: {p.job || "-"}</div>
+                ))}
+                {calendarInfo.cells.map((day, idx) => {
+                  if (!day) {
+                    return <div key={`empty-${idx}`} style={{ minHeight: 56 }} />;
+                  }
+                  const monthKey = String(calendarInfo.month).padStart(2, "0");
+                  const dayKey = String(day).padStart(2, "0");
+                  const key = `${monthKey}-${dayKey}`;
+                  const list = birthdayMap[key] || [];
+                  return (
+                    <div
+                      key={`day-${day}`}
+                      style={{
+                        minHeight: 56,
+                        borderRadius: 10,
+                        border: "1px solid var(--soft-border)",
+                        padding: 6,
+                        fontSize: 12,
+                        background: list.length ? "rgba(46, 204, 113, 0.08)" : "transparent",
+                      }}
+                    >
+                      <div style={{ fontWeight: 900 }}>{day}</div>
+                      {list.length ? (
+                        <div style={{ marginTop: 4, display: "grid", gap: 2 }}>
+                          {list.slice(0, 3).map((p) => (
+                            <div key={p.uid} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }} />
+                              <span style={{ fontSize: 11, opacity: 0.9 }}>{p.nickname || p.mcNickname || "?? ??"}</span>
+                            </div>
+                          ))}
+                          {list.length > 3 ? <div style={{ fontSize: 11, opacity: 0.7 }}>{`+${list.length - 3}?`}</div> : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12, opacity: 0.8 }}>
+              {authUser ? "? ???? ????? ??? ? ????." : "??? ? ???? ??? ? ????."}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+              <TextField
+                label="???"
+                value={profileForm.nickname}
+                onChange={(v) => handleProfileChange("nickname", v)}
+                placeholder="?: ??24"
+              />
+              <TextField
+                label="?? ???"
+                value={profileForm.mcNickname}
+                onChange={(v) => handleProfileChange("mcNickname", v)}
+                placeholder="?: Mirae24"
+              />
+              <TextField
+                label="??"
+                type="date"
+                value={profileForm.birthday}
+                onChange={(v) => handleProfileChange("birthday", v)}
+                placeholder="YYYY-MM-DD"
+              />
+              <TextField
+                label="??"
+                type="number"
+                value={profileForm.age}
+                onChange={(v) => handleProfileChange("age", v)}
+                placeholder="?: 21"
+              />
+              <TextField
+                label="MBTI"
+                value={profileForm.mbti}
+                onChange={(v) => handleProfileChange("mbti", v)}
+                placeholder="?: INFP"
+              />
+              <TextField
+                label="?? ??"
+                value={profileForm.job}
+                onChange={(v) => handleProfileChange("job", v)}
+                placeholder="?: ???"
+              />
+              <div style={{ gridColumn: "1 / -1" }}>
+                <TextArea
+                  label="???? ?"
+                  value={profileForm.likes}
+                  onChange={(v) => handleProfileChange("likes", v)}
+                  placeholder="???? ?? ?? ???."
+                  rows={3}
+                />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <TextArea
+                  label="???? ?"
+                  value={profileForm.dislikes}
+                  onChange={(v) => handleProfileChange("dislikes", v)}
+                  placeholder="???? ?? ?? ???."
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {profileError ? <div style={{ fontSize: 12, color: "#c0392b" }}>{profileError}</div> : null}
+
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={saveProfile}
+                disabled={!authUser || profileSaving}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--accent)",
+                  color: "var(--accent-text)",
+                  cursor: !authUser || profileSaving ? "not-allowed" : "pointer",
+                  fontWeight: 900,
+                  fontSize: 13,
+                  opacity: !authUser || profileSaving ? 0.6 : 1,
+                }}
+              >
+                {profileSaving ? "?? ?..." : "??? ??"}
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              {profiles.length === 0 ? (
+                <div style={{ fontSize: 13, opacity: 0.7 }}>??? ??? ???? ????.</div>
+              ) : (
+                profiles.map((p) => (
+                  <div
+                    key={p.uid}
+                    style={{
+                      padding: 12,
+                      borderRadius: 12,
+                      border: "1px solid var(--soft-border)",
+                      background: "var(--panel-bg)",
+                      display: "grid",
+                      gap: 6,
+                    }}
+                  >
+                    <div style={{ fontWeight: 900 }}>
+                      {p.nickname || p.mcNickname || "?? ??"}
+                      {p.mcNickname ? ` (${p.mcNickname})` : ""}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, fontSize: 12 }}>
+                      <div>??: {p.birthday || "-"}</div>
+                      <div>??: {p.age || "-"}</div>
+                      <div>MBTI: {p.mbti || "-"}</div>
+                      <div>?? ??: {p.job || "-"}</div>
+                    </div>
+                    {p.likes ? <div style={{ fontSize: 12 }}>???? ?: {p.likes}</div> : null}
+                    {p.dislikes ? <div style={{ fontSize: 12 }}>???? ?: {p.dislikes}</div> : null}
                   </div>
-                  {p.likes ? <div style={{ fontSize: 12 }}>좋아하는 것: {p.likes}</div> : null}
-                  {p.dislikes ? <div style={{ fontSize: 12 }}>싫어하는 것: {p.dislikes}</div> : null}
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
       ) : null}
 
       {!showProfiles ? (
-      <Card title={"\uac74\uc758 \uad00\ub9ac"}>
-        {items.length === 0 ? (
-          <div style={{ fontSize: 13, opacity: 0.8 }}>등록된 건의가 없습니다.</div>
-        ) : (
-          <div style={{ display: "grid", gap: 12 }}>
-            {items.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  border: "1px solid var(--soft-border)",
-                  borderRadius: 12,
-                  padding: 12,
-                  background: "var(--panel-bg)",
-                  display: "grid",
-                  gap: 8,
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ fontWeight: 900 }}>
-                    [{typeLabel(item.type)}] {item.title}
-                  </div>
-                  <div style={{ fontSize: 12, opacity: 0.75 }}>
-                    {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString("ko-KR") : "-"}
-                  </div>
-                </div>
-                <div style={{ fontSize: 13, lineHeight: 1.5 }}>{item.body}</div>
-                {item.contact ? (
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>연락처: {item.contact}</div>
-                ) : null}
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  <div style={{ fontSize: 12, opacity: 0.7 }}>
-                    공개: {item.visibility === "private" ? "비공개" : "공개"}
-                  </div>
-                  {item.reply ? (
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>
-                      관리자 답변 완료
-                    </div>
-                  ) : null}
-                </div>
-                {item.reply ? (
+        <>
+          <Card title={"?? ??"}>
+            {items.length === 0 ? (
+              <div style={{ fontSize: 13, opacity: 0.8 }}>??? ??? ????.</div>
+            ) : (
+              <div style={{ display: "grid", gap: 12 }}>
+                {items.map((item) => (
                   <div
+                    key={item.id}
                     style={{
-                      padding: 10,
-                      borderRadius: 10,
-                      background: "var(--soft-bg)",
                       border: "1px solid var(--soft-border)",
-                      fontSize: 13,
+                      borderRadius: 12,
+                      padding: 12,
+                      background: "var(--panel-bg)",
+                      display: "grid",
+                      gap: 8,
                     }}
                   >
-                    <div style={{ fontWeight: 900, marginBottom: 4 }}>관리자 답변</div>
-                    <div style={{ whiteSpace: "pre-wrap" }}>{item.reply}</div>
-                  </div>
-                ) : null}
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>상태</div>
-                  {isAdmin ? (
-                    <select
-                      value={item.status || "new"}
-                      onChange={(e) => updateStatus(item.id, e.target.value)}
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: 10,
-                        border: "1px solid var(--input-border)",
-                        outline: "none",
-                        fontSize: 13,
-                        background: "var(--input-bg)",
-                        color: "var(--text)",
-                      }}
-                    >
-                      <option value="new">접수</option>
-                      <option value="progress">진행중</option>
-                      <option value="done">완료</option>
-                    </select>
-                  ) : (
-                    <div style={{ fontSize: 12, opacity: 0.7 }}>{statusLabel(item.status)}</div>
-                  )}
-                  {isAdmin ? (
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: 10,
-                        border: "1px solid var(--input-border)",
-                        background: "var(--panel-bg)",
-                        color: "var(--text)",
-                        cursor: "pointer",
-                        fontSize: 12,
-                        fontWeight: 700,
-                      }}
-                    >
-                      삭제
-                    </button>
-                  ) : null}
-                </div>
-                {isAdmin ? (
-                  <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
-                    <TextArea
-                      label="관리자 답변"
-                      value={replyDrafts[item.id] ?? ""}
-                      onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
-                      placeholder="답변을 입력하세요"
-                      rows={3}
-                    />
-                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                      <button
-                        onClick={() => saveReply(item.id, replyDrafts[item.id] ?? "")}
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                      <div style={{ fontWeight: 900 }}>
+                        [{typeLabel(item.type)}] {item.title}
+                      </div>
+                      <div style={{ fontSize: 12, opacity: 0.75 }}>
+                        {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString("ko-KR") : "-"}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 13, lineHeight: 1.5 }}>{item.body}</div>
+                    {item.contact ? (
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>???: {item.contact}</div>
+                    ) : null}
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      <div style={{ fontSize: 12, opacity: 0.7 }}>
+                        ??: {item.visibility === "private" ? "???" : "??"}
+                      </div>
+                      {item.reply ? (
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>
+                          ??? ?? ??
+                        </div>
+                      ) : null}
+                    </div>
+                    {item.reply ? (
+                      <div
                         style={{
-                          padding: "8px 10px",
+                          padding: 10,
                           borderRadius: 10,
-                          border: "1px solid var(--input-border)",
-                          background: "var(--accent)",
-                          color: "var(--accent-text)",
-                          cursor: "pointer",
-                          fontSize: 12,
-                          fontWeight: 900,
+                          background: "var(--soft-bg)",
+                          border: "1px solid var(--soft-border)",
+                          fontSize: 13,
                         }}
                       >
-                        답변 저장
-                      </button>
+                        <div style={{ fontWeight: 900, marginBottom: 4 }}>??? ??</div>
+                        <div style={{ whiteSpace: "pre-wrap" }}>{item.reply}</div>
+                      </div>
+                    ) : null}
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>??</div>
+                      {isAdmin ? (
+                        <select
+                          value={item.status || "new"}
+                          onChange={(e) => updateStatus(item.id, e.target.value)}
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: 10,
+                            border: "1px solid var(--input-border)",
+                            outline: "none",
+                            fontSize: 13,
+                            background: "var(--input-bg)",
+                            color: "var(--text)",
+                          }}
+                        >
+                          <option value="new">??</option>
+                          <option value="progress">???</option>
+                          <option value="done">??</option>
+                        </select>
+                      ) : (
+                        <div style={{ fontSize: 12, opacity: 0.7 }}>{statusLabel(item.status)}</div>
+                      )}
+                      {isAdmin ? (
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: 10,
+                            border: "1px solid var(--input-border)",
+                            background: "var(--panel-bg)",
+                            color: "var(--text)",
+                            cursor: "pointer",
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          ??
+                        </button>
+                      ) : null}
                     </div>
+                    {isAdmin ? (
+                      <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
+                        <TextArea
+                          label="??? ??"
+                          value={replyDrafts[item.id] ?? ""}
+                          onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
+                          placeholder="??? ?????"
+                          rows={3}
+                        />
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                          <button
+                            onClick={() => saveReply(item.id, replyDrafts[item.id] ?? "")}
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: 10,
+                              border: "1px solid var(--input-border)",
+                              background: "var(--accent)",
+                              color: "var(--accent-text)",
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontWeight: 900,
+                            }}
+                          >
+                            ?? ??
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
+            )}
+          </Card>
 
-      <Card title={"현재 접속 중"}>
-        <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
-          {`현재 접속: ${onlineUsers.length}명`}
-        </div>
-        {onlineUsers.length === 0 ? (
-          <div style={{ fontSize: 12, opacity: 0.7 }}>접속 중인 사용자가 없습니다.</div>
-        ) : (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {onlineUsers.map((user) => (
-              <div
-                key={user.id}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 999,
-                  border: "1px solid var(--soft-border)",
-                  background: "var(--panel-bg)",
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                {user.displayName || user.email || "익명"}
+          <Card title={"?? ?? ?"}>
+            <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
+              {`?? ??: ${onlineUsers.length}?`}
+            </div>
+            {onlineUsers.length === 0 ? (
+              <div style={{ fontSize: 12, opacity: 0.7 }}>?? ?? ???? ????.</div>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {onlineUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      border: "1px solid var(--soft-border)",
+                      background: "var(--panel-bg)",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {user.displayName || user.email || "??"}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
+            )}
+          </Card>
+        </>
+      ) : null}
     </div>
   );
 }
-
 function PotionRowDetails({ feeRate, ev, row, shardsPerDig, gemRule, flameRule }) {
   const stamina = row.stamina;
   const spd = ev.staminaPerDig;
