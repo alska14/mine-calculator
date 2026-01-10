@@ -1372,9 +1372,25 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
       setProfileTouched(false);
     } catch (err) {
       if (err?.code === "resource-exhausted") {
-        setProfileError("저장량이 잠시 초과되었습니다. 조금 후 다시 시도해 주세요.");
+        try {
+          localStorage.setItem(
+            `pendingProfile:${authUser.uid}`,
+            JSON.stringify({ payload, ts: Date.now() })
+          );
+        } catch {
+          // ignore localStorage failures
+        }
+        setProfileError("저장량이 잠시 초과되었습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
       } else if (err?.message === "timeout") {
-        setProfileError("저장이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.");
+        try {
+          localStorage.setItem(
+            `pendingProfile:${authUser.uid}`,
+            JSON.stringify({ payload, ts: Date.now() })
+          );
+        } catch {
+          // ignore localStorage failures
+        }
+        setProfileError("저장이 지연되고 있습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
       } else {
         setProfileError("프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
@@ -2400,6 +2416,17 @@ export default function App() {
   const [nicknameError, setNicknameError] = useState("");
   const presenceWriteAtRef = useRef(0);
   const presenceEnabled = false;
+  const retryInFlightRef = useRef(false);
+
+  const pendingNicknameKey = (uid) => `pendingNickname:${uid}`;
+  const pendingProfileKey = (uid) => `pendingProfile:${uid}`;
+  const enqueuePending = (key, payload) => {
+    try {
+      localStorage.setItem(key, JSON.stringify({ payload, ts: Date.now() }));
+    } catch {
+      // ignore localStorage failures
+    }
+  };
 
   const feeRate = useMemo(() => {
     const v = toNum(s.feePct, 0) / 100;
@@ -2435,9 +2462,11 @@ export default function App() {
       ]);
     } catch (err) {
       if (err?.code === "resource-exhausted") {
-        setNicknameError("저장량이 잠시 초과되었습니다. 조금 후 다시 시도해 주세요.");
+        enqueuePending(pendingNicknameKey(authUser.uid), { nickname: trimmed });
+        setNicknameError("저장량이 잠시 초과되었습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
       } else if (err?.message === "timeout") {
-        setNicknameError("저장이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.");
+        enqueuePending(pendingNicknameKey(authUser.uid), { nickname: trimmed });
+        setNicknameError("저장이 지연되고 있습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
       } else {
         setNicknameError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
@@ -2454,6 +2483,50 @@ export default function App() {
     });
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    if (!authUser) return undefined;
+    const retryPending = async () => {
+      if (retryInFlightRef.current) return;
+      retryInFlightRef.current = true;
+      try {
+        const nickKey = pendingNicknameKey(authUser.uid);
+        const nickRaw = localStorage.getItem(nickKey);
+        if (nickRaw) {
+          const parsed = JSON.parse(nickRaw);
+          const nickname = parsed?.payload?.nickname;
+          if (nickname) {
+            await setDoc(
+              doc(db, "users", authUser.uid),
+              { nickname, nicknameUpdatedAt: serverTimestamp() },
+              { merge: true }
+            );
+            localStorage.removeItem(nickKey);
+            setNicknameError("");
+          }
+        }
+
+        const profileKey = pendingProfileKey(authUser.uid);
+        const profileRaw = localStorage.getItem(profileKey);
+        if (profileRaw) {
+          const parsed = JSON.parse(profileRaw);
+          const payload = parsed?.payload;
+          if (payload) {
+            await setDoc(doc(db, "villageProfiles", authUser.uid), payload, { merge: true });
+            localStorage.removeItem(profileKey);
+          }
+        }
+      } catch {
+        // keep pending for next retry
+      } finally {
+        retryInFlightRef.current = false;
+      }
+    };
+
+    retryPending();
+    const timer = setInterval(retryPending, 120000);
+    return () => clearInterval(timer);
+  }, [authUser]);
 
   useEffect(() => {
     if (!authUser) {
