@@ -810,16 +810,30 @@ function FeedbackPage({ s, setS }) {
   const [replyDrafts, setReplyDrafts] = useState({});
   const isAdmin = s.adminMode === true;
   const canSubmit = form.title.trim() && form.body.trim();
+  const [clientId] = useState(() => {
+    try {
+      const key = "miner_feedback_client_id";
+      const existing = localStorage.getItem(key);
+      if (existing) return existing;
+      const next = `c_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+      localStorage.setItem(key, next);
+      return next;
+    } catch {
+      return `c_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+    }
+  });
 
   useEffect(() => {
     const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
       const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      const visible = isAdmin ? rows : rows.filter((r) => r.visibility !== "private");
+      const visible = isAdmin
+        ? rows
+        : rows.filter((r) => r.visibility !== "private" || r.authorId === clientId);
       setItems(visible);
     });
     return () => unsub();
-  }, [isAdmin]);
+  }, [isAdmin, clientId]);
 
   useEffect(() => {
     setReplyDrafts((prev) => {
@@ -843,6 +857,7 @@ function FeedbackPage({ s, setS }) {
       body: form.body.trim(),
       contact: form.contact.trim(),
       visibility: form.visibility,
+      authorId: clientId,
       status: "new",
       createdAt: serverTimestamp(),
     });
