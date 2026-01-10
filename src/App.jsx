@@ -605,7 +605,7 @@ function ProfilePage({ s, setS, feeRate }) {
     amethyst: "\uc790\uc218\uc815",
     copper: "\uad6c\ub9ac",
     redstone: "\ub808\ub4dc\uc2a4\ud1a4",
-    stone: "\uc11d\uc7ac",
+    stone: "\uc870\uc57d\ub3cc",
     deepCobble: "\uc2ec\uce35 \uc870\uc57d\ub3cc",
   };
 
