@@ -794,9 +794,11 @@ function FeedbackPage({ s, setS }) {
     title: "",
     body: "",
     contact: "",
+    visibility: "public",
   });
 
   const [items, setItems] = useState([]);
+  const [replyDrafts, setReplyDrafts] = useState({});
   const isAdmin = s.adminMode === true;
   const canSubmit = form.title.trim() && form.body.trim();
 
@@ -804,10 +806,25 @@ function FeedbackPage({ s, setS }) {
     const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
       const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setItems(rows);
+      const visible = isAdmin ? rows : rows.filter((r) => r.visibility !== "private");
+      setItems(visible);
     });
     return () => unsub();
-  }, []);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    setReplyDrafts((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      items.forEach((item) => {
+        if (!(item.id in next)) {
+          next[item.id] = item.reply || "";
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [items]);
 
   const submit = () => {
     if (!canSubmit) return;
@@ -816,10 +833,11 @@ function FeedbackPage({ s, setS }) {
       title: form.title.trim(),
       body: form.body.trim(),
       contact: form.contact.trim(),
+      visibility: form.visibility,
       status: "new",
       createdAt: serverTimestamp(),
     });
-    setForm({ type: "improve", title: "", body: "", contact: "" });
+    setForm({ type: "improve", title: "", body: "", contact: "", visibility: "public" });
   };
 
   const updateStatus = (id, status) => {
@@ -830,6 +848,16 @@ function FeedbackPage({ s, setS }) {
   const removeItem = (id) => {
     if (!isAdmin) return;
     deleteDoc(doc(db, "feedbacks", id));
+  };
+
+  const saveReply = (id, reply) => {
+    if (!isAdmin) return;
+    const trimmed = (reply || "").trim();
+    updateDoc(doc(db, "feedbacks", id), {
+      reply: trimmed,
+      repliedAt: trimmed ? serverTimestamp() : null,
+      status: trimmed ? "done" : "progress",
+    });
   };
 
   const typeLabel = (type) => {
@@ -880,6 +908,15 @@ function FeedbackPage({ s, setS }) {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
+          <Select
+            label={"공개 설정"}
+            value={form.visibility}
+            onChange={(v) => setForm((p) => ({ ...p, visibility: v }))}
+            options={[
+              { value: "public", label: "공개" },
+              { value: "private", label: "비공개(관리자만)" },
+            ]}
+          />
           <TextField
             label="제목"
             value={form.title}
@@ -945,6 +982,20 @@ function FeedbackPage({ s, setS }) {
                   <div style={{ fontSize: 12, opacity: 0.8 }}>연락처: {item.contact}</div>
                 ) : null}
                 <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <div style={{ fontSize: 12, opacity: 0.7 }}>
+                    공개: {item.visibility === "private" ? "비공개" : "공개"}
+                  </div>
+                  {item.reply ? (
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>관리자 답변 완료</div>
+                  ) : null}
+                </div>
+                {item.reply ? (
+                  <div style={{ padding: 10, borderRadius: 10, background: "var(--soft-bg)", border: "1px solid var(--soft-border)", fontSize: 13 }}>
+                    <div style={{ fontWeight: 900, marginBottom: 4 }}>관리자 답변</div>
+                    <div style={{ whiteSpace: "pre-wrap" }}>{item.reply}</div>
+                  </div>
+                ) : null}
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                   <div style={{ fontSize: 12, opacity: 0.8 }}>상태</div>
                   {isAdmin ? (
                     <select
@@ -985,6 +1036,36 @@ function FeedbackPage({ s, setS }) {
                     </button>
                   ) : null}
                 </div>
+                {isAdmin ? (
+                  <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
+                    <TextArea
+                      label="관리자 답변"
+                      value={replyDrafts[item.id] ?? ""}
+                      onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
+                      placeholder="답변을 입력하세요"
+                      rows={3}
+                    />
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button
+                        onClick={() => {
+                          saveReply(item.id, replyDrafts[item.id] ?? "");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: 10,
+                          border: "1px solid var(--input-border)",
+                          background: "var(--accent)",
+                          color: "var(--accent-text)",
+                          cursor: "pointer",
+                          fontSize: 12,
+                          fontWeight: 900,
+                        }}
+                      >
+                        답변 저장
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
