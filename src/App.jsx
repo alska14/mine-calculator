@@ -588,7 +588,7 @@ function Sidebar({ active, onSelect, onlineUsers }) {
             {onlineUsers.map((user) => (
               <div key={user.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }} />
-                <span>{user.displayName || user.email || "익명"}</span>
+                <span>{user.nickname || user.displayName || user.email || "익명"}</span>
               </div>
             ))}
           </div>
@@ -604,7 +604,26 @@ function Sidebar({ active, onSelect, onlineUsers }) {
  * =======================
  */
 
-function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
+function ProfilePage({
+  s,
+  setS,
+  feeRate,
+  priceUpdatedAt,
+  authUser,
+  userDoc,
+  onSaveNickname,
+  nicknameSaving,
+  nicknameError,
+}) {
+  const [nickname, setNickname] = useState("");
+
+  useEffect(() => {
+    if (!authUser) {
+      setNickname("");
+      return;
+    }
+    setNickname(userDoc?.nickname ?? authUser.displayName ?? "");
+  }, [authUser, userDoc]);
   const sageOptions = useMemo(() => {
     const values = Object.keys(SAGE_SHARDS_BY_ENH).map(Number).sort((a, b) => a - b);
     return values.map((v) => ({ value: v, label: `${v}강 (조각 ${SAGE_SHARDS_BY_ENH[v]}개)` }));
@@ -660,6 +679,36 @@ function ProfilePage({ s, setS, feeRate, priceUpdatedAt }) {
     <div style={{ display: "grid", gap: 12 }}>
       <Card title="내 정보 입력">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+          <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <TextField
+              label="온라인 표시 이름"
+              value={nickname}
+              onChange={(v) => setNickname(v)}
+              placeholder="예: 미래24"
+            />
+            <button
+              onClick={() => onSaveNickname(nickname)}
+              disabled={!authUser || nicknameSaving}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "1px solid var(--input-border)",
+                background: "var(--accent)",
+                color: "var(--accent-text)",
+                cursor: !authUser || nicknameSaving ? "not-allowed" : "pointer",
+                fontWeight: 900,
+                fontSize: 12,
+                opacity: !authUser || nicknameSaving ? 0.6 : 1,
+                whiteSpace: "nowrap",
+              }}
+              title={authUser ? "온라인 표시 이름 저장" : "로그인 후 수정할 수 있습니다."}
+            >
+              {nicknameSaving ? "저장 중..." : "저장"}
+            </button>
+          </div>
+          {nicknameError ? (
+            <div style={{ gridColumn: "1 / -1", fontSize: 12, color: "#c0392b" }}>{nicknameError}</div>
+          ) : null}
           <Select
             label={"\ud14c\ub9c8"}
             value={["light", "dark", "purple"].includes(s.themeMode) ? s.themeMode : "light"}
@@ -858,6 +907,21 @@ function FeedbackPage({ s, setS }) {
   const isAdmin = s.adminMode === true;
   const canSubmit = form.title.trim() && form.body.trim();
   const [clientId] = useState(() => getClientId());
+  const [profiles, setProfiles] = useState([]);
+  const [profileForm, setProfileForm] = useState({
+    nickname: "",
+    mcNickname: "",
+    birthday: "",
+    age: "",
+    mbti: "",
+    job: "",
+    likes: "",
+    dislikes: "",
+  });
+  const [profileTouched, setProfileTouched] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
   useEffect(() => {
     const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
@@ -931,6 +995,68 @@ function FeedbackPage({ s, setS }) {
     if (status === "done") return "완료";
     return "접수";
   };
+
+  const handleProfileChange = (key, value) => {
+    setProfileTouched(true);
+    setProfileForm((p) => ({ ...p, [key]: value }));
+  };
+
+  const saveProfile = async () => {
+    if (!authUser) return;
+    setProfileSaving(true);
+    setProfileError("");
+    const existing = profiles.find((p) => p.uid === authUser.uid);
+    const payload = {
+      uid: authUser.uid,
+      nickname: profileForm.nickname.trim(),
+      mcNickname: profileForm.mcNickname.trim(),
+      birthday: profileForm.birthday.trim(),
+      age: profileForm.age.trim(),
+      mbti: profileForm.mbti.trim(),
+      job: profileForm.job.trim(),
+      likes: profileForm.likes.trim(),
+      dislikes: profileForm.dislikes.trim(),
+      updatedAt: serverTimestamp(),
+    };
+    if (!existing?.createdAt) {
+      payload.createdAt = serverTimestamp();
+    }
+    try {
+      await setDoc(doc(db, "villageProfiles", authUser.uid), payload, { merge: true });
+      setProfileTouched(false);
+    } catch {
+      setProfileError("프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const birthdayMap = useMemo(() => {
+    const map = {};
+    profiles.forEach((p) => {
+      if (!p.birthday) return;
+      const parts = String(p.birthday).split("-");
+      if (parts.length < 3) return;
+      const key = `${parts[1]}-${parts[2]}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(p);
+    });
+    return map;
+  }, [profiles]);
+
+  const calendarInfo = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const monthIndex = calendarMonth.getMonth();
+    const start = new Date(year, monthIndex, 1);
+    const end = new Date(year, monthIndex + 1, 0);
+    const daysInMonth = end.getDate();
+    const startDay = start.getDay();
+    const cells = [];
+    for (let i = 0; i < startDay; i += 1) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
+    while (cells.length < 42) cells.push(null);
+    return { year, month: monthIndex + 1, cells };
+  }, [calendarMonth]);
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
@@ -1135,7 +1261,7 @@ function FeedbackPage({ s, setS }) {
   );
 }
 
-function VillageSuggestionPage({ s, onlineUsers }) {
+function VillageSuggestionPage({ s, onlineUsers, authUser }) {
   const [form, setForm] = useState({
     type: "improve",
     title: "",
@@ -1162,6 +1288,43 @@ function VillageSuggestionPage({ s, onlineUsers }) {
     });
     return () => unsub();
   }, [isAdmin, clientId]);
+
+  useEffect(() => {
+    const q = query(collection(db, "villageProfiles"), orderBy("updatedAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setProfiles(rows);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (!authUser || profileTouched) return;
+    const mine = profiles.find((p) => p.uid === authUser.uid);
+    if (!mine) {
+      setProfileForm({
+        nickname: "",
+        mcNickname: "",
+        birthday: "",
+        age: "",
+        mbti: "",
+        job: "",
+        likes: "",
+        dislikes: "",
+      });
+      return;
+    }
+    setProfileForm({
+      nickname: mine.nickname || "",
+      mcNickname: mine.mcNickname || "",
+      birthday: mine.birthday || "",
+      age: mine.age || "",
+      mbti: mine.mbti || "",
+      job: mine.job || "",
+      likes: mine.likes || "",
+      dislikes: mine.dislikes || "",
+    });
+  }, [authUser, profiles, profileTouched]);
 
   useEffect(() => {
     setReplyDrafts((prev) => {
@@ -1310,6 +1473,204 @@ function VillageSuggestionPage({ s, onlineUsers }) {
           >
             등록
           </button>
+        </div>
+      </Card>
+
+      <Card title="마을원 프로필">
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <button
+                onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--panel-bg)",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                이전
+              </button>
+              <div style={{ fontWeight: 900 }}>{`${calendarInfo.year}년 ${calendarInfo.month}월 생일`}</div>
+              <button
+                onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--panel-bg)",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                다음
+              </button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
+              {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
+                <div key={d} style={{ fontSize: 12, fontWeight: 900, textAlign: "center", opacity: 0.7 }}>
+                  {d}
+                </div>
+              ))}
+              {calendarInfo.cells.map((day, idx) => {
+                if (!day) {
+                  return <div key={`empty-${idx}`} style={{ minHeight: 56 }} />;
+                }
+                const monthKey = String(calendarInfo.month).padStart(2, "0");
+                const dayKey = String(day).padStart(2, "0");
+                const key = `${monthKey}-${dayKey}`;
+                const list = birthdayMap[key] || [];
+                return (
+                  <div
+                    key={`day-${day}`}
+                    style={{
+                      minHeight: 56,
+                      borderRadius: 10,
+                      border: "1px solid var(--soft-border)",
+                      padding: 6,
+                      fontSize: 12,
+                      background: list.length ? "rgba(46, 204, 113, 0.08)" : "transparent",
+                    }}
+                  >
+                    <div style={{ fontWeight: 900 }}>{day}</div>
+                    {list.length ? (
+                      <div style={{ marginTop: 4, display: "grid", gap: 2 }}>
+                        {list.slice(0, 3).map((p) => (
+                          <div key={p.uid} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }} />
+                            <span style={{ fontSize: 11, opacity: 0.9 }}>{p.nickname || p.mcNickname || "이름 없음"}</span>
+                          </div>
+                        ))}
+                        {list.length > 3 ? <div style={{ fontSize: 11, opacity: 0.7 }}>{`+${list.length - 3}명`}</div> : null}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ fontSize: 12, opacity: 0.8 }}>
+            {authUser ? "내 프로필을 입력하거나 수정할 수 있습니다." : "로그인 후 프로필을 입력할 수 있습니다."}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+            <TextField
+              label="닉네임"
+              value={profileForm.nickname}
+              onChange={(v) => handleProfileChange("nickname", v)}
+              placeholder="예: 미래24"
+            />
+            <TextField
+              label="마크 닉네임"
+              value={profileForm.mcNickname}
+              onChange={(v) => handleProfileChange("mcNickname", v)}
+              placeholder="예: Mirae24"
+            />
+            <TextField
+              label="생일"
+              type="date"
+              value={profileForm.birthday}
+              onChange={(v) => handleProfileChange("birthday", v)}
+              placeholder="YYYY-MM-DD"
+            />
+            <TextField
+              label="나이"
+              type="number"
+              value={profileForm.age}
+              onChange={(v) => handleProfileChange("age", v)}
+              placeholder="예: 21"
+            />
+            <TextField
+              label="MBTI"
+              value={profileForm.mbti}
+              onChange={(v) => handleProfileChange("mbti", v)}
+              placeholder="예: INFP"
+            />
+            <TextField
+              label="마크 직업"
+              value={profileForm.job}
+              onChange={(v) => handleProfileChange("job", v)}
+              placeholder="예: 건축가"
+            />
+            <div style={{ gridColumn: "1 / -1" }}>
+              <TextArea
+                label="좋아하는 것"
+                value={profileForm.likes}
+                onChange={(v) => handleProfileChange("likes", v)}
+                placeholder="좋아하는 것을 적어 주세요."
+                rows={3}
+              />
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <TextArea
+                label="싫어하는 것"
+                value={profileForm.dislikes}
+                onChange={(v) => handleProfileChange("dislikes", v)}
+                placeholder="싫어하는 것을 적어 주세요."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          {profileError ? <div style={{ fontSize: 12, color: "#c0392b" }}>{profileError}</div> : null}
+
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button
+              onClick={saveProfile}
+              disabled={!authUser || profileSaving}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "1px solid var(--input-border)",
+                background: "var(--accent)",
+                color: "var(--accent-text)",
+                cursor: !authUser || profileSaving ? "not-allowed" : "pointer",
+                fontWeight: 900,
+                fontSize: 13,
+                opacity: !authUser || profileSaving ? 0.6 : 1,
+              }}
+            >
+              {profileSaving ? "저장 중..." : "프로필 저장"}
+            </button>
+          </div>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            {profiles.length === 0 ? (
+              <div style={{ fontSize: 13, opacity: 0.7 }}>등록된 마을원 프로필이 없습니다.</div>
+            ) : (
+              profiles.map((p) => (
+                <div
+                  key={p.uid}
+                  style={{
+                    padding: 12,
+                    borderRadius: 12,
+                    border: "1px solid var(--soft-border)",
+                    background: "var(--panel-bg)",
+                    display: "grid",
+                    gap: 6,
+                  }}
+                >
+                  <div style={{ fontWeight: 900 }}>
+                    {p.nickname || p.mcNickname || "이름 없음"}
+                    {p.mcNickname ? ` (${p.mcNickname})` : ""}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, fontSize: 12 }}>
+                    <div>생일: {p.birthday || "-"}</div>
+                    <div>나이: {p.age || "-"}</div>
+                    <div>MBTI: {p.mbti || "-"}</div>
+                    <div>마크 직업: {p.job || "-"}</div>
+                  </div>
+                  {p.likes ? <div style={{ fontSize: 12 }}>좋아하는 것: {p.likes}</div> : null}
+                  {p.dislikes ? <div style={{ fontSize: 12 }}>싫어하는 것: {p.dislikes}</div> : null}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </Card>
 
@@ -2003,6 +2364,8 @@ export default function App() {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [presenceDocs, setPresenceDocs] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [nicknameSaving, setNicknameSaving] = useState(false);
+  const [nicknameError, setNicknameError] = useState("");
 
   const feeRate = useMemo(() => {
     const v = toNum(s.feePct, 0) / 100;
@@ -2016,6 +2379,23 @@ export default function App() {
       // ignore
     }
     setS(defaultState);
+  };
+
+  const saveNickname = async (nextName) => {
+    if (!authUser) return;
+    const trimmed = (nextName || "").trim();
+    setNicknameSaving(true);
+    setNicknameError("");
+    try {
+      await updateDoc(doc(db, "users", authUser.uid), {
+        nickname: trimmed,
+        nicknameUpdatedAt: serverTimestamp(),
+      });
+    } catch {
+      setNicknameError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setNicknameSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -2040,6 +2420,7 @@ export default function App() {
         {
           uid: authUser.uid,
           displayName: authUser.displayName || "",
+          nickname: userDoc?.nickname || authUser.displayName || "",
           email: authUser.email || "",
           updatedAt: serverTimestamp(),
         },
@@ -2053,6 +2434,7 @@ export default function App() {
         id: authUser.uid,
         uid: authUser.uid,
         displayName: authUser.displayName || "",
+        nickname: userDoc?.nickname || authUser.displayName || "",
         email: authUser.email || "",
         updatedAt: new Date(),
       };
@@ -2062,7 +2444,7 @@ export default function App() {
     });
     const timer = setInterval(writePresence, 30000);
     return () => clearInterval(timer);
-  }, [authUser]);
+  }, [authUser, userDoc]);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "presence"), (snap) => {
@@ -2093,6 +2475,7 @@ export default function App() {
             id: authUser.uid,
             uid: authUser.uid,
             displayName: authUser.displayName || "",
+            nickname: userDoc?.nickname || authUser.displayName || "",
             email: authUser.email || "",
             updatedAt: new Date(),
           },
@@ -2103,7 +2486,7 @@ export default function App() {
     update();
     const timer = setInterval(update, 30000);
     return () => clearInterval(timer);
-  }, [presenceDocs, authUser]);
+  }, [presenceDocs, authUser, userDoc]);
 
   useEffect(() => {
     if (!authUser) {
@@ -2606,7 +2989,17 @@ export default function App() {
 
             <div style={{ marginTop: 14 }}>
             {s.activeMenu === "profile" ? (
-              <ProfilePage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
+              <ProfilePage
+                s={s}
+                setS={setS}
+                feeRate={feeRate}
+                priceUpdatedAt={priceUpdatedAt}
+                authUser={authUser}
+                userDoc={userDoc}
+                onSaveNickname={saveNickname}
+                nicknameSaving={nicknameSaving}
+                nicknameError={nicknameError}
+              />
             ) : null}
             {s.activeMenu === "potion" ? (
               <PotionPage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
@@ -2616,7 +3009,7 @@ export default function App() {
             ) : null}
             {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
             {s.activeMenu === "village" ? (
-              <VillageSuggestionPage s={s} onlineUsers={onlineUsers} />
+              <VillageSuggestionPage s={s} onlineUsers={onlineUsers} authUser={authUser} />
             ) : null}
           </div>
 
