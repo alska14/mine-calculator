@@ -2067,6 +2067,21 @@ export default function App() {
 
       <div style={{ padding: 16, background: "var(--app-bg)" }}>
         <div style={{ maxWidth: 1200 }}>
+          <div style={{ marginBottom: 14 }}>
+            <img
+              src="/banner.png"
+              alt="성북구 마을 배너"
+              style={{
+                width: "100%",
+                height: 220,
+                objectFit: "cover",
+                borderRadius: 16,
+                border: "1px solid var(--soft-border)",
+                background: "var(--panel-bg)",
+                display: "block",
+              }}
+            />
+          </div>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
             <div>
               <div style={{ fontSize: 20, fontWeight: 900 }}>광부 효율 계산기</div>
