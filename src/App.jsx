@@ -2376,6 +2376,7 @@ export default function App() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [nicknameSaving, setNicknameSaving] = useState(false);
   const [nicknameError, setNicknameError] = useState("");
+  const presenceWriteAtRef = useRef(0);
 
   const feeRate = useMemo(() => {
     const v = toNum(s.feePct, 0) / 100;
@@ -2397,7 +2398,7 @@ export default function App() {
     setNicknameSaving(true);
     setNicknameError("");
     try {
-      await setDoc(
+      const writePromise = setDoc(
         doc(db, "users", authUser.uid),
         {
           nickname: trimmed,
@@ -2405,16 +2406,18 @@ export default function App() {
         },
         { merge: true }
       );
-      await setDoc(
-        doc(db, "presence", authUser.uid),
-        {
-          nickname: trimmed,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-    } catch {
-      setNicknameError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      await Promise.race([
+        writePromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
+    } catch (err) {
+      if (err?.code === "resource-exhausted") {
+        setNicknameError("저장량이 잠시 초과되었습니다. 조금 후 다시 시도해 주세요.");
+      } else if (err?.message === "timeout") {
+        setNicknameError("저장이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.");
+      } else {
+        setNicknameError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      }
     } finally {
       setNicknameSaving(false);
     }
@@ -2436,8 +2439,11 @@ export default function App() {
       return undefined;
     }
     const ref = doc(db, "presence", authUser.uid);
-    const writePresence = () =>
-      setDoc(
+    const writePresence = () => {
+      const now = Date.now();
+      if (now - presenceWriteAtRef.current < 25000) return;
+      presenceWriteAtRef.current = now;
+      return setDoc(
         ref,
         {
           uid: authUser.uid,
@@ -2448,6 +2454,7 @@ export default function App() {
         },
         { merge: true }
       );
+    };
     writePresence();
     setPresenceDocs((prev) => {
       const next = Array.isArray(prev) ? [...prev] : [];
@@ -2464,7 +2471,7 @@ export default function App() {
       else next.push(fallback);
       return next;
     });
-    const timer = setInterval(writePresence, 30000);
+    const timer = setInterval(writePresence, 60000);
     return () => clearInterval(timer);
   }, [authUser, userDoc]);
 
