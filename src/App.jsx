@@ -1650,6 +1650,7 @@ export default function App() {
         prices: data.prices ?? p.prices,
         abilityGrossSell: data.abilityGrossSell ?? p.abilityGrossSell,
         lifeGrossSell: data.lifeGrossSell ?? p.lifeGrossSell,
+        potionPrices: data.potionPrices ?? p.potionPrices,
       }));
     });
     return () => unsub();
@@ -1672,6 +1673,7 @@ export default function App() {
           prices: s.prices,
           abilityGrossSell: s.abilityGrossSell,
           lifeGrossSell: s.lifeGrossSell,
+          potionPrices: s.potionPrices,
           updatedAt: serverTimestamp(),
         },
         { merge: true }
@@ -1680,7 +1682,7 @@ export default function App() {
     return () => {
       if (priceUpdateTimer.current) clearTimeout(priceUpdateTimer.current);
     };
-  }, [s.ingotGrossPrice, s.gemGrossPrice, s.prices, s.abilityGrossSell, s.lifeGrossSell]);
+  }, [s.ingotGrossPrice, s.gemGrossPrice, s.prices, s.abilityGrossSell, s.lifeGrossSell, s.potionPrices]);
 
   const openAdminModal = () => {
     setAdminModalOpen(true);
