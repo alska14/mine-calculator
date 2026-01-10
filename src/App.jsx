@@ -1352,10 +1352,32 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
       payload.createdAt = serverTimestamp();
     }
     try {
-      await setDoc(doc(db, "villageProfiles", authUser.uid), payload, { merge: true });
+      setProfiles((prev) => {
+        const next = Array.isArray(prev) ? [...prev] : [];
+        const idx = next.findIndex((p) => p.uid === authUser.uid);
+        const optimistic = {
+          ...(idx >= 0 ? next[idx] : {}),
+          ...payload,
+          updatedAt: new Date(),
+          createdAt: idx >= 0 ? next[idx]?.createdAt : new Date(),
+        };
+        if (idx >= 0) next[idx] = optimistic;
+        else next.push(optimistic);
+        return next;
+      });
+      await Promise.race([
+        setDoc(doc(db, "villageProfiles", authUser.uid), payload, { merge: true }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
       setProfileTouched(false);
-    } catch {
-      setProfileError("프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } catch (err) {
+      if (err?.code === "resource-exhausted") {
+        setProfileError("저장량이 잠시 초과되었습니다. 조금 후 다시 시도해 주세요.");
+      } else if (err?.message === "timeout") {
+        setProfileError("저장이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.");
+      } else {
+        setProfileError("프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      }
     } finally {
       setProfileSaving(false);
     }
