@@ -532,7 +532,7 @@ const defaultState = {
   adminMode: false,
 };
 
-function Sidebar({ active, onSelect }) {
+function Sidebar({ active, onSelect, onlineUsers }) {
   const itemStyle = (key) => ({
     padding: "10px 12px",
     borderRadius: 10,
@@ -566,6 +566,33 @@ function Sidebar({ active, onSelect }) {
       </div>
       <div style={{ marginTop: 12, fontSize: 12, opacity: 0.75, lineHeight: 1.4 }}>
         입력값은 브라우저에 자동 저장됩니다.
+      </div>
+      <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--soft-border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 900 }}>
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "#2ecc71",
+              boxShadow: "0 0 6px rgba(46, 204, 113, 0.8)",
+              display: "inline-block",
+            }}
+          />
+          {`온라인 ${onlineUsers.length}명`}
+        </div>
+        {onlineUsers.length === 0 ? (
+          <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>접속 중인 사용자가 없습니다.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+            {onlineUsers.map((user) => (
+              <div key={user.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }} />
+                <span>{user.displayName || user.email || "익명"}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2245,7 +2272,7 @@ export default function App() {
     >
       {showSidebar ? (
         <div style={{ padding: 16, borderRight: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
-          <Sidebar active={s.activeMenu} onSelect={setActive} />
+          <Sidebar active={s.activeMenu} onSelect={setActive} onlineUsers={onlineUsers} />
         </div>
       ) : null}
 
