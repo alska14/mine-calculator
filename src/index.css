@@ -29,6 +29,22 @@
   --accent-text: #0f1115;
   --soft-bg: #0f141b;
 }
+
+.app-root[data-theme="purple"] {
+  color-scheme: dark;
+  --app-bg: #160f1d;
+  --panel-bg: #1c1426;
+  --card-bg: #1c1426;
+  --text: #f3e9ff;
+  --muted: #c1a8d9;
+  --border: #352548;
+  --soft-border: #2b1f3b;
+  --input-bg: #140d1c;
+  --input-border: #352548;
+  --accent: #a65bff;
+  --accent-text: #120a18;
+  --soft-bg: #140d1c;
+}
 * { box-sizing: border-box; }
 body {
   margin: 0;

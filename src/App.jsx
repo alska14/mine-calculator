@@ -257,12 +257,18 @@ function TextArea({ label, value, onChange, placeholder, rows = 4 }) {
 }
 
 function Select({ label, value, onChange, options }) {
+  const handleChange = (e) => {
+    const raw = e.target.value;
+    const num = Number(raw);
+    const next = Number.isFinite(num) && String(num) === raw ? num : raw;
+    onChange(next);
+  };
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <div style={{ fontSize: 12, opacity: 0.8 }}>{label}</div>
       <select
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onChange={handleChange}
         style={{
           padding: "10px 12px",
           borderRadius: 10,
@@ -607,17 +613,16 @@ function ProfilePage({ s, setS, feeRate }) {
     <div style={{ display: "grid", gap: 12 }}>
       <Card title="내 정보 입력">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>테마</div>
-            <ToggleButton
-              isOn={s.themeMode === "dark"}
-              onClick={() =>
-                setS((p) => ({ ...p, themeMode: p.themeMode === "dark" ? "light" : "dark" }))
-              }
-              labelOn="다크 모드"
-              labelOff="라이트 모드"
-            />
-          </div>
+          <Select
+            label={"\ud14c\ub9c8"}
+            value={["light", "dark", "purple"].includes(s.themeMode) ? s.themeMode : "light"}
+            onChange={(v) => setS((p) => ({ ...p, themeMode: v }))}
+            options={[
+              { value: "light", label: "\ub77c\uc774\ud2b8 \ubaa8\ub4dc" },
+              { value: "dark", label: "\ub2e4\ud06c \ubaa8\ub4dc" },
+              { value: "purple", label: "\ud37c\ud50c \ubaa8\ub4dc" },
+            ]}
+          />
           <Select
             label="세이지 곡괭이 강화 단계"
             value={s.sageEnhLevel}
