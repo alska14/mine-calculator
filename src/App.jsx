@@ -1230,6 +1230,19 @@ function IngotPage({ s, setS, feeRate }) {
       .join(", ");
   };
 
+  const formatSellSummary = (recipe) => {
+    const items = Object.entries(recipe || {})
+      .map(([k, qty]) => ({ key: k, qty: qty || 0, mode: s.modes[k] || "owned" }))
+      .filter((x) => x.qty > 0 && x.mode !== "buy");
+    if (items.length === 0) return "\ud310\ub9e4 \uc5c6\uc74c";
+    return items
+      .map((x) => {
+        const name = materialLabels[x.key] ?? x.key;
+        return `${name} ${x.qty}\uac1c`;
+      })
+      .join(", ");
+  };
+
   // 내정보 기반 기대값(주괴/보석)
   const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
@@ -1426,7 +1439,12 @@ function IngotPage({ s, setS, feeRate }) {
                       ) : null}
                     </td>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>{fmt(x.profit)}</td>
-                    <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(x.sellIndivNet)}</td>
+                    <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
+                      {fmt(x.sellIndivNet)}
+                      <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.75 }}>
+                        &rarr; {formatSellSummary(s.recipes[row.key])}
+                      </span>
+                    </td>
                     <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
                       {x.profit - x.sellIndivNet >= 0 ? "제작 이득" : "재료 판매 이득"}
                     </td>
