@@ -1619,6 +1619,7 @@ export default function App() {
   const [adminError, setAdminError] = useState("");
   const [priceUpdatedAt, setPriceUpdatedAt] = useState(null);
   const priceUpdateTimer = useRef(null);
+  const suppressPriceWrite = useRef(false);
 
   const feeRate = useMemo(() => {
     const v = toNum(s.feePct, 0) / 100;
@@ -1640,11 +1641,25 @@ export default function App() {
       const data = snap.data();
       const ts = data?.updatedAt?.toDate ? data.updatedAt.toDate() : null;
       setPriceUpdatedAt(ts);
+      if (!data) return;
+      suppressPriceWrite.current = true;
+      setS((p) => ({
+        ...p,
+        ingotGrossPrice: data.ingotGrossPrice ?? p.ingotGrossPrice,
+        gemGrossPrice: data.gemGrossPrice ?? p.gemGrossPrice,
+        prices: data.prices ?? p.prices,
+        abilityGrossSell: data.abilityGrossSell ?? p.abilityGrossSell,
+        lifeGrossSell: data.lifeGrossSell ?? p.lifeGrossSell,
+      }));
     });
     return () => unsub();
   }, []);
 
   useEffect(() => {
+    if (suppressPriceWrite.current) {
+      suppressPriceWrite.current = false;
+      return;
+    }
     if (priceUpdateTimer.current) {
       clearTimeout(priceUpdateTimer.current);
     }
