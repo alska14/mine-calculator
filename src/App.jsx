@@ -1264,6 +1264,8 @@ function IngotPage({ s, setS, feeRate }) {
     const sellIndivNet = (recipe) => {
       return sum(
         Object.entries(recipe).map(([k, qty]) => {
+          const mode = s.modes[k] || "owned";
+          if (mode === "buy") return 0;
           const market = toNum(s.prices[k]?.market ?? 0);
           return (qty || 0) * netSell(market, feeRate);
         })
