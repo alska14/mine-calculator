@@ -532,7 +532,7 @@ const defaultState = {
   adminMode: false,
 };
 
-function Sidebar({ active, onSelect }) {
+function Sidebar({ active, onSelect, authUser, onLogin, onLogout }) {
   const itemStyle = (key) => ({
     padding: "10px 12px",
     borderRadius: 10,
@@ -545,6 +545,42 @@ function Sidebar({ active, onSelect }) {
   });
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {authUser ? (
+          <button
+            onClick={onLogout}
+            className="unlock-control"
+            style={{
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: "var(--panel-bg)",
+              cursor: "pointer",
+              fontWeight: 700,
+              fontSize: 12,
+            }}
+          >
+            {"\uB85C\uADF8\uC544\uC6C3"}
+          </button>
+        ) : (
+          <button
+            onClick={onLogin}
+            className="unlock-control"
+            style={{
+              padding: "8px 10px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: "var(--accent)",
+              color: "var(--accent-text)",
+              cursor: "pointer",
+              fontWeight: 900,
+              fontSize: 12,
+            }}
+          >
+            {"\uB85C\uADF8\uC778"}
+          </button>
+        )}
+      </div>
       <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 6 }}>메뉴</div>
       <div style={{ fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>
         {"\ub2e4\ud06c\ubaa8\ub4dc\ub294 \ub0b4\uc815\ubcf4\uc5d0\uc11c \uc124\uc815\ud560 \uc218 \uc788\uace0, \ubb38\uc81c\uc810\uc740 \ubb38\uc758/\ud53c\ub4dc\ubc31\uc5d0 \ub0a8\uaca8\uc8fc\uc138\uc694."}
@@ -2171,7 +2207,13 @@ export default function App() {
     >
       {showSidebar ? (
         <div style={{ padding: 16, borderRight: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
-          <Sidebar active={s.activeMenu} onSelect={setActive} />
+          <Sidebar
+            active={s.activeMenu}
+            onSelect={setActive}
+            authUser={authUser}
+            onLogin={handleLogin}
+            onLogout={handleLogout}
+          />
         </div>
       ) : null}
 
