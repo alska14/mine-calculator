@@ -1176,7 +1176,7 @@ function PotionRowDetails({ feeRate, ev, row, shardsPerDig, gemRule, flameRule }
   );
 }
 
-function PotionPage({ s, setS, feeRate }) {
+function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
   const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
   const flameRule = flamingPickRule(s.flamingPickLevel);
@@ -1250,6 +1250,10 @@ function PotionPage({ s, setS, feeRate }) {
           <Field label="300 포션 가격" value={s.potionPrices.p300} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p300: v } }))} min={0} suffix="원" />
           <Field label="500 포션 가격" value={s.potionPrices.p500} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p500: v } }))} min={0} suffix="원" />
           <Field label="700 포션 가격" value={s.potionPrices.p700} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p700: v } }))} min={0} suffix="원" />
+        </div>
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
+          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
         </div>
       </Card>
 
@@ -1812,7 +1816,9 @@ export default function App() {
             {s.activeMenu === "profile" ? (
               <ProfilePage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
             ) : null}
-            {s.activeMenu === "potion" ? <PotionPage s={s} setS={setS} feeRate={feeRate} /> : null}
+            {s.activeMenu === "potion" ? (
+              <PotionPage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
+            ) : null}
             {s.activeMenu === "ingot" ? (
               <IngotPage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
             ) : null}
