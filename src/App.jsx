@@ -2387,10 +2387,22 @@ export default function App() {
     setNicknameSaving(true);
     setNicknameError("");
     try {
-      await updateDoc(doc(db, "users", authUser.uid), {
-        nickname: trimmed,
-        nicknameUpdatedAt: serverTimestamp(),
-      });
+      await setDoc(
+        doc(db, "users", authUser.uid),
+        {
+          nickname: trimmed,
+          nicknameUpdatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      await setDoc(
+        doc(db, "presence", authUser.uid),
+        {
+          nickname: trimmed,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
     } catch {
       setNicknameError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
