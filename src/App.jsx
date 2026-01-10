@@ -2225,6 +2225,72 @@ export default function App() {
             </Card>
           ) : null}
 
+          {authUser && s.adminMode ? (
+            <div style={{ marginBottom: 12 }}>
+              <Card title={"\uAC00\uC785 \uC2B9\uC778 \uAD00\uB9AC"}>
+                {pendingUsers.length === 0 ? (
+                  <div style={{ fontSize: 13, opacity: 0.8 }}>
+                    {"\uB300\uAE30 \uC911\uC778 \uC694\uCCAD\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."}
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gap: 10 }}>
+                    {pendingUsers.map((u) => (
+                      <div
+                        key={u.id}
+                        style={{
+                          border: "1px solid var(--soft-border)",
+                          borderRadius: 12,
+                          padding: 12,
+                          background: "var(--panel-bg)",
+                          display: "grid",
+                          gap: 6,
+                        }}
+                      >
+                        <div style={{ fontWeight: 900 }}>
+                          {u.name || "-"} ({u.email || "-"})
+                        </div>
+                        <div style={{ fontSize: 12, opacity: 0.7 }}>
+                          {u.createdAt?.toDate ? u.createdAt.toDate().toLocaleString("ko-KR") : "-"}
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button
+                            onClick={() => approveUser(u.id)}
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: 10,
+                              border: "1px solid var(--input-border)",
+                              background: "var(--accent)",
+                              color: "var(--accent-text)",
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontWeight: 900,
+                            }}
+                          >
+                            {"\uC2B9\uC778"}
+                          </button>
+                          <button
+                            onClick={() => rejectUser(u.id)}
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: 10,
+                              border: "1px solid var(--input-border)",
+                              background: "var(--panel-bg)",
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontWeight: 900,
+                            }}
+                          >
+                            {"\uAC70\uC808"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+          ) : null}
+
           {!authLoading && !canUseApp ? (
             <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
               {!authUser ? (
@@ -2313,73 +2379,24 @@ export default function App() {
                 </Card>
               ) : null}
 
-              {isPending && s.adminMode ? (
-                <Card title={"\uAC00\uC785 \uC2B9\uC778 \uAD00\uB9AC"}>
-                  {pendingUsers.length === 0 ? (
-                    <div style={{ fontSize: 13, opacity: 0.8 }}>
-                      {"\uB300\uAE30 \uC911\uC778 \uC694\uCCAD\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."}
-                    </div>
-                  ) : (
-                    <div style={{ display: "grid", gap: 10 }}>
-                      {pendingUsers.map((u) => (
-                        <div
-                          key={u.id}
-                          style={{
-                            border: "1px solid var(--soft-border)",
-                            borderRadius: 12,
-                            padding: 12,
-                            background: "var(--panel-bg)",
-                            display: "grid",
-                            gap: 6,
-                          }}
-                        >
-                          <div style={{ fontWeight: 900 }}>
-                            {u.name || "-"} ({u.email || "-"})
-                          </div>
-                          <div style={{ fontSize: 12, opacity: 0.7 }}>
-                            {u.createdAt?.toDate ? u.createdAt.toDate().toLocaleString("ko-KR") : "-"}
-                          </div>
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <button
-                              onClick={() => approveUser(u.id)}
-                              style={{
-                                padding: "8px 10px",
-                                borderRadius: 10,
-                                border: "1px solid var(--input-border)",
-                                background: "var(--accent)",
-                                color: "var(--accent-text)",
-                                cursor: "pointer",
-                                fontSize: 12,
-                                fontWeight: 900,
-                              }}
-                            >
-                              {"\uC2B9\uC778"}
-                            </button>
-                            <button
-                              onClick={() => rejectUser(u.id)}
-                              style={{
-                                padding: "8px 10px",
-                                borderRadius: 10,
-                                border: "1px solid var(--input-border)",
-                                background: "var(--panel-bg)",
-                                cursor: "pointer",
-                                fontSize: 12,
-                                fontWeight: 900,
-                              }}
-                            >
-                              {"\uAC70\uC808"}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-              ) : null}
             </div>
           ) : null}
 
           <div className={uiLocked ? "readonly-lock" : undefined}>
+            {uiLocked ? (
+              <div
+                style={{
+                  marginBottom: 12,
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: "1px solid #f39c12",
+                  background: "rgba(243, 156, 18, 0.12)",
+                  fontWeight: 900,
+                }}
+              >
+                {"\uC2DC\uC138/\uC635\uC158 \uBCC0\uACBD\uC740 \uB85C\uADF8\uC778 \uD6C4 \uAC00\uB2A5\uD569\uB2C8\uB2E4. \uB85C\uADF8\uC778 \uD574\uC8FC\uC138\uC694."}
+              </div>
+            ) : null}
             <div style={{ marginBottom: 14 }}>
               <img
                 src="/banner.png"
