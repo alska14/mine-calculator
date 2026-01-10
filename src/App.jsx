@@ -449,7 +449,7 @@ function craftProfit({ productGrossSellPrice, feeRate, costs }) {
 const defaultState = {
   schemaVersion: 4,
 
-  activeMenu: "potion", // potion | ingot | profile | feedback | village
+  activeMenu: "potion", // potion | ingot | profile | feedback | village | members
   feePct: "5",
   themeMode: "light", // light | dark
 
@@ -563,6 +563,9 @@ function Sidebar({ active, onSelect, onlineUsers }) {
       </div>
       <div style={itemStyle("village")} onClick={() => onSelect("village")}>
         마을 건의함
+      </div>
+      <div style={itemStyle("members")} onClick={() => onSelect("members")}>
+        마을 멤버
       </div>
       <div style={{ marginTop: 12, fontSize: 12, opacity: 0.75, lineHeight: 1.4 }}>
         입력값은 브라우저에 자동 저장됩니다.
@@ -888,6 +891,7 @@ function ProfilePage({
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
         </div>
       </Card>
+      ) : null}
     </div>
   );
 }
@@ -1257,11 +1261,12 @@ function FeedbackPage({ s, setS }) {
           </div>
         )}
       </Card>
+      ) : null}
     </div>
   );
 }
 
-function VillageSuggestionPage({ s, onlineUsers, authUser }) {
+function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
   const [form, setForm] = useState({
     type: "improve",
     title: "",
@@ -1387,7 +1392,8 @@ function VillageSuggestionPage({ s, onlineUsers, authUser }) {
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <Card title={"\ub9c8\uc744 \uac74\uc758\ud568"}>
+      {!showProfiles ? (
+        <Card title={"\ub9c8\uc744 \uac74\uc758\ud568"}>
         <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
           {"\ub9c8\uc744 \uad00\ub828 \uac74\uc758/\ubb38\uc758\ub294 \uc5ec\uae30\uc5d0 \ub0a8\uaca8\uc8fc\uc138\uc694."}
         </div>
@@ -1474,9 +1480,11 @@ function VillageSuggestionPage({ s, onlineUsers, authUser }) {
             등록
           </button>
         </div>
-      </Card>
+        </Card>
+      ) : null}
 
-      <Card title="마을원 프로필">
+      {showProfiles ? (
+        <Card title="마을원 프로필">
         <div style={{ display: "grid", gap: 12 }}>
           <div style={{ padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -1673,7 +1681,9 @@ function VillageSuggestionPage({ s, onlineUsers, authUser }) {
           </div>
         </div>
       </Card>
+      ) : null}
 
+      {!showProfiles ? (
       <Card title={"\uac74\uc758 \uad00\ub9ac"}>
         {items.length === 0 ? (
           <div style={{ fontSize: 13, opacity: 0.8 }}>등록된 건의가 없습니다.</div>
@@ -3021,7 +3031,10 @@ export default function App() {
             ) : null}
             {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
             {s.activeMenu === "village" ? (
-              <VillageSuggestionPage s={s} onlineUsers={onlineUsers} authUser={authUser} />
+              <VillageSuggestionPage s={s} onlineUsers={onlineUsers} authUser={authUser} showProfiles={false} />
+            ) : null}
+            {s.activeMenu === "members" ? (
+              <VillageSuggestionPage s={s} onlineUsers={onlineUsers} authUser={authUser} showProfiles />
             ) : null}
           </div>
 
