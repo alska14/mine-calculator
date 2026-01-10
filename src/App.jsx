@@ -1186,7 +1186,7 @@ function PotionPage({ s, setS, feeRate }) {
   );
 }
 
-function IngotPage({ s, feeRate }) {
+function IngotPage({ s, setS, feeRate }) {
   // 내정보 기반 기대값(주괴/보석)
   const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
@@ -1300,10 +1300,26 @@ function IngotPage({ s, feeRate }) {
 
       <Card title="가공 비교: 재료 그대로 판매 vs 어빌/라이프스톤">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-          <Field label="어빌리티 스톤 판매가(시장가)" value={s.abilityGrossSell} onChange={() => {}} placeholder="내정보에서 변경" />
-          <Field label="하급 라이프스톤 판매가(시장가)" value={s.lifeGrossSell.low} onChange={() => {}} placeholder="내정보에서 변경" />
-          <Field label="중급 라이프스톤 판매가(시장가)" value={s.lifeGrossSell.mid} onChange={() => {}} placeholder="내정보에서 변경" />
-          <Field label="상급 라이프스톤 판매가(시장가)" value={s.lifeGrossSell.high} onChange={() => {}} placeholder="내정보에서 변경" />
+          <Field
+            label="어빌리티 스톤 판매가(시장가)"
+            value={s.abilityGrossSell}
+            onChange={(v) => setS((p) => ({ ...p, abilityGrossSell: v }))}
+          />
+          <Field
+            label="하급 라이프스톤 판매가(시장가)"
+            value={s.lifeGrossSell.low}
+            onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, low: v } }))}
+          />
+          <Field
+            label="중급 라이프스톤 판매가(시장가)"
+            value={s.lifeGrossSell.mid}
+            onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, mid: v } }))}
+          />
+          <Field
+            label="상급 라이프스톤 판매가(시장가)"
+            value={s.lifeGrossSell.high}
+            onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, high: v } }))}
+          />
         </div>
 
         <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
@@ -1543,7 +1559,7 @@ export default function App() {
           <div style={{ marginTop: 14 }}>
             {s.activeMenu === "profile" ? <ProfilePage s={s} setS={setS} feeRate={feeRate} /> : null}
             {s.activeMenu === "potion" ? <PotionPage s={s} setS={setS} feeRate={feeRate} /> : null}
-            {s.activeMenu === "ingot" ? <IngotPage s={s} feeRate={feeRate} /> : null}
+            {s.activeMenu === "ingot" ? <IngotPage s={s} setS={setS} feeRate={feeRate} /> : null}
             {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
           </div>
 
