@@ -910,21 +910,6 @@ function FeedbackPage({ s, setS }) {
   const isAdmin = s.adminMode === true;
   const canSubmit = form.title.trim() && form.body.trim();
   const [clientId] = useState(() => getClientId());
-  const [profiles, setProfiles] = useState([]);
-  const [profileForm, setProfileForm] = useState({
-    nickname: "",
-    mcNickname: "",
-    birthday: "",
-    age: "",
-    mbti: "",
-    job: "",
-    likes: "",
-    dislikes: "",
-  });
-  const [profileTouched, setProfileTouched] = useState(false);
-  const [profileSaving, setProfileSaving] = useState(false);
-  const [profileError, setProfileError] = useState("");
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
   useEffect(() => {
     const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
@@ -998,68 +983,6 @@ function FeedbackPage({ s, setS }) {
     if (status === "done") return "완료";
     return "접수";
   };
-
-  const handleProfileChange = (key, value) => {
-    setProfileTouched(true);
-    setProfileForm((p) => ({ ...p, [key]: value }));
-  };
-
-  const saveProfile = async () => {
-    if (!authUser) return;
-    setProfileSaving(true);
-    setProfileError("");
-    const existing = profiles.find((p) => p.uid === authUser.uid);
-    const payload = {
-      uid: authUser.uid,
-      nickname: profileForm.nickname.trim(),
-      mcNickname: profileForm.mcNickname.trim(),
-      birthday: profileForm.birthday.trim(),
-      age: profileForm.age.trim(),
-      mbti: profileForm.mbti.trim(),
-      job: profileForm.job.trim(),
-      likes: profileForm.likes.trim(),
-      dislikes: profileForm.dislikes.trim(),
-      updatedAt: serverTimestamp(),
-    };
-    if (!existing?.createdAt) {
-      payload.createdAt = serverTimestamp();
-    }
-    try {
-      await setDoc(doc(db, "villageProfiles", authUser.uid), payload, { merge: true });
-      setProfileTouched(false);
-    } catch {
-      setProfileError("프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
-    } finally {
-      setProfileSaving(false);
-    }
-  };
-
-  const birthdayMap = useMemo(() => {
-    const map = {};
-    profiles.forEach((p) => {
-      if (!p.birthday) return;
-      const parts = String(p.birthday).split("-");
-      if (parts.length < 3) return;
-      const key = `${parts[1]}-${parts[2]}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(p);
-    });
-    return map;
-  }, [profiles]);
-
-  const calendarInfo = useMemo(() => {
-    const year = calendarMonth.getFullYear();
-    const monthIndex = calendarMonth.getMonth();
-    const start = new Date(year, monthIndex, 1);
-    const end = new Date(year, monthIndex + 1, 0);
-    const daysInMonth = end.getDate();
-    const startDay = start.getDay();
-    const cells = [];
-    for (let i = 0; i < startDay; i += 1) cells.push(null);
-    for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
-    while (cells.length < 42) cells.push(null);
-    return { year, month: monthIndex + 1, cells };
-  }, [calendarMonth]);
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
@@ -1279,6 +1202,21 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
   const isAdmin = s.adminMode === true;
   const canSubmit = form.title.trim() && form.body.trim();
   const [clientId] = useState(() => getClientId());
+  const [profiles, setProfiles] = useState([]);
+  const [profileForm, setProfileForm] = useState({
+    nickname: "",
+    mcNickname: "",
+    birthday: "",
+    age: "",
+    mbti: "",
+    job: "",
+    likes: "",
+    dislikes: "",
+  });
+  const [profileTouched, setProfileTouched] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
   useEffect(() => {
     const q = query(collection(db, "villageSuggestions"), orderBy("createdAt", "desc"));
@@ -1387,6 +1325,68 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
     if (status === "done") return "\uc644\ub8cc";
     return "\uc811\uc218";
   };
+
+  const handleProfileChange = (key, value) => {
+    setProfileTouched(true);
+    setProfileForm((p) => ({ ...p, [key]: value }));
+  };
+
+  const saveProfile = async () => {
+    if (!authUser) return;
+    setProfileSaving(true);
+    setProfileError("");
+    const existing = profiles.find((p) => p.uid === authUser.uid);
+    const payload = {
+      uid: authUser.uid,
+      nickname: profileForm.nickname.trim(),
+      mcNickname: profileForm.mcNickname.trim(),
+      birthday: profileForm.birthday.trim(),
+      age: profileForm.age.trim(),
+      mbti: profileForm.mbti.trim(),
+      job: profileForm.job.trim(),
+      likes: profileForm.likes.trim(),
+      dislikes: profileForm.dislikes.trim(),
+      updatedAt: serverTimestamp(),
+    };
+    if (!existing?.createdAt) {
+      payload.createdAt = serverTimestamp();
+    }
+    try {
+      await setDoc(doc(db, "villageProfiles", authUser.uid), payload, { merge: true });
+      setProfileTouched(false);
+    } catch {
+      setProfileError("프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const birthdayMap = useMemo(() => {
+    const map = {};
+    profiles.forEach((p) => {
+      if (!p.birthday) return;
+      const parts = String(p.birthday).split("-");
+      if (parts.length < 3) return;
+      const key = `${parts[1]}-${parts[2]}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(p);
+    });
+    return map;
+  }, [profiles]);
+
+  const calendarInfo = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const monthIndex = calendarMonth.getMonth();
+    const start = new Date(year, monthIndex, 1);
+    const end = new Date(year, monthIndex + 1, 0);
+    const daysInMonth = end.getDate();
+    const startDay = start.getDay();
+    const cells = [];
+    for (let i = 0; i < startDay; i += 1) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
+    while (cells.length < 42) cells.push(null);
+    return { year, month: monthIndex + 1, cells };
+  }, [calendarMonth]);
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
