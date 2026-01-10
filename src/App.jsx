@@ -4,14 +4,17 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { auth, db, googleProvider } from "./firebase";
 
 /**
  * =========
@@ -1939,6 +1942,11 @@ export default function App() {
   const [priceUpdatedAt, setPriceUpdatedAt] = useState(null);
   const priceUpdateTimer = useRef(null);
   const suppressPriceWrite = useRef(false);
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
+  const [userDoc, setUserDoc] = useState(null);
+  const [pendingUsers, setPendingUsers] = useState([]);
 
   const feeRate = useMemo(() => {
     const v = toNum(s.feePct, 0) / 100;
@@ -1953,6 +1961,66 @@ export default function App() {
     }
     setS(defaultState);
   };
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setAuthUser(user || null);
+      setAuthLoading(false);
+      setAuthError("");
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    if (!authUser) {
+      setUserDoc(null);
+      return undefined;
+    }
+    const userRef = doc(db, "users", authUser.uid);
+    (async () => {
+      const snap = await getDoc(userRef);
+      const exists = snap.exists();
+      const payload = {
+        uid: authUser.uid,
+        email: authUser.email || "",
+        name: authUser.displayName || "",
+        photoURL: authUser.photoURL || "",
+        lastLoginAt: serverTimestamp(),
+      };
+      if (!exists) {
+        payload.status = "pending";
+        payload.createdAt = serverTimestamp();
+      }
+      await setDoc(userRef, payload, { merge: true });
+    })();
+
+    const unsub = onSnapshot(userRef, (snap) => {
+      if (!snap.exists()) {
+        setUserDoc({ uid: authUser.uid, status: "pending" });
+        return;
+      }
+      setUserDoc({ id: snap.id, ...snap.data() });
+    });
+    return () => unsub();
+  }, [authUser]);
+
+  useEffect(() => {
+    if (!authUser || !s.adminMode) {
+      setPendingUsers([]);
+      return undefined;
+    }
+    const q = query(collection(db, "users"), where("status", "==", "pending"));
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      rows.sort((a, b) => {
+        const ta = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+        const tb = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+        return tb - ta;
+      });
+      setPendingUsers(rows);
+    });
+    return () => unsub();
+  }, [authUser, s.adminMode]);
 
   useEffect(() => {
     const ref = doc(db, "meta", "marketPrices");
@@ -2003,6 +2071,23 @@ export default function App() {
     };
   }, [s.ingotGrossPrice, s.gemGrossPrice, s.prices, s.abilityGrossSell, s.lifeGrossSell, s.potionPrices]);
 
+  const handleLogin = async () => {
+    setAuthError("");
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch {
+      setAuthError("\uAD6C\uAE00 \uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch {
+      // ignore
+    }
+  };
+
   const openAdminModal = () => {
     setAdminModalOpen(true);
     setAdminPass("");
@@ -2028,6 +2113,24 @@ export default function App() {
     setS((p) => ({ ...p, adminMode: false }));
   };
 
+  const approveUser = (uid) => {
+    if (!s.adminMode) return;
+    updateDoc(doc(db, "users", uid), {
+      status: "approved",
+      approvedAt: serverTimestamp(),
+      approvedBy: authUser?.email || "admin",
+    });
+  };
+
+  const rejectUser = (uid) => {
+    if (!s.adminMode) return;
+    updateDoc(doc(db, "users", uid), {
+      status: "rejected",
+      rejectedAt: serverTimestamp(),
+      rejectedBy: authUser?.email || "admin",
+    });
+  };
+
   const [introOpen, setIntroOpen] = useState(() => {
     try {
       return localStorage.getItem("miner_intro_seen") ? false : true;
@@ -2048,6 +2151,10 @@ export default function App() {
   // IngotPage에서 판매가 입력을 막고(placeholder), 실제 입력은 profile에서만 하려고
   // 단, 기존 구조를 크게 바꾸지 않기 위해 “입력 위치 이동”만 하고, 값은 그대로 사용합니다.
   const setActive = (key) => setS((p) => ({ ...p, activeMenu: key }));
+  const canUseApp = !!authUser && userDoc?.status === "approved";
+  const isPending = !!authUser && !canUseApp && userDoc?.status !== "rejected";
+  const isRejected = userDoc?.status === "rejected";
+  const showSidebar = canUseApp;
 
   return (
     <div
@@ -2055,22 +2162,179 @@ export default function App() {
       data-theme={s.themeMode}
       style={{
         display: "grid",
-        gridTemplateColumns: "260px 1fr",
+        gridTemplateColumns: showSidebar ? "260px 1fr" : "1fr",
         minHeight: "100vh",
         background: "var(--app-bg)",
         color: "var(--text)",
       }}
     >
-      <div style={{ padding: 16, borderRight: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
-        <Sidebar active={s.activeMenu} onSelect={setActive} />
-      </div>
+      {showSidebar ? (
+        <div style={{ padding: 16, borderRight: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
+          <Sidebar active={s.activeMenu} onSelect={setActive} />
+        </div>
+      ) : null}
 
       <div style={{ padding: 16, background: "var(--app-bg)" }}>
         <div style={{ maxWidth: 1200 }}>
+          {authLoading ? (
+            <Card title={"\uB85C\uADF8\uC778 \uD655\uC778 \uC911"}>
+              <div style={{ fontSize: 13, opacity: 0.8 }}>{"\uB85C\uADF8\uC778 \uC0C1\uD0DC\uB97C \uD655\uC778\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4."}</div>
+            </Card>
+          ) : !authUser ? (
+            <Card title={"\uB85C\uADF8\uC778 \uD544\uC694"}>
+              <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
+                {"\uB85C\uADF8\uC778\uB41C \uC0AC\uC6A9\uC790\uB9CC \uC774\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."}
+              </div>
+              {authError ? <div style={{ fontSize: 12, color: "#c0392b", marginBottom: 8 }}>{authError}</div> : null}
+              <button
+                onClick={handleLogin}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--accent)",
+                  color: "var(--accent-text)",
+                  cursor: "pointer",
+                  fontWeight: 900,
+                  fontSize: 13,
+                }}
+              >
+                {"\uAD6C\uAE00\uB85C \uB85C\uADF8\uC778"}
+              </button>
+            </Card>
+          ) : isRejected ? (
+            <Card title={"\uC811\uADFC \uBD88\uAC00"}>
+              <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
+                {"\uC2B9\uC778\uC774 \uAC70\uC808\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uAD00\uB9AC\uC790\uC5D0\uAC8C \uBB38\uC758\uD574\uC8FC\uC138\uC694."}
+              </div>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--panel-bg)",
+                  cursor: "pointer",
+                  fontWeight: 900,
+                  fontSize: 13,
+                }}
+              >
+                {"\uB85C\uADF8\uC544\uC6C3"}
+              </button>
+            </Card>
+          ) : isPending ? (
+            <div style={{ display: "grid", gap: 12 }}>
+              <Card title={"\uC2B9\uC778 \uB300\uAE30"}>
+                <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
+                  {"\uAD00\uB9AC\uC790 \uC2B9\uC778 \uD6C4 \uC0AC\uC6A9 \uAC00\uB2A5\uD569\uB2C8\uB2E4."}
+                </div>
+                <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 10 }}>
+                  {"\uB0B4 \uACC4\uC815: "}
+                  {authUser.email || "-"}
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      border: "1px solid var(--input-border)",
+                      background: "var(--panel-bg)",
+                      cursor: "pointer",
+                      fontWeight: 900,
+                      fontSize: 13,
+                    }}
+                  >
+                    {"\uB85C\uADF8\uC544\uC6C3"}
+                  </button>
+                  {!s.adminMode ? (
+                    <button
+                      onClick={openAdminModal}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        border: "1px solid var(--input-border)",
+                        background: "var(--panel-bg)",
+                        cursor: "pointer",
+                        fontWeight: 900,
+                        fontSize: 13,
+                      }}
+                    >
+                      {"\uAD00\uB9AC\uC790 \uB85C\uADF8\uC778"}
+                    </button>
+                  ) : null}
+                </div>
+              </Card>
+              {s.adminMode ? (
+                <Card title={"\uAC00\uC785 \uC2B9\uC778 \uAD00\uB9AC"}>
+                  {pendingUsers.length === 0 ? (
+                    <div style={{ fontSize: 13, opacity: 0.8 }}>
+                      {"\uB300\uAE30 \uC911\uC778 \uC694\uCCAD\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."}
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gap: 10 }}>
+                      {pendingUsers.map((u) => (
+                        <div
+                          key={u.id}
+                          style={{
+                            border: "1px solid var(--soft-border)",
+                            borderRadius: 12,
+                            padding: 12,
+                            background: "var(--panel-bg)",
+                            display: "grid",
+                            gap: 6,
+                          }}
+                        >
+                          <div style={{ fontWeight: 900 }}>
+                            {u.name || "-"} ({u.email || "-"})
+                          </div>
+                          <div style={{ fontSize: 12, opacity: 0.7 }}>
+                            {u.createdAt?.toDate ? u.createdAt.toDate().toLocaleString("ko-KR") : "-"}
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                              onClick={() => approveUser(u.id)}
+                              style={{
+                                padding: "8px 10px",
+                                borderRadius: 10,
+                                border: "1px solid var(--input-border)",
+                                background: "var(--accent)",
+                                color: "var(--accent-text)",
+                                cursor: "pointer",
+                                fontSize: 12,
+                                fontWeight: 900,
+                              }}
+                            >
+                              {"\uC2B9\uC778"}
+                            </button>
+                            <button
+                              onClick={() => rejectUser(u.id)}
+                              style={{
+                                padding: "8px 10px",
+                                borderRadius: 10,
+                                border: "1px solid var(--input-border)",
+                                background: "var(--panel-bg)",
+                                cursor: "pointer",
+                                fontSize: 12,
+                                fontWeight: 900,
+                              }}
+                            >
+                              {"\uAC70\uC808"}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              ) : null}
+            </div>
+          ) : (
+            <>
           <div style={{ marginBottom: 14 }}>
-            <img
-              src="/banner.png"
-              alt="성북구 마을 배너"
+                <img
+                  src="/banner.png"
+                  alt="\uC131\uBD81\uAD6C \uB9C8\uC744 \uBC30\uB108"
               style={{
                 width: "100%",
                 height: "min(40vw, 220px)",
@@ -2085,12 +2349,14 @@ export default function App() {
             />
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 900 }}>광부 효율 계산기</div>
-              <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
-                판매 수수료 {fmt(toNum(s.feePct))}% 적용(판매 실수령 기준)
-              </div>
-            </div>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 900 }}>{"\uAD11\uBD80 \uD6A8\uC728 \uACC4\uC0B0\uAE30"}</div>
+                  <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
+                    {"\uD310\uB9E4 \uC218\uC218\uB8CC "}
+                    {fmt(toNum(s.feePct))}
+                    {"% \uC801\uC6A9(\uD310\uB9E4 \uC2E4\uC218\uB839 \uAE30\uC900)"}
+                  </div>
+                </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <button
                 onClick={reset}
@@ -2161,6 +2427,8 @@ export default function App() {
           <div style={{ marginTop: 14, fontSize: 12, opacity: 0.7 }}>
             {"\ub0b4\uc815\ubcf4/\uc2dc\uc138 \ubcc0\uacbd\uc740 \ud3ec\uc158/\uc8fc\uad34 \ud6a8\uc728 \uacc4\uc0b0\uc5d0\ub3c4 \uc790\ub3d9 \ubc18\uc601\ub429\ub2c8\ub2e4. \u00b7 made by mirae24"}
           </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -2240,7 +2508,7 @@ export default function App() {
         </div>
       ) : null}
 
-      {introOpen ? (
+      {introOpen && canUseApp ? (
         <div
           style={{
             position: "fixed",
