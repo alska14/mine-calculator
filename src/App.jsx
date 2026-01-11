@@ -532,7 +532,7 @@ const defaultState = {
   adminMode: false,
 };
 
-function Sidebar({ active, onSelect, onlineUsers }) {
+function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onPrevMonth, onNextMonth }) {
   const itemStyle = (key) => ({
     padding: "10px 12px",
     borderRadius: 10,
@@ -597,6 +597,78 @@ function Sidebar({ active, onSelect, onlineUsers }) {
           </div>
         )}
       </div>
+      {calendarInfo ? (
+        <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--soft-border)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <button
+              onClick={onPrevMonth}
+              style={{
+                padding: "4px 8px",
+                borderRadius: 8,
+                border: "1px solid var(--input-border)",
+                background: "var(--panel-bg)",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 700,
+              }}
+            >
+              {"이전"}
+            </button>
+            <div style={{ fontSize: 12, fontWeight: 900 }}>{`${calendarInfo.year}년 ${calendarInfo.month}월 생일`}</div>
+            <button
+              onClick={onNextMonth}
+              style={{
+                padding: "4px 8px",
+                borderRadius: 8,
+                border: "1px solid var(--input-border)",
+                background: "var(--panel-bg)",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 700,
+              }}
+            >
+              {"다음"}
+            </button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+            {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
+              <div key={d} style={{ fontSize: 10, fontWeight: 900, textAlign: "center", opacity: 0.7 }}>
+                {d}
+              </div>
+            ))}
+            {calendarInfo.cells.map((day, idx) => {
+              if (!day) {
+                return <div key={`empty-${idx}`} style={{ minHeight: 26 }} />;
+              }
+              const monthKey = String(calendarInfo.month).padStart(2, "0");
+              const dayKey = String(day).padStart(2, "0");
+              const key = `${monthKey}-${dayKey}`;
+              const list = birthdayMap?.[key] || [];
+              return (
+                <div
+                  key={`day-${day}`}
+                  style={{
+                    minHeight: 26,
+                    borderRadius: 8,
+                    border: "1px solid var(--soft-border)",
+                    padding: 4,
+                    fontSize: 10,
+                    background: list.length ? "rgba(46, 204, 113, 0.08)" : "transparent",
+                  }}
+                >
+                  <div style={{ fontWeight: 900 }}>{day}</div>
+                  {list.length ? (
+                    <div style={{ marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }} />
+                      <span style={{ fontSize: 10 }}>{list.length}</span>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1211,7 +1283,7 @@ function FeedbackPage({ s, setS }) {
   );
 }
 
-function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
+function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profiles, setProfiles }) {
   const [form, setForm] = useState({
     type: "improve",
     title: "",
@@ -1226,7 +1298,6 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
   const isAdmin = s.adminMode === true;
   const canSubmit = form.title.trim() && form.body.trim();
   const [clientId] = useState(() => getClientId());
-  const [profiles, setProfiles] = useState([]);
   const [profileForm, setProfileForm] = useState({
     nickname: "",
     mcNickname: "",
@@ -1241,7 +1312,6 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
   const [profileTouched, setProfileTouched] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState("");
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
 
   useEffect(() => {
     const q = query(collection(db, "villageSuggestions"), orderBy("createdAt", "desc"));
@@ -1254,15 +1324,6 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
     });
     return () => unsub();
   }, [isAdmin, clientId]);
-
-  useEffect(() => {
-    const q = query(collection(db, "villageProfiles"), orderBy("updatedAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
-      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setProfiles(rows);
-    });
-    return () => unsub();
-  }, []);
 
   useEffect(() => {
     if (!authUser || profileTouched) return;
@@ -1358,11 +1419,15 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
     setProfileForm((p) => ({ ...p, [key]: value }));
   };
 
+  const existingProfile = useMemo(() => {
+    if (!authUser) return null;
+    return profiles.find((p) => p.uid === authUser.uid) || null;
+  }, [authUser, profiles]);
+
   const saveProfile = async () => {
     if (!authUser) return;
     setProfileSaving(true);
     setProfileError("");
-    const existing = profiles.find((p) => p.uid === authUser.uid);
     const payload = {
       uid: authUser.uid,
       nickname: profileForm.nickname.trim(),
@@ -1376,7 +1441,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
       dislikes: profileForm.dislikes.trim(),
       updatedAt: serverTimestamp(),
     };
-    if (!existing?.createdAt) {
+    if (!existingProfile?.createdAt) {
       payload.createdAt = serverTimestamp();
     }
     try {
@@ -1427,18 +1492,53 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
     }
   };
 
-  const birthdayMap = useMemo(() => {
-    const map = {};
-    profiles.forEach((p) => {
-      if (!p.birthday) return;
-      const parts = String(p.birthday).split("-");
-      if (parts.length < 3) return;
-      const key = `${parts[1]}-${parts[2]}`;
-      if (!map[key]) map[key] = [];
-      map[key].push(p);
+  const deleteProfile = async () => {
+    if (!authUser) return;
+    setProfileSaving(true);
+    setProfileError("");
+    try {
+      setProfiles((prev) => prev.filter((p) => p.uid !== authUser.uid));
+      await Promise.race([
+        deleteDoc(doc(db, "villageProfiles", authUser.uid)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
+      setProfileForm({
+        nickname: "",
+        mcNickname: "",
+        birthday: "",
+        age: "",
+        mbti: "",
+        job: "",
+        rank: "",
+        likes: "",
+        dislikes: "",
+      });
+      setProfileTouched(false);
+    } catch (err) {
+      if (err?.code === "resource-exhausted" || err?.message === "timeout") {
+        setProfileError("삭제가 지연되고 있습니다. 잠시 후 다시 시도해주세요.");
+      } else {
+        setProfileError("프로필 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      }
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const resetProfileForm = () => {
+    setProfileForm({
+      nickname: "",
+      mcNickname: "",
+      birthday: "",
+      age: "",
+      mbti: "",
+      job: "",
+      rank: "",
+      likes: "",
+      dislikes: "",
     });
-    return map;
-  }, [profiles]);
+    setProfileTouched(true);
+  };
 
   const rankOrder = ["이장", "부이장", "주민대표", "거주민", "입주자", "알바"];
   const sortedProfiles = useMemo(() => {
@@ -1452,20 +1552,6 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
       return an.localeCompare(bn);
     });
   }, [profiles]);
-
-  const calendarInfo = useMemo(() => {
-    const year = calendarMonth.getFullYear();
-    const monthIndex = calendarMonth.getMonth();
-    const start = new Date(year, monthIndex, 1);
-    const end = new Date(year, monthIndex + 1, 0);
-    const daysInMonth = end.getDate();
-    const startDay = start.getDay();
-    const cells = [];
-    for (let i = 0; i < startDay; i += 1) cells.push(null);
-    for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
-    while (cells.length < 42) cells.push(null);
-    return { year, month: monthIndex + 1, cells };
-  }, [calendarMonth]);
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
@@ -1563,80 +1649,39 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
       {showProfiles ? (
         <Card title="마을원 프로필">
           <div style={{ display: "grid", gap: 12 }}>
-            <div style={{ padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <button
-                  onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 10,
-                    border: "1px solid var(--input-border)",
-                    background: "var(--panel-bg)",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
-                >
-                  이전
-                </button>
-                <div style={{ fontWeight: 900 }}>{`${calendarInfo.year}년 ${calendarInfo.month}월 생일`}</div>
-                <button
-                  onClick={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 10,
-                    border: "1px solid var(--input-border)",
-                    background: "var(--panel-bg)",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
-                >
-                  다음
-                </button>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
-                {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
-                  <div key={d} style={{ fontSize: 12, fontWeight: 900, textAlign: "center", opacity: 0.7 }}>
-                    {d}
-                  </div>
-                ))}
-                {calendarInfo.cells.map((day, idx) => {
-                  if (!day) {
-                    return <div key={`empty-${idx}`} style={{ minHeight: 56 }} />;
-                  }
-                  const monthKey = String(calendarInfo.month).padStart(2, "0");
-                  const dayKey = String(day).padStart(2, "0");
-                  const key = `${monthKey}-${dayKey}`;
-                  const list = birthdayMap[key] || [];
-                  return (
-                    <div
-                      key={`day-${day}`}
-                      style={{
-                        minHeight: 56,
-                        borderRadius: 10,
-                        border: "1px solid var(--soft-border)",
-                        padding: 6,
-                        fontSize: 12,
-                        background: list.length ? "rgba(46, 204, 113, 0.08)" : "transparent",
-                      }}
-                    >
-                      <div style={{ fontWeight: 900 }}>{day}</div>
-                      {list.length ? (
-                        <div style={{ marginTop: 4, display: "grid", gap: 2 }}>
-                          {list.slice(0, 3).map((p) => (
-                            <div key={p.uid} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#2ecc71", display: "inline-block" }} />
-                              <span style={{ fontSize: 11, opacity: 0.9 }}>{p.nickname || p.mcNickname || "이름 없음"}</span>
-                            </div>
-                          ))}
-                          {list.length > 3 ? <div style={{ fontSize: 11, opacity: 0.7 }}>{`+${list.length - 3}명`}</div> : null}
-                        </div>
-                      ) : null}
+
+            <div style={{ display: "grid", gap: 10 }}>
+              {sortedProfiles.length === 0 ? (
+                <div style={{ fontSize: 13, opacity: 0.7 }}>??? ??? ???? ????.</div>
+              ) : (
+                sortedProfiles.map((p) => (
+                  <div
+                    key={p.uid}
+                    style={{
+                      padding: 12,
+                      borderRadius: 12,
+                      border: "1px solid var(--soft-border)",
+                      background: "var(--panel-bg)",
+                      display: "grid",
+                      gap: 6,
+                    }}
+                  >
+                    <div style={{ fontWeight: 900 }}>
+                      {p.nickname || p.mcNickname || "?? ??"}
+                      {p.mcNickname ? ` (${p.mcNickname})` : ""}
                     </div>
-                  );
-                })}
-              </div>
+                    {p.rank ? <div style={{ fontSize: 12, opacity: 0.85 }}>??: {p.rank}</div> : null}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, fontSize: 12 }}>
+                      <div>??: {p.birthday || "-"}</div>
+                      <div>??: {p.age || "-"}</div>
+                      <div>MBTI: {p.mbti || "-"}</div>
+                      <div>?? ??: {p.job || "-"}</div>
+                    </div>
+                    {p.likes ? <div style={{ fontSize: 12 }}>???? ?: {p.likes}</div> : null}
+                    {p.dislikes ? <div style={{ fontSize: 12 }}>???? ?: {p.dislikes}</div> : null}
+                  </div>
+                ))
+              )}
             </div>
 
             <div style={{ fontSize: 12, opacity: 0.8 }}>
@@ -1717,7 +1762,27 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
 
             {profileError ? <div style={{ fontSize: 12, color: "#c0392b" }}>{profileError}</div> : null}
 
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div style={{ fontSize: 12, opacity: 0.75 }}>
+              {existingProfile ? "? ???? ????. ??/??? ? ????." : "???? ??????."}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
+              <button
+                onClick={resetProfileForm}
+                disabled={!authUser || profileSaving}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--panel-bg)",
+                  cursor: !authUser || profileSaving ? "not-allowed" : "pointer",
+                  fontWeight: 900,
+                  fontSize: 13,
+                  opacity: !authUser || profileSaving ? 0.6 : 1,
+                }}
+              >
+                {"? ???"}
+              </button>
               <button
                 onClick={saveProfile}
                 disabled={!authUser || profileSaving}
@@ -1733,43 +1798,26 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                   opacity: !authUser || profileSaving ? 0.6 : 1,
                 }}
               >
-                {profileSaving ? "저장 중..." : "프로필 저장"}
+                {profileSaving ? "?? ?..." : existingProfile ? "??? ??" : "??? ??"}
+              </button>
+              <button
+                onClick={deleteProfile}
+                disabled={!authUser || profileSaving || !existingProfile}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--panel-bg)",
+                  cursor: !authUser || profileSaving || !existingProfile ? "not-allowed" : "pointer",
+                  fontWeight: 900,
+                  fontSize: 13,
+                  opacity: !authUser || profileSaving || !existingProfile ? 0.6 : 1,
+                }}
+              >
+                {"??? ??"}
               </button>
             </div>
 
-            <div style={{ display: "grid", gap: 10 }}>
-              {sortedProfiles.length === 0 ? (
-                <div style={{ fontSize: 13, opacity: 0.7 }}>등록된 마을원 프로필이 없습니다.</div>
-              ) : (
-                sortedProfiles.map((p) => (
-                  <div
-                    key={p.uid}
-                    style={{
-                      padding: 12,
-                      borderRadius: 12,
-                      border: "1px solid var(--soft-border)",
-                      background: "var(--panel-bg)",
-                      display: "grid",
-                      gap: 6,
-                    }}
-                  >
-                  <div style={{ fontWeight: 900 }}>
-                    {p.nickname || p.mcNickname || "이름 없음"}
-                    {p.mcNickname ? ` (${p.mcNickname})` : ""}
-                  </div>
-                  {p.rank ? <div style={{ fontSize: 12, opacity: 0.85 }}>직급: {p.rank}</div> : null}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, fontSize: 12 }}>
-                      <div>생일: {p.birthday || "-"}</div>
-                      <div>나이: {p.age || "-"}</div>
-                      <div>MBTI: {p.mbti || "-"}</div>
-                      <div>마크 직업: {p.job || "-"}</div>
-                    </div>
-                    {p.likes ? <div style={{ fontSize: 12 }}>좋아하는 것: {p.likes}</div> : null}
-                    {p.dislikes ? <div style={{ fontSize: 12 }}>싫어하는 것: {p.dislikes}</div> : null}
-                  </div>
-                ))
-              )}
-            </div>
           </div>
         </Card>
       ) : null}
@@ -2467,6 +2515,8 @@ export default function App() {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [presenceDocs, setPresenceDocs] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [profiles, setProfiles] = useState([]);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [priceSaving, setPriceSaving] = useState(false);
   const [priceSaveError, setPriceSaveError] = useState("");
   const [nicknameSaving, setNicknameSaving] = useState(false);
@@ -2497,6 +2547,33 @@ export default function App() {
     const v = toNum(s.feePct, 0) / 100;
     return Math.max(0, Math.min(0.5, v));
   }, [s.feePct]);
+
+  const birthdayMap = useMemo(() => {
+    const map = {};
+    profiles.forEach((p) => {
+      if (!p.birthday) return;
+      const parts = String(p.birthday).split("-");
+      if (parts.length < 3) return;
+      const key = `${parts[1]}-${parts[2]}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(p);
+    });
+    return map;
+  }, [profiles]);
+
+  const calendarInfo = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const monthIndex = calendarMonth.getMonth();
+    const start = new Date(year, monthIndex, 1);
+    const end = new Date(year, monthIndex + 1, 0);
+    const daysInMonth = end.getDate();
+    const startDay = start.getDay();
+    const cells = [];
+    for (let i = 0; i < startDay; i += 1) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d += 1) cells.push(d);
+    while (cells.length < 42) cells.push(null);
+    return { year, month: monthIndex + 1, cells };
+  }, [calendarMonth]);
 
   const reset = () => {
     try {
@@ -2791,6 +2868,15 @@ export default function App() {
   }, [authUser, s.adminMode]);
 
   useEffect(() => {
+    const q = query(collection(db, "villageProfiles"), orderBy("updatedAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setProfiles(rows);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
     const ref = doc(db, "shared", "prices");
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.data();
@@ -2943,7 +3029,15 @@ export default function App() {
     >
       {showSidebar ? (
         <div style={{ padding: 16, borderRight: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
-          <Sidebar active={s.activeMenu} onSelect={setActive} onlineUsers={onlineUsers} />
+          <Sidebar
+            active={s.activeMenu}
+            onSelect={setActive}
+            onlineUsers={onlineUsers}
+            birthdayMap={birthdayMap}
+            calendarInfo={calendarInfo}
+            onPrevMonth={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
+            onNextMonth={() => setCalendarMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
+          />
         </div>
       ) : null}
 
@@ -3267,10 +3361,24 @@ export default function App() {
             ) : null}
             {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
             {s.activeMenu === "village" ? (
-              <VillageSuggestionPage s={s} onlineUsers={onlineUsers} authUser={authUser} showProfiles={false} />
+              <VillageSuggestionPage
+                s={s}
+                onlineUsers={onlineUsers}
+                authUser={authUser}
+                showProfiles={false}
+                profiles={profiles}
+                setProfiles={setProfiles}
+              />
             ) : null}
             {s.activeMenu === "members" ? (
-              <VillageSuggestionPage s={s} onlineUsers={onlineUsers} authUser={authUser} showProfiles />
+              <VillageSuggestionPage
+                s={s}
+                onlineUsers={onlineUsers}
+                authUser={authUser}
+                showProfiles
+                profiles={profiles}
+                setProfiles={setProfiles}
+              />
             ) : null}
           </div>
 
