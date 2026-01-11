@@ -2633,29 +2633,42 @@ export default function App() {
     }
     const userRef = doc(db, "users", authUser.uid);
     (async () => {
-      const snap = await getDoc(userRef);
-      const exists = snap.exists();
-      const payload = {
-        uid: authUser.uid,
-        email: authUser.email || "",
-        name: authUser.displayName || "",
-        photoURL: authUser.photoURL || "",
-        lastLoginAt: serverTimestamp(),
-      };
-      if (!exists) {
-        payload.status = "pending";
-        payload.createdAt = serverTimestamp();
+      try {
+        const snap = await getDoc(userRef);
+        const exists = snap.exists();
+        const payload = {
+          uid: authUser.uid,
+          email: authUser.email || "",
+          name: authUser.displayName || "",
+          photoURL: authUser.photoURL || "",
+          lastLoginAt: serverTimestamp(),
+        };
+        if (!exists) {
+          payload.status = "pending";
+          payload.createdAt = serverTimestamp();
+        }
+        await setDoc(userRef, payload, { merge: true });
+      } catch (err) {
+        setUserDoc({ uid: authUser.uid, status: "pending" });
+        if (err?.code === "resource-exhausted") {
+          setAuthError("로그인이 되었지만 서버 동기화가 지연됩니다. 잠시 후 다시 시도해 주세요.");
+        }
       }
-      await setDoc(userRef, payload, { merge: true });
     })();
 
-    const unsub = onSnapshot(userRef, (snap) => {
-      if (!snap.exists()) {
+    const unsub = onSnapshot(
+      userRef,
+      (snap) => {
+        if (!snap.exists()) {
+          setUserDoc({ uid: authUser.uid, status: "pending" });
+          return;
+        }
+        setUserDoc({ id: snap.id, ...snap.data() });
+      },
+      () => {
         setUserDoc({ uid: authUser.uid, status: "pending" });
-        return;
       }
-      setUserDoc({ id: snap.id, ...snap.data() });
-    });
+    );
     return () => unsub();
   }, [authUser]);
 
