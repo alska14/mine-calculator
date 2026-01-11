@@ -902,9 +902,32 @@ function ProfilePage({
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
           {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+          {priceUpdatedBy ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
           {priceUpdatedBy
             ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})`
             : ""}
+        </div>
+
+        <div style={{ marginTop: "10px", display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
+          <button
+            onClick={onSaveSharedPrices}
+            disabled={!authUser || priceSaving}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: authUser ? "var(--panel-bg)" : "transparent",
+              color: "var(--text)",
+              cursor: !authUser || priceSaving ? "not-allowed" : "pointer",
+              fontWeight: 800,
+              fontSize: 12,
+              opacity: !authUser || priceSaving ? 0.6 : 1,
+            }}
+            title={authUser ? "시세/옵션 저장" : "로그인 후 저장할 수 있습니다."}
+          >
+            {priceSaving ? "저장 중..." : "시세 저장"}
+          </button>
         </div>
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
           {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
@@ -2206,7 +2229,7 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
   );
 }
 
-function IngotPage({ s, setS, feeRate, priceUpdatedAt }) {
+function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSharedPrices, priceSaving, priceSaveError, authUser }) {
   const materialLabels = {
     ingot: "\uc8fc\uad34",
     stone: "\uc870\uc57d\ub3cc",
@@ -3374,7 +3397,17 @@ export default function App() {
               <PotionPage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
             ) : null}
             {s.activeMenu === "ingot" ? (
-              <IngotPage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
+              <IngotPage
+                s={s}
+                setS={setS}
+                feeRate={feeRate}
+                priceUpdatedAt={priceUpdatedAt}
+                priceUpdatedBy={priceUpdatedBy}
+                onSaveSharedPrices={saveSharedPrices}
+                priceSaving={priceSaving}
+                priceSaveError={priceSaveError}
+                authUser={authUser}
+              />
             ) : null}
             {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
             {s.activeMenu === "village" ? (
