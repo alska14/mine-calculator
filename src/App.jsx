@@ -690,6 +690,7 @@ function ProfilePage({
   setS,
   feeRate,
   priceUpdatedAt,
+  priceUpdatedBy,
   authUser,
   userDoc,
   onSaveNickname,
@@ -901,6 +902,9 @@ function ProfilePage({
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
           {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+          {priceUpdatedBy
+            ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})`
+            : ""}
         </div>
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
           {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
@@ -2510,6 +2514,7 @@ export default function App() {
   const [adminPass, setAdminPass] = useState("");
   const [adminError, setAdminError] = useState("");
   const [priceUpdatedAt, setPriceUpdatedAt] = useState(null);
+  const [priceUpdatedBy, setPriceUpdatedBy] = useState(null);
   const priceUpdateTimer = useRef(null);
   const suppressPriceWrite = useRef(false);
   const [authUser, setAuthUser] = useState(null);
@@ -2885,7 +2890,9 @@ export default function App() {
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.data();
       const ts = data?.updatedAt?.toDate ? data.updatedAt.toDate() : null;
+      const by = data?.updatedBy || null;
       setPriceUpdatedAt(ts);
+      setPriceUpdatedBy(by);
       if (!data) return;
       suppressPriceWrite.current = true;
       setS((p) => ({
@@ -2915,6 +2922,11 @@ export default function App() {
       abilityGrossSell: s.abilityGrossSell,
       lifeGrossSell: s.lifeGrossSell,
       potionPrices: s.potionPrices,
+      updatedBy: {
+        uid: authUser.uid,
+        name: authUser.displayName || "",
+        email: authUser.email || "",
+      },
       updatedAt: serverTimestamp(),
     };
     try {
@@ -3347,6 +3359,7 @@ export default function App() {
                 setS={setS}
                 feeRate={feeRate}
                 priceUpdatedAt={priceUpdatedAt}
+                priceUpdatedBy={priceUpdatedBy}
                 authUser={authUser}
                 userDoc={userDoc}
                 onSaveNickname={saveNickname}
