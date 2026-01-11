@@ -615,6 +615,9 @@ function ProfilePage({
   authUser,
   userDoc,
   onSaveNickname,
+  onSaveSharedPrices,
+  priceSaving,
+  priceSaveError,
   nicknameSaving,
   nicknameError,
 }) {
@@ -824,7 +827,7 @@ function ProfilePage({
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
           {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
           <button
-            onClick={saveSharedPrices}
+            onClick={onSaveSharedPrices}
             disabled={!authUser || priceSaving}
             style={{
               padding: "8px 12px",
@@ -3188,6 +3191,9 @@ export default function App() {
                 authUser={authUser}
                 userDoc={userDoc}
                 onSaveNickname={saveNickname}
+                onSaveSharedPrices={saveSharedPrices}
+                priceSaving={priceSaving}
+                priceSaveError={priceSaveError}
                 nicknameSaving={nicknameSaving}
                 nicknameError={nicknameError}
               />
