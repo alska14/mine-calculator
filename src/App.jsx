@@ -695,7 +695,7 @@ function ProfilePage({
   userDoc,
   onSaveNickname,
   onSaveCommonPrices,
-            {commonPriceSaving ? "저장 중..." : "시세 저장"}
+  commonPriceSaving,
   commonPriceError,
   onSaveMaterialPrices,
   materialPriceSaving,
@@ -903,13 +903,16 @@ function ProfilePage({
           구매 비용(수수료 없음): <b>시장가 그대로</b>
         </div>
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          {"최근 시세 업데이트: "}
+          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+          {priceUpdatedBy ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
           {priceUpdatedBy
             ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})`
             : ""}
         </div>
 
+        <div style={{ marginTop: "10px", display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
           {commonPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{commonPriceError}</span> : null}
           <button
@@ -926,10 +929,1529 @@ function ProfilePage({
               fontSize: 12,
               opacity: !authUser || commonPriceSaving ? 0.6 : 1,
             }}
-            title={authUser ? "시세 저장" : "로그인 후 저장할 수 있습니다."}
+            title={authUser ? "?? ??" : "??? ? ??? ? ????."}
           >
-            {commonPriceSaving ? "저장 중..." : "시세 저장"}
+            {commonPriceSaving ? "?? ?..." : "?? ??"}
           </button>
+        </div>
+        <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
+          <button
+            onClick={onSaveSharedPrices}
+            disabled={!authUser || priceSaving}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: authUser ? "var(--panel-bg)" : "transparent",
+              color: "var(--text)",
+              cursor: !authUser || priceSaving ? "not-allowed" : "pointer",
+              fontWeight: 800,
+              fontSize: 12,
+              opacity: !authUser || priceSaving ? 0.6 : 1,
+            }}
+            title={authUser ? "시세/옵션 수동 저장" : "로그인 후 저장할 수 있습니다."}
+          >
+            {priceSaving ? "저장 중..." : "시세/옵션 저장"}
+          </button>
+        </div>
+      </Card>
+
+      <Card title="재료 시세(시장가) + 수급 방식 입력">
+        <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10, lineHeight: 1.5 }}>
+          재료는 <b>시장가 1개만</b> 입력합니다.
+          <br />- 판매 실수령 = 시장가 × (1-수수료)
+          <br />- 구매 비용 = 시장가(수수료 없음)
+          <br />
+          수급 방식:
+          <br />- 직접 수급(0) / 구매 필요 / (고급) 포기한 판매 수익
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <Select
+            label={"\uc218\uae09 \ubc29\uc2dd \uc77c\uad04 \uc124\uc815"}
+            value="custom"
+            onChange={(v) => {
+              if (v === "custom") return;
+              const mode = v === "all_buy" ? "buy" : "owned";
+              setS((p) => ({
+                ...p,
+                modes: materialKeysForUI.reduce((acc, key) => ({ ...acc, [key]: mode }), { ...p.modes }),
+              }));
+            }}
+            options={[
+              { value: "custom", label: "\ucee4\uc2a4\ud140(\uac1c\ubcc4 \uc124\uc815)" },
+              { value: "all_owned", label: "\uc804\ubd80 \uc9c1\uc811 \uc218\uae09" },
+              { value: "all_buy", label: "\uc804\ubd80 \uad6c\ub9e4" },
+            ]}
+          />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+          {materialKeysForUI.map((k) => (
+            <React.Fragment key={k}>
+              <Field
+                label={`${materialLabels[k] ?? k} \uc2dc\uc7a5\uac00(\uac1c\ub2f9)`}
+                value={s.prices[k]?.market ?? ""}
+                onChange={(v) => setS((p) => ({ ...p, prices: { ...p.prices, [k]: { market: v } } }))}
+                min={0}
+                suffix="원"
+              />
+              <Select
+                label={`${materialLabels[k] ?? k} \uc218\uae09 \ubc29\uc2dd`}
+                value={
+                  ["owned", "opportunity", "buy"].includes(s.modes[k])
+                    ? s.modes[k] === "owned"
+                      ? 0
+                      : s.modes[k] === "buy"
+                        ? 1
+                        : 2
+                    : 0
+                }
+                onChange={(v) => {
+                  const mode = v === 0 ? "owned" : v === 1 ? "buy" : "opportunity";
+                  setS((p) => ({ ...p, modes: { ...p.modes, [k]: mode } }));
+                }}
+                options={[
+                  { value: 0, label: "직접 수급(0)" },
+                  { value: 1, label: "구매 필요" },
+                  { value: 2, label: "포기한 판매 수익(고급)" },
+                ]}
+              />
+            </React.Fragment>
+          ))}
+        </div>
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
+          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+        </div>
+
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {materialPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{materialPriceError}</span> : null}
+          <button
+            onClick={onSaveMaterialPrices}
+            disabled={!authUser || materialPriceSaving}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: authUser ? "var(--panel-bg)" : "transparent",
+              color: "var(--text)",
+              cursor: !authUser || materialPriceSaving ? "not-allowed" : "pointer",
+              fontWeight: 800,
+              fontSize: 12,
+              opacity: !authUser || materialPriceSaving ? 0.6 : 1,
+            }}
+            title={authUser ? "재료 시세 저장" : "로그인 후 저장할 수 있습니다."}
+          >
+            {materialPriceSaving ? "저장 중..." : "재료 시세 저장"}
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function FeedbackPage({ s, setS }) {
+  const [form, setForm] = useState({
+    type: "improve",
+    title: "",
+    body: "",
+    contact: "",
+    visibility: "public",
+  });
+  const [customType, setCustomType] = useState("");
+
+  const [items, setItems] = useState([]);
+  const [replyDrafts, setReplyDrafts] = useState({});
+  const isAdmin = s.adminMode === true;
+  const canSubmit = form.title.trim() && form.body.trim();
+  const [clientId] = useState(() => getClientId());
+
+  useEffect(() => {
+    const q = query(collection(db, "feedbacks"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const visible = isAdmin
+        ? rows
+        : rows.filter((r) => r.visibility !== "private" || r.authorId === clientId);
+      setItems(visible);
+    });
+    return () => unsub();
+  }, [isAdmin, clientId]);
+
+  useEffect(() => {
+    setReplyDrafts((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      items.forEach((item) => {
+        if (!(item.id in next)) {
+          next[item.id] = item.reply || "";
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [items]);
+
+  const submit = () => {
+    if (!canSubmit) return;
+    addDoc(collection(db, "feedbacks"), {
+      type: form.type,
+      title: form.title.trim(),
+      body: form.body.trim(),
+      contact: form.contact.trim(),
+      visibility: form.visibility,
+      authorId: clientId,
+      status: "new",
+      createdAt: serverTimestamp(),
+    });
+    setForm({ type: "improve", title: "", body: "", contact: "", visibility: "public" });
+  };
+
+  const updateStatus = (id, status) => {
+    if (!isAdmin) return;
+    updateDoc(doc(db, "feedbacks", id), { status });
+  };
+
+  const removeItem = (id) => {
+    if (!isAdmin) return;
+    deleteDoc(doc(db, "feedbacks", id));
+  };
+
+  const saveReply = (id, reply) => {
+    if (!isAdmin) return;
+    const trimmed = (reply || "").trim();
+    updateDoc(doc(db, "feedbacks", id), {
+      reply: trimmed,
+      repliedAt: trimmed ? serverTimestamp() : null,
+      status: trimmed ? "done" : "progress",
+    });
+  };
+
+  const typeLabel = (type) => {
+    if (type === "bug") return "오류/잘못된 점";
+    if (type === "other") return "기타";
+    return "개선";
+  };
+
+  const statusLabel = (status) => {
+    if (status === "progress") return "진행중";
+    if (status === "done") return "완료";
+    return "접수";
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <Card title="개선점/오류 제보">
+        <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
+          사용 중 문제점이나 개선 아이디어가 있으면 문의/피드백에 남겨주세요.
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>유형</div>
+            <select
+              value={form.type}
+              onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+              style={{
+                padding: "10px 12px",
+                borderRadius: 10,
+                border: "1px solid var(--input-border)",
+                outline: "none",
+                fontSize: 14,
+                background: "var(--input-bg)",
+                color: "var(--text)",
+              }}
+            >
+              <option value="improve">개선</option>
+              <option value="bug">오류/잘못된 점</option>
+              <option value="other">기타</option>
+            </select>
+          </div>
+          <TextField
+            label="연락처(선택)"
+            value={form.contact}
+            onChange={(v) => setForm((p) => ({ ...p, contact: v }))}
+            placeholder="이메일/디스코드 등"
+          />
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
+          <Select
+            label={"공개 설정"}
+            value={form.visibility}
+            onChange={(v) => setForm((p) => ({ ...p, visibility: v }))}
+            options={[
+              { value: "public", label: "공개" },
+              { value: "private", label: "비공개(관리자만)" },
+            ]}
+          />
+          <TextField
+            label="제목"
+            value={form.title}
+            onChange={(v) => setForm((p) => ({ ...p, title: v }))}
+            placeholder="예: 재료 시세 입력이 불편해요"
+          />
+          <TextArea
+            label="내용"
+            value={form.body}
+            onChange={(v) => setForm((p) => ({ ...p, body: v }))}
+            placeholder="어떤 문제가 있었는지, 개선 아이디어를 자세히 적어주세요."
+            rows={5}
+          />
+        </div>
+
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10 }}>
+          <button
+            onClick={submit}
+            disabled={!canSubmit}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: canSubmit ? "var(--accent)" : "var(--panel-bg)",
+              color: canSubmit ? "var(--accent-text)" : "var(--muted)",
+              cursor: canSubmit ? "pointer" : "not-allowed",
+              fontWeight: 900,
+              fontSize: 13,
+            }}
+          >
+            제보 등록
+          </button>
+        </div>
+      </Card>
+
+      <Card title="문의 관리">
+        {items.length === 0 ? (
+          <div style={{ fontSize: 13, opacity: 0.8 }}>등록된 문의가 없습니다.</div>
+        ) : (
+          <div style={{ display: "grid", gap: 12 }}>
+            {items.map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  border: "1px solid var(--soft-border)",
+                  borderRadius: 12,
+                  padding: 12,
+                  background: "var(--panel-bg)",
+                  display: "grid",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ fontWeight: 900 }}>
+                    [{typeLabel(item.type)}] {item.title}
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.75 }}>
+                    {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString("ko-KR") : "-"}
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, lineHeight: 1.5 }}>{item.body}</div>
+                {item.contact ? (
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>연락처: {item.contact}</div>
+                ) : null}
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <div style={{ fontSize: 12, opacity: 0.7 }}>
+                    공개: {item.visibility === "private" ? "비공개" : "공개"}
+                  </div>
+                  {item.reply ? (
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>관리자 답변 완료</div>
+                  ) : null}
+                </div>
+                {item.reply ? (
+                  <div style={{ padding: 10, borderRadius: 10, background: "var(--soft-bg)", border: "1px solid var(--soft-border)", fontSize: 13 }}>
+                    <div style={{ fontWeight: 900, marginBottom: 4 }}>관리자 답변</div>
+                    <div style={{ whiteSpace: "pre-wrap" }}>{item.reply}</div>
+                  </div>
+                ) : null}
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>상태</div>
+                  {isAdmin ? (
+                    <select
+                      value={item.status || "new"}
+                      onChange={(e) => updateStatus(item.id, e.target.value)}
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: 10,
+                        border: "1px solid var(--input-border)",
+                        outline: "none",
+                        fontSize: 13,
+                        background: "var(--input-bg)",
+                        color: "var(--text)",
+                      }}
+                    >
+                      <option value="new">접수</option>
+                      <option value="progress">진행중</option>
+                      <option value="done">완료</option>
+                    </select>
+                  ) : (
+                    <div style={{ fontSize: 12, opacity: 0.7 }}>{statusLabel(item.status)}</div>
+                  )}
+                  {isAdmin ? (
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: 10,
+                        border: "1px solid var(--input-border)",
+                        background: "var(--panel-bg)",
+                        color: "var(--text)",
+                        cursor: "pointer",
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      삭제
+                    </button>
+                  ) : null}
+                </div>
+                {isAdmin ? (
+                  <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
+                    <TextArea
+                      label="관리자 답변"
+                      value={replyDrafts[item.id] ?? ""}
+                      onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
+                      placeholder="답변을 입력하세요"
+                      rows={3}
+                    />
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button
+                        onClick={() => {
+                          saveReply(item.id, replyDrafts[item.id] ?? "");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: 10,
+                          border: "1px solid var(--input-border)",
+                          background: "var(--accent)",
+                          color: "var(--accent-text)",
+                          cursor: "pointer",
+                          fontSize: 12,
+                          fontWeight: 900,
+                        }}
+                      >
+                        답변 저장
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profiles, setProfiles }) {
+  const [form, setForm] = useState({
+    type: "improve",
+    title: "",
+    body: "",
+    contact: "",
+    visibility: "public",
+  });
+  const [customType, setCustomType] = useState("");
+
+  const [items, setItems] = useState([]);
+  const [replyDrafts, setReplyDrafts] = useState({});
+  const isAdmin = s.adminMode === true;
+  const canSubmit = form.title.trim() && form.body.trim();
+  const [clientId] = useState(() => getClientId());
+  const [profileForm, setProfileForm] = useState({
+    nickname: "",
+    mcNickname: "",
+    birthday: "",
+    age: "",
+    mbti: "",
+    job: "",
+    rank: "",
+    likes: "",
+    dislikes: "",
+  });
+  const [profileTouched, setProfileTouched] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    const q = query(collection(db, "villageSuggestions"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const visible = isAdmin
+        ? rows
+        : rows.filter((r) => r.visibility !== "private" || r.authorId === clientId);
+      setItems(visible);
+    });
+    return () => unsub();
+  }, [isAdmin, clientId]);
+
+  useEffect(() => {
+    if (!authUser || profileTouched) return;
+    const mine = profiles.find((p) => p.uid === authUser.uid);
+    if (!mine) {
+      setProfileForm({
+        nickname: "",
+        mcNickname: "",
+        birthday: "",
+        age: "",
+        mbti: "",
+        job: "",
+        rank: "",
+        likes: "",
+        dislikes: "",
+      });
+      return;
+    }
+    setProfileForm({
+      nickname: mine.nickname || "",
+      mcNickname: mine.mcNickname || "",
+      birthday: mine.birthday || "",
+      age: mine.age || "",
+      mbti: mine.mbti || "",
+      job: mine.job || "",
+      rank: mine.rank || "",
+      likes: mine.likes || "",
+      dislikes: mine.dislikes || "",
+    });
+  }, [authUser, profiles, profileTouched]);
+
+  useEffect(() => {
+    setReplyDrafts((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      items.forEach((item) => {
+        if (!(item.id in next)) {
+          next[item.id] = item.reply || "";
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [items]);
+
+  const submit = () => {
+    if (!canSubmit) return;
+    const finalType = form.type === "other" ? customType.trim() || "기타" : form.type;
+    addDoc(collection(db, "villageSuggestions"), {
+      type: finalType,
+      title: form.title.trim(),
+      body: form.body.trim(),
+      contact: form.contact.trim(),
+      visibility: form.visibility,
+      authorId: clientId,
+      status: "new",
+      createdAt: serverTimestamp(),
+    });
+    setForm({ type: "improve", title: "", body: "", contact: "", visibility: "public" });
+    setCustomType("");
+  };
+
+  const updateStatus = (id, status) => {
+    if (!isAdmin) return;
+    updateDoc(doc(db, "villageSuggestions", id), { status });
+  };
+
+  const removeItem = (id) => {
+    if (!isAdmin) return;
+    deleteDoc(doc(db, "villageSuggestions", id));
+  };
+
+  const saveReply = (id, reply) => {
+    if (!isAdmin) return;
+    const trimmed = (reply || "").trim();
+    updateDoc(doc(db, "villageSuggestions", id), {
+      reply: trimmed,
+      repliedAt: trimmed ? serverTimestamp() : null,
+      status: trimmed ? "done" : "progress",
+    });
+  };
+
+  const typeLabel = (type) => (type ? String(type) : "\uae30\ud0c0");
+
+  const statusLabel = (status) => {
+    if (status === "progress") return "\uc9c4\ud589\uc911";
+    if (status === "done") return "\uc644\ub8cc";
+    return "\uc811\uc218";
+  };
+
+  const handleProfileChange = (key, value) => {
+    setProfileTouched(true);
+    setProfileForm((p) => ({ ...p, [key]: value }));
+  };
+
+  const existingProfile = useMemo(() => {
+    if (!authUser) return null;
+    return profiles.find((p) => p.uid === authUser.uid) || null;
+  }, [authUser, profiles]);
+
+  const saveProfile = async () => {
+    if (!authUser) return;
+    setProfileSaving(true);
+    setProfileError("");
+    const payload = {
+      uid: authUser.uid,
+      nickname: profileForm.nickname.trim(),
+      mcNickname: profileForm.mcNickname.trim(),
+      birthday: profileForm.birthday.trim(),
+      age: profileForm.age.trim(),
+      mbti: profileForm.mbti.trim(),
+      job: profileForm.job.trim(),
+      rank: profileForm.rank || "",
+      likes: profileForm.likes.trim(),
+      dislikes: profileForm.dislikes.trim(),
+      updatedAt: serverTimestamp(),
+    };
+    if (!existingProfile?.createdAt) {
+      payload.createdAt = serverTimestamp();
+    }
+    try {
+      setProfiles((prev) => {
+        const next = Array.isArray(prev) ? [...prev] : [];
+        const idx = next.findIndex((p) => p.uid === authUser.uid);
+        const optimistic = {
+          ...(idx >= 0 ? next[idx] : {}),
+          ...payload,
+          updatedAt: new Date(),
+          createdAt: idx >= 0 ? next[idx]?.createdAt : new Date(),
+        };
+        if (idx >= 0) next[idx] = optimistic;
+        else next.push(optimistic);
+        return next;
+      });
+      await Promise.race([
+        setDoc(doc(db, "villageProfiles", authUser.uid), payload, { merge: true }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
+      setProfileTouched(false);
+    } catch (err) {
+      if (err?.code === "resource-exhausted") {
+        try {
+          localStorage.setItem(
+            `pendingProfile:${authUser.uid}`,
+            JSON.stringify({ payload, ts: Date.now() })
+          );
+        } catch {
+          // ignore localStorage failures
+        }
+        setProfileError("저장량이 잠시 초과되었습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
+      } else if (err?.message === "timeout") {
+        try {
+          localStorage.setItem(
+            `pendingProfile:${authUser.uid}`,
+            JSON.stringify({ payload, ts: Date.now() })
+          );
+        } catch {
+          // ignore localStorage failures
+        }
+        setProfileError("저장이 지연되고 있습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
+      } else {
+        setProfileError("프로필 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      }
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const deleteProfile = async () => {
+    if (!authUser) return;
+    setProfileSaving(true);
+    setProfileError("");
+    try {
+      setProfiles((prev) => prev.filter((p) => p.uid !== authUser.uid));
+      await Promise.race([
+        deleteDoc(doc(db, "villageProfiles", authUser.uid)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
+      setProfileForm({
+        nickname: "",
+        mcNickname: "",
+        birthday: "",
+        age: "",
+        mbti: "",
+        job: "",
+        rank: "",
+        likes: "",
+        dislikes: "",
+      });
+      setProfileTouched(false);
+    } catch (err) {
+      if (err?.code === "resource-exhausted" || err?.message === "timeout") {
+        setProfileError("삭제가 지연되고 있습니다. 잠시 후 다시 시도해주세요.");
+      } else {
+        setProfileError("프로필 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      }
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const resetProfileForm = () => {
+    setProfileForm({
+      nickname: "",
+      mcNickname: "",
+      birthday: "",
+      age: "",
+      mbti: "",
+      job: "",
+      rank: "",
+      likes: "",
+      dislikes: "",
+    });
+    setProfileTouched(true);
+  };
+
+  const rankOrder = ["이장", "부이장", "주민대표", "거주민", "입주자", "알바"];
+  const sortedProfiles = useMemo(() => {
+    const order = new Map(rankOrder.map((rank, idx) => [rank, idx]));
+    return [...profiles].sort((a, b) => {
+      const ra = order.has(a.rank) ? order.get(a.rank) : rankOrder.length;
+      const rb = order.has(b.rank) ? order.get(b.rank) : rankOrder.length;
+      if (ra !== rb) return ra - rb;
+      const an = a.nickname || a.mcNickname || "";
+      const bn = b.nickname || b.mcNickname || "";
+      return an.localeCompare(bn);
+    });
+  }, [profiles]);
+
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      {!showProfiles ? (
+        <Card title={"마을 건의함"}>
+          <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 10 }}>
+            {"마을 관련 건의/문의는 여기에 남겨주세요."}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>유형</div>
+              <select
+                value={form.type}
+                onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))}
+                style={{
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  outline: "none",
+                  fontSize: 14,
+                  background: "var(--input-bg)",
+                  color: "var(--text)",
+                }}
+              >
+                <option value="improve">개선</option>
+                <option value="bug">오류/잘못된 점</option>
+                <option value="other">기타(직접 입력)</option>
+              </select>
+            </div>
+            <TextField
+              label="연락처(선택)"
+              value={form.contact}
+              onChange={(v) => setForm((p) => ({ ...p, contact: v }))}
+              placeholder="이메일/디스코드 등"
+            />
+          </div>
+
+          {form.type === "other" ? (
+            <div style={{ marginTop: 12 }}>
+              <TextField
+                label="기타 유형"
+                value={customType}
+                onChange={(v) => setCustomType(v)}
+                placeholder="예: 이벤트/시설/상점"
+              />
+            </div>
+          ) : null}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
+            <Select
+              label={"공개 설정"}
+              value={form.visibility}
+              onChange={(v) => setForm((p) => ({ ...p, visibility: v }))}
+              options={[
+                { value: "public", label: "공개" },
+                { value: "private", label: "비공개(관리자만)" },
+              ]}
+            />
+            <TextField
+              label="제목"
+              value={form.title}
+              onChange={(v) => setForm((p) => ({ ...p, title: v }))}
+              placeholder="예: 마을 상점에 아이템 추가 요청"
+            />
+            <TextArea
+              label="내용"
+              value={form.body}
+              onChange={(v) => setForm((p) => ({ ...p, body: v }))}
+              placeholder="건의 내용을 자세히 적어주세요."
+              rows={5}
+            />
+          </div>
+
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            <button
+              onClick={submit}
+              disabled={!canSubmit}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "1px solid var(--input-border)",
+                background: canSubmit ? "var(--accent)" : "var(--panel-bg)",
+                color: canSubmit ? "var(--accent-text)" : "var(--muted)",
+                cursor: canSubmit ? "pointer" : "not-allowed",
+                fontWeight: 900,
+                fontSize: 13,
+              }}
+            >
+              등록
+            </button>
+          </div>
+        </Card>
+      ) : null}
+
+      {showProfiles ? (
+        <Card title="마을원 프로필">
+          <div style={{ display: "grid", gap: 12 }}>
+            <div style={{ display: "grid", gap: 10 }}>
+              {sortedProfiles.length === 0 ? (
+                <div style={{ fontSize: 13, opacity: 0.7 }}>등록된 마을원 프로필이 없습니다.</div>
+              ) : (
+                sortedProfiles.map((p) => (
+                  <div
+                    key={p.uid}
+                    style={{
+                      padding: 12,
+                      borderRadius: 12,
+                      border: "1px solid var(--soft-border)",
+                      background: "var(--panel-bg)",
+                      display: "grid",
+                      gap: 6,
+                    }}
+                  >
+                    <div style={{ fontWeight: 900 }}>
+                      {p.nickname || p.mcNickname || "이름 없음"}
+                      {p.mcNickname ? ` (${p.mcNickname})` : ""}
+                    </div>
+                    {p.rank ? <div style={{ fontSize: 12, opacity: 0.85 }}>직급: {p.rank}</div> : null}
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, fontSize: 12 }}>
+                      <div>생일: {p.birthday || "-"}</div>
+                      <div>나이: {p.age || "-"}</div>
+                      <div>MBTI: {p.mbti || "-"}</div>
+                      <div>마크 직업: {p.job || "-"}</div>
+                    </div>
+                    {p.likes ? <div style={{ fontSize: 12 }}>좋아하는 것: {p.likes}</div> : null}
+                    {p.dislikes ? <div style={{ fontSize: 12 }}>싫어하는 것: {p.dislikes}</div> : null}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ fontSize: 12, opacity: 0.8 }}>
+              {authUser ? "내 프로필을 입력하거나 수정할 수 있습니다." : "로그인 후 프로필을 입력할 수 있습니다."}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+              <TextField
+                label="닉네임"
+                value={profileForm.nickname}
+                onChange={(v) => handleProfileChange("nickname", v)}
+                placeholder="예: 미래24"
+              />
+              <TextField
+                label="마크 닉네임"
+                value={profileForm.mcNickname}
+                onChange={(v) => handleProfileChange("mcNickname", v)}
+                placeholder="예: Mirae24"
+              />
+              <TextField
+                label="생일"
+                type="date"
+                value={profileForm.birthday}
+                onChange={(v) => handleProfileChange("birthday", v)}
+                placeholder="YYYY-MM-DD"
+              />
+              <TextField
+                label="나이"
+                type="number"
+                value={profileForm.age}
+                onChange={(v) => handleProfileChange("age", v)}
+                placeholder="예: 21"
+              />
+              <TextField
+                label="MBTI"
+                value={profileForm.mbti}
+                onChange={(v) => handleProfileChange("mbti", v)}
+                placeholder="예: INFP"
+              />
+              <TextField
+                label="마크 직업"
+                value={profileForm.job}
+                onChange={(v) => handleProfileChange("job", v)}
+                placeholder="예: 건축가"
+              />
+              <Select
+                label="직급"
+                value={profileForm.rank}
+                onChange={(v) => handleProfileChange("rank", v)}
+                options={[
+                  { value: "이장", label: "이장" },
+                  { value: "부이장", label: "부이장" },
+                  { value: "주민대표", label: "주민대표" },
+                  { value: "거주민", label: "거주민" },
+                  { value: "입주자", label: "입주자" },
+                  { value: "알바", label: "알바" },
+                ]}
+              />
+              <div style={{ gridColumn: "1 / -1" }}>
+                <TextArea
+                  label="좋아하는 것"
+                  value={profileForm.likes}
+                  onChange={(v) => handleProfileChange("likes", v)}
+                  placeholder="좋아하는 것을 적어 주세요."
+                  rows={3}
+                />
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <TextArea
+                  label="싫어하는 것"
+                  value={profileForm.dislikes}
+                  onChange={(v) => handleProfileChange("dislikes", v)}
+                  placeholder="싫어하는 것을 적어 주세요."
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {profileError ? <div style={{ fontSize: 12, color: "#c0392b" }}>{profileError}</div> : null}
+
+            <div style={{ fontSize: 12, opacity: 0.75 }}>
+              {existingProfile ? "내 프로필이 있습니다. 수정/삭제할 수 있습니다." : "프로필을 생성해주세요."}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
+              <button
+                onClick={resetProfileForm}
+                disabled={!authUser || profileSaving}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--panel-bg)",
+                  cursor: !authUser || profileSaving ? "not-allowed" : "pointer",
+                  fontWeight: 900,
+                  fontSize: 13,
+                  opacity: !authUser || profileSaving ? 0.6 : 1,
+                }}
+              >
+                {"새 프로필"}
+              </button>
+              <button
+                onClick={saveProfile}
+                disabled={!authUser || profileSaving}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--accent)",
+                  color: "var(--accent-text)",
+                  cursor: !authUser || profileSaving ? "not-allowed" : "pointer",
+                  fontWeight: 900,
+                  fontSize: 13,
+                  opacity: !authUser || profileSaving ? 0.6 : 1,
+                }}
+              >
+                {profileSaving ? "저장 중..." : existingProfile ? "프로필 수정" : "프로필 생성"}
+              </button>
+              <button
+                onClick={deleteProfile}
+                disabled={!authUser || profileSaving || !existingProfile}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  border: "1px solid var(--input-border)",
+                  background: "var(--panel-bg)",
+                  cursor: !authUser || profileSaving || !existingProfile ? "not-allowed" : "pointer",
+                  fontWeight: 900,
+                  fontSize: 13,
+                  opacity: !authUser || profileSaving || !existingProfile ? 0.6 : 1,
+                }}
+              >
+                {"프로필 삭제"}
+              </button>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
+      {!showProfiles ? (
+        <>
+          <Card title={"건의 관리"}>
+            {items.length === 0 ? (
+              <div style={{ fontSize: 13, opacity: 0.8 }}>등록된 건의가 없습니다.</div>
+            ) : (
+              <div style={{ display: "grid", gap: 12 }}>
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      border: "1px solid var(--soft-border)",
+                      borderRadius: 12,
+                      padding: 12,
+                      background: "var(--panel-bg)",
+                      display: "grid",
+                      gap: 8,
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                      <div style={{ fontWeight: 900 }}>
+                        [{typeLabel(item.type)}] {item.title}
+                      </div>
+                      <div style={{ fontSize: 12, opacity: 0.75 }}>
+                        {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleString("ko-KR") : "-"}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 13, lineHeight: 1.5 }}>{item.body}</div>
+                    {item.contact ? (
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>연락처: {item.contact}</div>
+                    ) : null}
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      <div style={{ fontSize: 12, opacity: 0.7 }}>
+                        공개: {item.visibility === "private" ? "비공개" : "공개"}
+                      </div>
+                      {item.reply ? (
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)" }}>
+                          관리자 답변 완료
+                        </div>
+                      ) : null}
+                    </div>
+                    {item.reply ? (
+                      <div
+                        style={{
+                          padding: 10,
+                          borderRadius: 10,
+                          background: "var(--soft-bg)",
+                          border: "1px solid var(--soft-border)",
+                          fontSize: 13,
+                        }}
+                      >
+                        <div style={{ fontWeight: 900, marginBottom: 4 }}>관리자 답변</div>
+                        <div style={{ whiteSpace: "pre-wrap" }}>{item.reply}</div>
+                      </div>
+                    ) : null}
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      <div style={{ fontSize: 12, opacity: 0.8 }}>상태</div>
+                      {isAdmin ? (
+                        <select
+                          value={item.status || "new"}
+                          onChange={(e) => updateStatus(item.id, e.target.value)}
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: 10,
+                            border: "1px solid var(--input-border)",
+                            outline: "none",
+                            fontSize: 13,
+                            background: "var(--input-bg)",
+                            color: "var(--text)",
+                          }}
+                        >
+                          <option value="new">접수</option>
+                          <option value="progress">진행중</option>
+                          <option value="done">완료</option>
+                        </select>
+                      ) : (
+                        <div style={{ fontSize: 12, opacity: 0.7 }}>{statusLabel(item.status)}</div>
+                      )}
+                      {isAdmin ? (
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: 10,
+                            border: "1px solid var(--input-border)",
+                            background: "var(--panel-bg)",
+                            color: "var(--text)",
+                            cursor: "pointer",
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          삭제
+                        </button>
+                      ) : null}
+                    </div>
+                    {isAdmin ? (
+                      <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
+                        <TextArea
+                          label="관리자 답변"
+                          value={replyDrafts[item.id] ?? ""}
+                          onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
+                          placeholder="답변을 입력하세요"
+                          rows={3}
+                        />
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                          <button
+                            onClick={() => saveReply(item.id, replyDrafts[item.id] ?? "")}
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: 10,
+                              border: "1px solid var(--input-border)",
+                              background: "var(--accent)",
+                              color: "var(--accent-text)",
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontWeight: 900,
+                            }}
+                          >
+                            답변 저장
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card title={"현재 접속 중"}>
+            <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
+              {`현재 접속: ${onlineUsers.length}명`}
+            </div>
+            {onlineUsers.length === 0 ? (
+              <div style={{ fontSize: 12, opacity: 0.7 }}>접속 중인 사용자가 없습니다.</div>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {onlineUsers.map((user) => (
+                  <div
+                    key={user.id}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      border: "1px solid var(--soft-border)",
+                      background: "var(--panel-bg)",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {user.displayName || user.email || "익명"}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </>
+      ) : null}
+    </div>
+  );
+}
+function PotionRowDetails({ feeRate, ev, row, shardsPerDig, gemRule, flameRule }) {
+  const stamina = row.stamina;
+  const spd = ev.staminaPerDig;
+  const digs = stamina / spd;
+
+  const ingotFromShardsValue = ev.ingotFromShardsValuePerDig * digs;
+  const ingotFromFlameValue = ev.ingotFromFlameValuePerDig * digs;
+  const gemValue = ev.gemValuePerDig * digs;
+
+  const total = ingotFromShardsValue + ingotFromFlameValue + gemValue;
+
+  return (
+    <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "var(--panel-bg)", border: "1px solid var(--soft-border)" }}>
+      <div style={{ fontWeight: 900, marginBottom: 8 }}>세부내역: {row.label}</div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
+        <div>기준 스태미나</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(stamina)}</div>
+
+        <div>광질 1회 스태미나</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(spd)}</div>
+
+        <div>예상 광질 횟수(스태미나/회)</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{digs.toFixed(4)}회</div>
+
+        <div>주괴 실수령 단가</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.ingotNet)}원</div>
+
+        <div>보석 실수령 단가</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.gemNet)}원</div>
+
+        <div>불붙은 확률 p(대체)</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{(ev.pFlame * 100).toFixed(2)}%</div>
+
+        <div>회당 조각(불붙은 미발동 시)</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(shardsPerDig)}개</div>
+
+        <div>보석 전문가</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>
+          {fmt(gemRule.prob * 100)}% / {fmt(gemRule.count)}개
+        </div>
+
+        <div>불붙은</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(flameRule.prob * 100)}% / 주괴 1개(조각 0 대체)</div>
+
+        <div style={{ marginTop: 6, fontWeight: 900 }}>포션 스태미나 기준 기대매출(실수령) 분해</div>
+        <div />
+
+        <div>조각→주괴 기대가치</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ingotFromShardsValue)}원</div>
+
+        <div>불붙은(대체) 주괴 기대가치</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ingotFromFlameValue)}원</div>
+
+        <div>보석 기대가치(불붙은과 무관)</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(gemValue)}원</div>
+
+        <div>합계 기대매출(실수령)</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(total)}원</div>
+
+        <div>구매가</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(row.cost)}원</div>
+
+        <div>순이익</div>
+        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(total - row.cost)}원</div>
+      </div>
+
+      <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>
+        계산식 요약(불붙은=대체):
+        <br />- 회당 주괴 기대량 = <b>(1-p)×(조각/필요조각)</b> + <b>p×1</b>
+        <br />- 회당 보석 기대가치 = (보석확률 × 보석개수 × 보석실수령단가) <b>(불붙은과 무관)</b>
+        <br />- 포션 기준 기대매출 = (회당 기대가치) × (스태미나 / 광질1회스태미나)
+      </div>
+    </div>
+  );
+}
+
+function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
+  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
+  const gemRule = gemExpertRule(s.gemExpertLevel);
+  const flameRule = flamingPickRule(s.flamingPickLevel);
+
+  const ev = useMemo(() => {
+    return miningEVBreakdown({
+      staminaPerDig: toNum(s.staminaPerDig, 10),
+      shardsPerDig,
+      shardsPerIngot: toNum(s.shardsPerIngot, 16),
+      ingotGrossPrice: toNum(s.ingotGrossPrice, 0),
+      gemDropProb: gemRule.prob,
+      gemDropCount: gemRule.count,
+      gemGrossPrice: toNum(s.gemGrossPrice, 0),
+      flamingIngotProb: flameRule.prob,
+      sellFeeRate: feeRate,
+    });
+  }, [
+    s.staminaPerDig,
+    shardsPerDig,
+    s.shardsPerIngot,
+    s.ingotGrossPrice,
+    gemRule.prob,
+    gemRule.count,
+    s.gemGrossPrice,
+    flameRule.prob,
+    feeRate,
+  ]);
+
+  const results = useMemo(() => {
+    const p = s.potionPrices;
+    const rows = [
+      { key: "p100", label: "100 포션", stamina: 100, cost: toNum(p.p100) },
+      { key: "p300", label: "300 포션", stamina: 300, cost: toNum(p.p300) },
+      { key: "p500", label: "500 포션", stamina: 500, cost: toNum(p.p500) },
+      { key: "p700", label: "700 포션", stamina: 700, cost: toNum(p.p700) },
+    ].map((r) => {
+      const revenue = ev.totalPerStamina * r.stamina;
+      const profit = revenue - r.cost;
+      return { ...r, revenue, profit };
+    });
+    const best = rows.reduce((acc, cur) => (cur.profit > acc.profit ? cur : acc), rows[0]);
+    return { rows, best };
+  }, [s.potionPrices, ev.totalPerStamina]);
+
+  const toggleRow = (key) => {
+    setS((p) => ({
+      ...p,
+      potionRowDetailsOpen: {
+        ...p.potionRowDetailsOpen,
+        [key]: !p.potionRowDetailsOpen?.[key],
+      },
+    }));
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <Card title="스테미나 포션 효율 계산">
+        <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13 }}>
+            <div>조각/회(미발동 시): <b>{fmt(shardsPerDig)}</b></div>
+            <div>보석: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>개</div>
+            <div>불붙은(대체): <b>{fmt(flameRule.prob * 100)}%</b> (주괴 1개)</div>
+            <div>스태미나 1당 기대 수익(실수령): <b>{fmt(ev.totalPerStamina)}</b>원</div>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="포션 가격 입력">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          <Field label="100 포션 가격" value={s.potionPrices.p100} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p100: v } }))} min={0} suffix="원" />
+          <Field label="300 포션 가격" value={s.potionPrices.p300} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p300: v } }))} min={0} suffix="원" />
+          <Field label="500 포션 가격" value={s.potionPrices.p500} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p500: v } }))} min={0} suffix="원" />
+          <Field label="700 포션 가격" value={s.potionPrices.p700} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p700: v } }))} min={0} suffix="원" />
+        </div>
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
+          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+        </div>
+      </Card>
+
+      <Card title="결과 (순이익 기준) — 포션별 세부내역 펼치기">
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>포션</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>스태미나</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>기대매출(실수령)</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>구매가</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>순이익</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>세부</th>
+              </tr>
+            </thead>
+            <tbody>
+              {results.rows.map((r) => {
+                const open = !!s.potionRowDetailsOpen?.[r.key];
+                return (
+                  <React.Fragment key={r.key}>
+                    <tr>
+                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>{r.label}</td>
+                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(r.stamina)}</td>
+                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(r.revenue)}</td>
+                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(r.cost)}</td>
+                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>{fmt(r.profit)}</td>
+                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
+                        <ToggleButton isOn={open} onClick={() => toggleRow(r.key)} labelOn="닫기" labelOff="보기" />
+                      </td>
+                    </tr>
+                    {open ? (
+                      <tr>
+                        <td colSpan={6} style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>
+                          <PotionRowDetails
+                            feeRate={feeRate}
+                            ev={ev}
+                            row={r}
+                            shardsPerDig={shardsPerDig}
+                            gemRule={gemRule}
+                            flameRule={flameRule}
+                          />
+                        </td>
+                      </tr>
+                    ) : null}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
+          순이익 추천: <b>{results.best.label}</b>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSharedPrices, priceSaving, priceSaveError, authUser }) {
+  const materialLabels = {
+    ingot: "\uc8fc\uad34",
+    stone: "\uc870\uc57d\ub3cc",
+    deepCobble: "\uc2ec\uce35 \uc870\uc57d\ub3cc",
+    redstone: "\ub808\ub4dc\uc2a4\ud1a4",
+    copper: "\uad6c\ub9ac",
+    diamond: "\ub2e4\uc774\uc544\ubaac\ub4dc \ube14\ub7ed",
+    iron: "\ucca0",
+    lapis: "\uccad\uae08\uc11d",
+    gold: "\uae08 \ube14\ub7ed",
+    amethyst: "\uc790\uc218\uc815",
+  };
+
+  const formatBuySummary = (list) => {
+    const items = (list || []).filter((x) => (x.qty || 0) > 0);
+    if (items.length === 0) return "";
+    return items
+      .map((x) => {
+        const name = materialLabels[x.key] ?? x.key;
+        return `${name} ${x.qty}\uac1c`;
+      })
+      .join(", ");
+  };
+
+  const formatSellSummary = (recipe) => {
+    const items = Object.entries(recipe || {})
+      .map(([k, qty]) => ({ key: k, qty: qty || 0, mode: s.modes[k] || "owned" }))
+      .filter((x) => x.qty > 0 && x.mode !== "buy");
+    if (items.length === 0) return "\ud310\ub9e4 \uc5c6\uc74c";
+    return items
+      .map((x) => {
+        const name = materialLabels[x.key] ?? x.key;
+        return `${name} ${x.qty}\uac1c`;
+      })
+      .join(", ");
+  };
+
+  // 내정보 기반 기대값(주괴/보석)
+  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
+  const gemRule = gemExpertRule(s.gemExpertLevel);
+  const flameRule = flamingPickRule(s.flamingPickLevel);
+
+  const ev = useMemo(() => {
+    return miningEVBreakdown({
+      staminaPerDig: toNum(s.staminaPerDig, 10),
+      shardsPerDig,
+      shardsPerIngot: toNum(s.shardsPerIngot, 16),
+      ingotGrossPrice: toNum(s.ingotGrossPrice, 0),
+      gemDropProb: gemRule.prob,
+      gemDropCount: gemRule.count,
+      gemGrossPrice: toNum(s.gemGrossPrice, 0),
+      flamingIngotProb: flameRule.prob,
+      sellFeeRate: feeRate,
+    });
+  }, [
+    s.staminaPerDig,
+    shardsPerDig,
+    s.shardsPerIngot,
+    s.ingotGrossPrice,
+    gemRule.prob,
+    gemRule.count,
+    s.gemGrossPrice,
+    flameRule.prob,
+    feeRate,
+  ]);
+
+  // 비교 계산(제작 vs 재료판매)
+  const compare = useMemo(() => {
+    const sellIndivNet = (recipe) => {
+      return sum(
+        Object.entries(recipe).map(([k, qty]) => {
+          const mode = s.modes[k] || "owned";
+          if (mode === "buy") return 0;
+          const market = toNum(s.prices[k]?.market ?? 0);
+          return (qty || 0) * netSell(market, feeRate);
+        })
+      );
+    };
+
+    const craft = (productGrossPrice, recipe) => {
+      const costs = Object.entries(recipe).map(([k, qty]) => {
+        const mode = s.modes[k] || "owned";
+        const market = toNum(s.prices[k]?.market ?? 0);
+        const unitCost = unitCostByMode({ mode, marketPrice: market, feeRate });
+        return { key: k, qty: qty || 0, unitCost, mode, market };
+      });
+      const buyList = costs.filter((c) => c.mode === "buy").map((c) => ({ key: c.key, qty: c.qty || 0 }));
+      return { ...craftProfit({ productGrossSellPrice: toNum(productGrossPrice), feeRate, costs }), costs, buyList };
+    };
+
+    const ability = craft(s.abilityGrossSell, s.recipes.ability);
+    const abilitySellIndiv = sellIndivNet(s.recipes.ability);
+
+    const low = craft(s.lifeGrossSell.low, s.recipes.low);
+    const lowSellIndiv = sellIndivNet(s.recipes.low);
+
+    const mid = craft(s.lifeGrossSell.mid, s.recipes.mid);
+    const midSellIndiv = sellIndivNet(s.recipes.mid);
+
+    const high = craft(s.lifeGrossSell.high, s.recipes.high);
+    const highSellIndiv = sellIndivNet(s.recipes.high);
+
+    const deltaByRounded = (profit, sellIndivNet) => Math.round(profit) - Math.round(sellIndivNet);
+
+    return {
+      ability: {
+        ...ability,
+        sellIndivNet: abilitySellIndiv,
+        deltaRevenueVsIndiv: deltaByRounded(ability.profit, abilitySellIndiv),
+      },
+      low: {
+        ...low,
+        sellIndivNet: lowSellIndiv,
+        deltaRevenueVsIndiv: deltaByRounded(low.profit, lowSellIndiv),
+      },
+      mid: {
+        ...mid,
+        sellIndivNet: midSellIndiv,
+        deltaRevenueVsIndiv: deltaByRounded(mid.profit, midSellIndiv),
+      },
+      high: {
+        ...high,
+        sellIndivNet: highSellIndiv,
+        deltaRevenueVsIndiv: deltaByRounded(high.profit, highSellIndiv),
+      },
+    };
+  }, [s.prices, s.modes, s.recipes, s.abilityGrossSell, s.lifeGrossSell, feeRate]);
+
+  // 자세히보기(포기한 판매 수익) 토글: 화면을 복잡하게 만들지 않기 위해 여기만 둠
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const explain = (x) => {
+    const buySpend = sum(
+      (x.costs || [])
+        .filter((c) => c.mode === "buy")
+        .map((c) => (c.qty || 0) * Math.max(0, c.market || 0))
+    );
+
+    const foregone = sum(
+      (x.costs || [])
+        .filter((c) => c.mode === "opportunity")
+        .map((c) => (c.qty || 0) * netSell(Math.max(0, c.market || 0), feeRate))
+    );
+
+    const ownedQty = sum((x.costs || []).filter((c) => c.mode === "owned").map((c) => c.qty || 0));
+
+    return { buySpend, foregone, ownedQty };
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <Card title="주괴/보석 기대값 (내정보 기반)">
+        <div style={{ marginBottom: 10, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
+          아래 기대값은 모두 <b>실수령 기준</b>입니다. (판매 수수료 {fmt(toNum(s.feePct))}% 반영)
+        </div>
+
+        <div style={{ padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
+            <div>회당 조각(미발동 시)</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(shardsPerDig)}개</div>
+            <div>불붙은 확률 p(대체)</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(flameRule.prob * 100)}%</div>
+            <div>회당 주괴(조각→환산) 기대</div><div style={{ textAlign: "right", fontWeight: 900 }}>{ev.ingotFromShardsPerDig.toFixed(4)}개</div>
+            <div>회당 주괴(불붙은 대체) 기대</div><div style={{ textAlign: "right", fontWeight: 900 }}>{ev.ingotFromFlamePerDig.toFixed(4)}개</div>
+            <div>회당 보석 기대가치</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.gemValuePerDig)}원</div>
+            <div>회당 총 기대가치</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.totalPerDig)}원</div>
+            <div>스태미나 1당 기대가치</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.totalPerStamina)}원</div>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="가공 비교: 재료 그대로 판매 vs 어빌/라이프스톤">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          <Field
+            label="어빌리티 스톤 판매가(시장가)"
+            value={s.abilityGrossSell}
+            onChange={(v) => setS((p) => ({ ...p, abilityGrossSell: v }))}
+          />
+          <Field
+            label="하급 라이프스톤 판매가(시장가)"
+            value={s.lifeGrossSell.low}
+            onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, low: v } }))}
+          />
+          <Field
+            label="중급 라이프스톤 판매가(시장가)"
+            value={s.lifeGrossSell.mid}
+            onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, mid: v } }))}
+          />
+          <Field
+            label="상급 라이프스톤 판매가(시장가)"
+            value={s.lifeGrossSell.high}
+            onChange={(v) => setS((p) => ({ ...p, lifeGrossSell: { ...p.lifeGrossSell, high: v } }))}
+          />
+        </div>
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
+          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
         </div>
 
         <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
