@@ -2471,9 +2471,16 @@ export default function App() {
   const [priceSaveError, setPriceSaveError] = useState("");
   const [nicknameSaving, setNicknameSaving] = useState(false);
   const [nicknameError, setNicknameError] = useState("");
+  const [presencePaused, setPresencePaused] = useState(false);
   const presenceWriteAtRef = useRef(0);
-  const presenceEnabled = true;
+  const presencePauseTimerRef = useRef(null);
   const retryInFlightRef = useRef(false);
+  const canUseApp = !!authUser && userDoc?.status === "approved";
+  const presenceEnabled = canUseApp && !presencePaused;
+  const PRESENCE_MIN_WRITE_GAP_MS = 30000;
+  const PRESENCE_WRITE_INTERVAL_MS = 60000;
+  const PRESENCE_ONLINE_WINDOW_MS = 5 * 60 * 1000;
+  const PRESENCE_PAUSE_MS = 5 * 60 * 1000;
 
   const pendingNicknameKey = (uid) => `pendingNickname:${uid}`;
   const pendingProfileKey = (uid) => `pendingProfile:${uid}`;
@@ -2498,6 +2505,16 @@ export default function App() {
       // ignore
     }
     setS(defaultState);
+  };
+
+  const pausePresence = () => {
+    if (presencePauseTimerRef.current) {
+      clearTimeout(presencePauseTimerRef.current);
+    }
+    setPresencePaused(true);
+    presencePauseTimerRef.current = setTimeout(() => {
+      setPresencePaused(false);
+    }, PRESENCE_PAUSE_MS);
   };
 
   const saveNickname = async (nextName) => {
@@ -2609,21 +2626,27 @@ export default function App() {
       return undefined;
     }
     const ref = doc(db, "presence", authUser.uid);
-    const writePresence = () => {
+    const writePresence = async () => {
       const now = Date.now();
-      if (now - presenceWriteAtRef.current < 10000) return;
+      if (now - presenceWriteAtRef.current < PRESENCE_MIN_WRITE_GAP_MS) return;
       presenceWriteAtRef.current = now;
-      return setDoc(
-        ref,
-        {
-          uid: authUser.uid,
-          displayName: authUser.displayName || "",
-          nickname: userDoc?.nickname || authUser.displayName || "",
-          email: authUser.email || "",
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
+      try {
+        await setDoc(
+          ref,
+          {
+            uid: authUser.uid,
+            displayName: authUser.displayName || "",
+            nickname: userDoc?.nickname || authUser.displayName || "",
+            email: authUser.email || "",
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        if (err?.code === "resource-exhausted") {
+          pausePresence();
+        }
+      }
     };
     writePresence();
     setPresenceDocs((prev) => {
@@ -2641,21 +2664,29 @@ export default function App() {
       else next.push(fallback);
       return next;
     });
-    const timer = setInterval(writePresence, 15000);
+    const timer = setInterval(writePresence, PRESENCE_WRITE_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [authUser, userDoc]);
+  }, [authUser, userDoc, presenceEnabled]);
 
   useEffect(() => {
     if (!presenceEnabled) {
       setPresenceDocs([]);
       return undefined;
     }
-    const unsub = onSnapshot(collection(db, "presence"), (snap) => {
-      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      setPresenceDocs(rows);
-    });
+    const unsub = onSnapshot(
+      collection(db, "presence"),
+      (snap) => {
+        const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setPresenceDocs(rows);
+      },
+      (err) => {
+        if (err?.code === "resource-exhausted") {
+          pausePresence();
+        }
+      }
+    );
     return () => unsub();
-  }, []);
+  }, [presenceEnabled]);
 
   useEffect(() => {
     if (!presenceEnabled) {
@@ -2670,7 +2701,7 @@ export default function App() {
       return null;
     };
     const update = () => {
-      const cutoff = Date.now() - 2 * 60 * 1000;
+      const cutoff = Date.now() - PRESENCE_ONLINE_WINDOW_MS;
       let online = presenceDocs.filter((u) => {
         const ms = getUpdatedAtMs(u);
         return ms != null && ms >= cutoff;
@@ -2693,7 +2724,7 @@ export default function App() {
     update();
     const timer = setInterval(update, 30000);
     return () => clearInterval(timer);
-  }, [presenceDocs, authUser, userDoc]);
+  }, [presenceDocs, authUser, userDoc, presenceEnabled]);
 
   useEffect(() => {
     if (!authUser) {
@@ -2893,7 +2924,6 @@ export default function App() {
   // IngotPage에서 판매가 입력을 막고(placeholder), 실제 입력은 profile에서만 하려고
   // 단, 기존 구조를 크게 바꾸지 않기 위해 “입력 위치 이동”만 하고, 값은 그대로 사용합니다.
   const setActive = (key) => setS((p) => ({ ...p, activeMenu: key }));
-  const canUseApp = !!authUser && userDoc?.status === "approved";
   const isPending = !!authUser && !canUseApp && userDoc?.status !== "rejected";
   const isRejected = userDoc?.status === "rejected";
   const uiLocked = !canUseApp;
