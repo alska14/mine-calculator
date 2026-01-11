@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   addDoc,
   collection,
@@ -52,10 +52,9 @@ function getClientId() {
 }
 
 /**
- * 숫자 입력 안정화용
- * - 상태는 string으로 저장(빈값/입력중 상태 보호)
- * - 계산할 때만 숫자 변환
- */
+ * ?レ옄 ?낅젰 ?덉젙?붿슜
+ * - ?곹깭??string?쇰줈 ???鍮덇컪/?낅젰以??곹깭 蹂댄샇)
+ * - 怨꾩궛???뚮쭔 ?レ옄 蹂?? */
 function toNum(v, fallback = 0) {
   if (typeof v === "number") return Number.isFinite(v) ? v : fallback;
   if (typeof v !== "string") return fallback;
@@ -102,12 +101,11 @@ function migrateState(raw, defaults) {
     };
   }
 
-  // v1 -> v2 : prices 구조를 {grossSell,buy} -> {market} 로 정규화
-  if (incomingVer < 2) {
+  // v1 -> v2 : prices 援ъ“瑜?{grossSell,buy} -> {market} 濡??뺢퇋??  if (incomingVer < 2) {
     const oldPrices = s.prices || {};
     const normalized = {};
     for (const [k, v] of Object.entries(oldPrices)) {
-      // 기존 구조면 grossSell 우선, 없으면 buy, 없으면 0
+      // 湲곗〈 援ъ“硫?grossSell ?곗꽑, ?놁쑝硫?buy, ?놁쑝硫?0
       if (isPlainObject(v)) {
         const market = v.market ?? v.grossSell ?? v.buy ?? 0;
         normalized[k] = { market: String(market ?? "") };
@@ -118,7 +116,7 @@ function migrateState(raw, defaults) {
     s = { ...s, prices: deepMerge(defaults.prices, normalized) };
   }
 
-  // v2 -> v3 : feedbacks 기본값 추가
+  // v2 -> v3 : feedbacks 湲곕낯媛?異붽?
   if (incomingVer < 3) {
     s = {
       ...s,
@@ -130,7 +128,7 @@ function migrateState(raw, defaults) {
     };
   }
 
-  // v3 -> v4 : adminMode 기본값 추가
+  // v3 -> v4 : adminMode 湲곕낯媛?異붽?
   if (incomingVer < 4) {
     s = {
       ...s,
@@ -185,7 +183,7 @@ function Field({ label, value, onChange, min, max, suffix, placeholder }) {
   const sanitizeOnBlur = () => {
     const n = toNum(value, NaN);
     if (!Number.isFinite(n)) {
-      onChange(""); // 빈값 유지
+      onChange(""); // 鍮덇컪 ?좎?
       return;
     }
     let v = n;
@@ -332,8 +330,7 @@ function ToggleButton({ isOn, onClick, labelOn, labelOff }) {
  * =========================
  */
 
-// 세이지 곡괭이 강화 단계별 조각 드랍 수
-const SAGE_SHARDS_BY_ENH = {
+// ?몄씠吏 怨↔눌??媛뺥솕 ?④퀎蹂?議곌컖 ?쒕엻 ??const SAGE_SHARDS_BY_ENH = {
   5: 4,
   6: 4,
   7: 4,
@@ -347,7 +344,7 @@ const SAGE_SHARDS_BY_ENH = {
   15: 12,
 };
 
-// 보석 전문가 레벨별 (확률, 개수)
+// 蹂댁꽍 ?꾨Ц媛 ?덈꺼蹂?(?뺣쪧, 媛쒖닔)
 function gemExpertRule(level) {
   if (level === 1) return { prob: 0.03, count: 1 };
   if (level === 2) return { prob: 0.07, count: 1 };
@@ -355,8 +352,8 @@ function gemExpertRule(level) {
   return { prob: 0, count: 0 };
 }
 
-// 불붙은 곡괭이 레벨별 (확률, 주괴 1개 직드랍)
-// 1~9레벨: 1~9% / 10레벨: 15%
+// 遺덈텤? 怨↔눌???덈꺼蹂?(?뺣쪧, 二쇨눼 1媛?吏곷뱶??
+// 1~9?덈꺼: 1~9% / 10?덈꺼: 15%
 function flamingPickRule(level) {
   if (!Number.isFinite(level) || level <= 0) return { prob: 0, ingots: 1 };
   if (level >= 10) return { prob: 0.15, ingots: 1 };
@@ -367,9 +364,9 @@ function flamingPickRule(level) {
  * ======================
  * Expected value function
  * ======================
- * 핵심 규칙(확정):
- * - 불붙은 곡괭이가 발동하면: 조각 0개 + 주괴 1개(대체)
- * - 보석 드랍 판정(보석 전문가)은 불붙은이 떠도 그대로 유지
+ * ?듭떖 洹쒖튃(?뺤젙):
+ * - 遺덈텤? 怨↔눌?닿? 諛쒕룞?섎㈃: 議곌컖 0媛?+ 二쇨눼 1媛??泥?
+ * - 蹂댁꽍 ?쒕엻 ?먯젙(蹂댁꽍 ?꾨Ц媛)? 遺덈텤????좊룄 洹몃?濡??좎?
  */
 function miningEVBreakdown({
   staminaPerDig,
@@ -390,14 +387,14 @@ function miningEVBreakdown({
   const ingotNet = netSell(Math.max(0, ingotGrossPrice), sellFeeRate);
   const gemNet = netSell(Math.max(0, gemGrossPrice), sellFeeRate);
 
-  // ✅ 불붙은은 "추가"가 아니라 "대체"
+  // ??遺덈텤?? "異붽?"媛 ?꾨땲??"?泥?
   const ingotFromShardsPerDig = (1 - p) * (Math.max(0, shardsPerDig) / spi);
   const ingotFromShardsValuePerDig = ingotFromShardsPerDig * ingotNet;
 
   const ingotFromFlamePerDig = p * 1;
   const ingotFromFlameValuePerDig = ingotFromFlamePerDig * ingotNet;
 
-  // 보석은 불붙은 여부와 무관하게 그대로 판정
+  // 蹂댁꽍? 遺덈텤? ?щ?? 臾닿??섍쾶 洹몃?濡??먯젙
   const gemValuePerDig = clamp01(gemDropProb) * Math.max(0, gemDropCount) * gemNet;
 
   const totalPerDig = ingotFromShardsValuePerDig + ingotFromFlameValuePerDig + gemValuePerDig;
@@ -423,16 +420,15 @@ function miningEVBreakdown({
  * ======================
  * Crafting profit helpers
  * ======================
- * 변경점(중요):
- * - 재료 가격은 market 1개만 입력
- * - 판매 시에는 수수료 반영(실수령)
- * - 구매 비용은 market 그대로(수수료 없음)
+ * 蹂寃쎌젏(以묒슂):
+ * - ?щ즺 媛寃⑹? market 1媛쒕쭔 ?낅젰
+ * - ?먮ℓ ?쒖뿉???섏닔猷?諛섏쁺(?ㅼ닔??
+ * - 援щℓ 鍮꾩슜? market 洹몃?濡??섏닔猷??놁쓬)
  */
 function unitCostByMode({ mode, marketPrice, feeRate }) {
   if (mode === "owned") return 0;
-  if (mode === "buy") return Math.max(0, marketPrice); // 구매 비용 = 시장가(수수료 없음)
-  // opportunity(기회비용) = 해당 재료를 팔았을 때 받는 실수령을 포기한 값
-  return netSell(Math.max(0, marketPrice), feeRate);
+  if (mode === "buy") return Math.max(0, marketPrice); // 援щℓ 鍮꾩슜 = ?쒖옣媛(?섏닔猷??놁쓬)
+  // opportunity(湲고쉶鍮꾩슜) = ?대떦 ?щ즺瑜??붿븯????諛쏅뒗 ?ㅼ닔?뱀쓣 ?ш린??媛?  return netSell(Math.max(0, marketPrice), feeRate);
 }
 
 function craftProfit({ productGrossSellPrice, feeRate, costs }) {
@@ -453,18 +449,17 @@ const defaultState = {
   feePct: "5",
   themeMode: "light", // light | dark
 
-  // 내정보
-  sageEnhLevel: 15, // 5~15
+  // ?댁젙蹂?  sageEnhLevel: 15, // 5~15
   gemExpertLevel: 3, // 0~3
   flamingPickLevel: 0, // 0~10
   staminaPerDig: "10",
   shardsPerIngot: "16",
 
-  // 시세(시장가, gross)
+  // ?쒖꽭(?쒖옣媛, gross)
   ingotGrossPrice: "6000",
   gemGrossPrice: "12000",
 
-  // 포션 가격(구매가)
+  // ?ъ뀡 媛寃?援щℓ媛)
   potionPrices: {
     p100: "14000",
     p300: "70000",
@@ -472,7 +467,7 @@ const defaultState = {
     p700: "210000",
   },
 
-  // 포션 결과 행별 세부내역 오픈 상태
+  // ?ъ뀡 寃곌낵 ?됰퀎 ?몃??댁뿭 ?ㅽ뵂 ?곹깭
   potionRowDetailsOpen: {
     p100: false,
     p300: false,
@@ -480,19 +475,19 @@ const defaultState = {
     p700: false,
   },
 
-  // 제작/판매가 (gross)
+  // ?쒖옉/?먮ℓ媛 (gross)
   abilityGrossSell: "18000",
   lifeGrossSell: {
-    low: "9000", // 하급
-    mid: "30000", // 중급
-    high: "60000", // 상급
+    low: "9000", // ?섍툒
+    mid: "30000", // 以묎툒
+    high: "60000", // ?곴툒
   },
 
-  // 재료 시세(개당, 시장가 1개만)
+  // ?щ즺 ?쒖꽭(媛쒕떦, ?쒖옣媛 1媛쒕쭔)
   prices: {
     ingot: { market: "6000" },
-    stone: { market: "773" }, // 돌뭉치(하급)
-    deepCobble: { market: "281" }, // 심층암 조약돌 뭉치(중급)
+    stone: { market: "773" }, // ?뚮춬移??섍툒)
+    deepCobble: { market: "281" }, // ?ъ링??議곗빟??萸됱튂(以묎툒)
     redstone: { market: "97" },
     copper: { market: "100" },
     diamond: { market: "2900" },
@@ -502,7 +497,7 @@ const defaultState = {
     amethyst: { market: "78" },
   },
 
-  // 재료 처리 방식(직접수급/구매/고급:포기한 판매수익)
+  // ?щ즺 泥섎━ 諛⑹떇(吏곸젒?섍툒/援щℓ/怨좉툒:?ш린???먮ℓ?섏씡)
   modes: {
     ingot: "opportunity",
     stone: "owned",
@@ -516,7 +511,7 @@ const defaultState = {
     amethyst: "owned",
   },
 
-  // 레시피(기본값)
+  // ?덉떆??湲곕낯媛?
   recipes: {
     ability: { ingot: 3 },
     low: { ingot: 1, stone: 2, redstone: 3, copper: 8 },
@@ -549,24 +544,12 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
       <div style={{ fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>
         {"\ub2e4\ud06c\ubaa8\ub4dc\ub294 \ub0b4\uc815\ubcf4\uc5d0\uc11c \uc124\uc815\ud560 \uc218 \uc788\uace0, \ubb38\uc81c\uc810\uc740 \ubb38\uc758/\ud53c\ub4dc\ubc31\uc5d0 \ub0a8\uaca8\uc8fc\uc138\uc694."}
       </div>
-      <div style={itemStyle("potion")} onClick={() => onSelect("potion")}>
-        스테미나 포션 효율 계산
-      </div>
-      <div style={itemStyle("ingot")} onClick={() => onSelect("ingot")}>
-        주괴/가공 비교
-      </div>
-      <div style={itemStyle("profile")} onClick={() => onSelect("profile")}>
-        내정보 + 시세 입력
-      </div>
-      <div style={itemStyle("feedback")} onClick={() => onSelect("feedback")}>
-        문의/피드백
-      </div>
-      <div style={itemStyle("village")} onClick={() => onSelect("village")}>
-        마을 건의함
-      </div>
-      <div style={itemStyle("members")} onClick={() => onSelect("members")}>
-        마을 멤버
-      </div>
+      <div style={itemStyle("potion")} onClick={() => onSelect("potion")}>스테미나 포션 효율 계산</div>
+      <div style={itemStyle("ingot")} onClick={() => onSelect("ingot")}>주괴/가공 비교</div>
+      <div style={itemStyle("profile")} onClick={() => onSelect("profile")}>내정보 + 시세 입력</div>
+      <div style={itemStyle("feedback")} onClick={() => onSelect("feedback")}>문의/피드백</div>
+      <div style={itemStyle("village")} onClick={() => onSelect("village")}>마을 건의함</div>
+      <div style={itemStyle("members")} onClick={() => onSelect("members")}>마을 멤버</div>
       <div style={{ marginTop: 12, fontSize: 12, opacity: 0.75, lineHeight: 1.4 }}>
         입력값은 브라우저에 자동 저장됩니다.
       </div>
@@ -612,7 +595,7 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
                 fontWeight: 700,
               }}
             >
-              {"이전"}
+              {"?댁쟾"}
             </button>
             <div style={{ fontSize: 12, fontWeight: 900 }}>{`${calendarInfo.year}년 ${calendarInfo.month}월 생일`}</div>
             <button
@@ -627,7 +610,7 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
                 fontWeight: 700,
               }}
             >
-              {"다음"}
+              {"?ㅼ쓬"}
             </button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
@@ -645,9 +628,7 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
               const key = `${monthKey}-${dayKey}`;
               const list = birthdayMap?.[key] || [];
               const title = list.length
-                ? list
                     .map((p) => p.nickname || p.mcNickname || "이름 없음")
-                    .join(", ")
                 : "";
               return (
                 <div
@@ -684,372 +665,6 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
  * Pages
  * =======================
  */
-
-function ProfilePage({
-  s,
-  setS,
-  feeRate,
-  priceUpdatedAt,
-  priceUpdatedBy,
-  authUser,
-  userDoc,
-  onSaveNickname,
-  onSaveCommonPrices,
-  commonPriceSaving,
-  commonPriceError,
-  onSaveMaterialPrices,
-  materialPriceSaving,
-  materialPriceError,
-  nicknameSaving,
-  nicknameError,
-}) {
-  const [nickname, setNickname] = useState("");
-
-  useEffect(() => {
-    if (!authUser) {
-      setNickname("");
-      return;
-    }
-    setNickname(userDoc?.nickname ?? authUser.displayName ?? "");
-  }, [authUser, userDoc]);
-  const sageOptions = useMemo(() => {
-    const values = Object.keys(SAGE_SHARDS_BY_ENH).map(Number).sort((a, b) => a - b);
-    return values.map((v) => ({ value: v, label: `${v}강 (조각 ${SAGE_SHARDS_BY_ENH[v]}개)` }));
-  }, []);
-
-  const gemOptions = [
-    { value: 0, label: "0레벨 (스킬 없음)" },
-    { value: 1, label: "1레벨 (3% 확률, 1개)" },
-    { value: 2, label: "2레벨 (7% 확률, 1개)" },
-    { value: 3, label: "3레벨 (10% 확률, 2개)" },
-  ];
-
-  const flameOptions = [
-    { value: 0, label: "0레벨 (스킬 없음)" },
-    ...Array.from({ length: 9 }, (_, i) => {
-      const lv = i + 1;
-      return { value: lv, label: `${lv}레벨 (${lv}% 확률, 조각→주괴 1개 대체)` };
-    }),
-    { value: 10, label: "10레벨 (15% 확률, 조각→주괴 1개 대체)" },
-  ];
-
-  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
-  const gemRule = gemExpertRule(s.gemExpertLevel);
-  const flameRule = flamingPickRule(s.flamingPickLevel);
-
-  const materialKeysForUI = [
-    "ingot",
-    "diamond",
-    "gold",
-    "iron",
-    "lapis",
-    "amethyst",
-    "copper",
-    "redstone",
-    "stone",
-    "deepCobble",
-  ];
-
-  const materialLabels = {
-    ingot: "\uc8fc\uad34",
-    diamond: "\ub2e4\uc774\uc544\ubaac\ub4dc",
-    gold: "\uae08",
-    iron: "\ucca0",
-    lapis: "\uccad\uae08\uc11d",
-    amethyst: "\uc790\uc218\uc815",
-    copper: "\uad6c\ub9ac",
-    redstone: "\ub808\ub4dc\uc2a4\ud1a4",
-    stone: "\uc870\uc57d\ub3cc",
-    deepCobble: "\uc2ec\uce35 \uc870\uc57d\ub3cc",
-  };
-
-  return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <Card title="내 정보 입력">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-          <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, alignItems: "flex-end" }}>
-            <TextField
-              label="온라인 표시 이름"
-              value={nickname}
-              onChange={(v) => setNickname(v)}
-              placeholder="예: 미래24"
-            />
-            <button
-              onClick={() => onSaveNickname(nickname)}
-              disabled={!authUser || nicknameSaving}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 10,
-                border: "1px solid var(--input-border)",
-                background: "var(--accent)",
-                color: "var(--accent-text)",
-                cursor: !authUser || nicknameSaving ? "not-allowed" : "pointer",
-                fontWeight: 900,
-                fontSize: 12,
-                opacity: !authUser || nicknameSaving ? 0.6 : 1,
-                whiteSpace: "nowrap",
-              }}
-              title={authUser ? "온라인 표시 이름 저장" : "로그인 후 수정할 수 있습니다."}
-            >
-              {nicknameSaving ? "저장 중..." : "저장"}
-            </button>
-          </div>
-          {nicknameError ? (
-            <div style={{ gridColumn: "1 / -1", fontSize: 12, color: "#c0392b" }}>{nicknameError}</div>
-          ) : null}
-          <Select
-            label={"\ud14c\ub9c8"}
-            value={["light", "dark", "purple"].includes(s.themeMode) ? s.themeMode : "light"}
-            onChange={(v) => setS((p) => ({ ...p, themeMode: v }))}
-            options={[
-              { value: "light", label: "\ub77c\uc774\ud2b8 \ubaa8\ub4dc" },
-              { value: "dark", label: "\ub2e4\ud06c \ubaa8\ub4dc" },
-              { value: "purple", label: "\ud37c\ud50c \ubaa8\ub4dc" },
-            ]}
-          />
-          <Select
-            label="세이지 곡괭이 강화 단계"
-            value={s.sageEnhLevel}
-            onChange={(v) => setS((p) => ({ ...p, sageEnhLevel: v }))}
-            options={sageOptions}
-          />
-          <Select
-            label="보석 전문가 레벨"
-            value={s.gemExpertLevel}
-            onChange={(v) => setS((p) => ({ ...p, gemExpertLevel: v }))}
-            options={gemOptions}
-          />
-          <Select
-            label="불붙은 곡괭이 레벨"
-            value={s.flamingPickLevel}
-            onChange={(v) => setS((p) => ({ ...p, flamingPickLevel: v }))}
-            options={flameOptions}
-          />
-          <Field
-            label="광질 1회 스태미나"
-            value={s.staminaPerDig}
-            onChange={(v) => setS((p) => ({ ...p, staminaPerDig: v }))}
-            placeholder="예: 10"
-            min={1}
-          />
-          <Field
-            label="조각→주괴 필요 조각"
-            value={s.shardsPerIngot}
-            onChange={(v) => setS((p) => ({ ...p, shardsPerIngot: v }))}
-            placeholder="예: 16"
-            min={1}
-          />
-        </div>
-
-        <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
-          <div style={{ fontWeight: 900, marginBottom: 6 }}>현재 내정보 요약</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13 }}>
-            <div>
-              조각/회(불붙은 미발동 시): <b>{fmt(shardsPerDig)}</b>
-            </div>
-            <div>
-              보석: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>개
-            </div>
-            <div>
-              불붙은(대체): <b>{fmt(flameRule.prob * 100)}%</b> 확률, <b>주괴 1개</b>
-            </div>
-            <div>
-              판매 수수료: <b>{fmt(toNum(s.feePct))}%</b>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      <Card title="시세 입력 (공통)">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-          <Field
-            label="판매 수수료(%)"
-            value={s.feePct}
-            onChange={(v) => setS((p) => ({ ...p, feePct: v }))}
-            placeholder="예: 5"
-            min={0}
-            max={50}
-            suffix="%"
-          />
-          <Field
-            label="주괴 시장가(원)"
-            value={s.ingotGrossPrice}
-            onChange={(v) =>
-              setS((p) => ({
-                ...p,
-                ingotGrossPrice: v,
-                prices: { ...p.prices, ingot: { market: v } },
-              }))
-            }
-            placeholder="예: 6000"
-            min={0}
-            suffix="원"
-          />
-          <Field
-            label="보석 시장가(원)"
-            value={s.gemGrossPrice}
-            onChange={(v) => setS((p) => ({ ...p, gemGrossPrice: v }))}
-            placeholder="예: 12000"
-            min={0}
-            suffix="원"
-          />
-        </div>
-
-        <div style={{ marginTop: 12, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
-          판매 실수령(수수료 반영):
-          <br />- 주괴 {fmt(toNum(s.ingotGrossPrice))} → <b>{fmt(netSell(toNum(s.ingotGrossPrice), feeRate))}</b>원
-          <br />- 보석 {fmt(toNum(s.gemGrossPrice))} → <b>{fmt(netSell(toNum(s.gemGrossPrice), feeRate))}</b>원
-          <br />
-          구매 비용(수수료 없음): <b>시장가 그대로</b>
-        </div>
-        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
-          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
-          {priceUpdatedBy ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
-          {priceUpdatedBy
-            ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})`
-            : ""}
-        </div>
-
-        <div style={{ marginTop: "10px", display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
-          {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
-        <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
-          {commonPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{commonPriceError}</span> : null}
-          <button
-            onClick={onSaveCommonPrices}
-            disabled={!authUser || commonPriceSaving}
-            style={{
-              padding: "8px 12px",
-              borderRadius: 10,
-              border: "1px solid var(--input-border)",
-              background: authUser ? "var(--panel-bg)" : "transparent",
-              color: "var(--text)",
-              cursor: !authUser || commonPriceSaving ? "not-allowed" : "pointer",
-              fontWeight: 800,
-              fontSize: 12,
-              opacity: !authUser || commonPriceSaving ? 0.6 : 1,
-            }}
-            title={authUser ? "?? ??" : "??? ? ??? ? ????."}
-          >
-            {commonPriceSaving ? "?? ?..." : "?? ??"}
-          </button>
-        </div>
-        <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
-          {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
-          <button
-            onClick={onSaveSharedPrices}
-            disabled={!authUser || priceSaving}
-            style={{
-              padding: "8px 12px",
-              borderRadius: 10,
-              border: "1px solid var(--input-border)",
-              background: authUser ? "var(--panel-bg)" : "transparent",
-              color: "var(--text)",
-              cursor: !authUser || priceSaving ? "not-allowed" : "pointer",
-              fontWeight: 800,
-              fontSize: 12,
-              opacity: !authUser || priceSaving ? 0.6 : 1,
-            }}
-            title={authUser ? "시세/옵션 수동 저장" : "로그인 후 저장할 수 있습니다."}
-          >
-            {priceSaving ? "저장 중..." : "시세/옵션 저장"}
-          </button>
-        </div>
-      </Card>
-
-      <Card title="재료 시세(시장가) + 수급 방식 입력">
-        <div style={{ fontSize: 13, opacity: 0.9, marginBottom: 10, lineHeight: 1.5 }}>
-          재료는 <b>시장가 1개만</b> 입력합니다.
-          <br />- 판매 실수령 = 시장가 × (1-수수료)
-          <br />- 구매 비용 = 시장가(수수료 없음)
-          <br />
-          수급 방식:
-          <br />- 직접 수급(0) / 구매 필요 / (고급) 포기한 판매 수익
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <Select
-            label={"\uc218\uae09 \ubc29\uc2dd \uc77c\uad04 \uc124\uc815"}
-            value="custom"
-            onChange={(v) => {
-              if (v === "custom") return;
-              const mode = v === "all_buy" ? "buy" : "owned";
-              setS((p) => ({
-                ...p,
-                modes: materialKeysForUI.reduce((acc, key) => ({ ...acc, [key]: mode }), { ...p.modes }),
-              }));
-            }}
-            options={[
-              { value: "custom", label: "\ucee4\uc2a4\ud140(\uac1c\ubcc4 \uc124\uc815)" },
-              { value: "all_owned", label: "\uc804\ubd80 \uc9c1\uc811 \uc218\uae09" },
-              { value: "all_buy", label: "\uc804\ubd80 \uad6c\ub9e4" },
-            ]}
-          />
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-          {materialKeysForUI.map((k) => (
-            <React.Fragment key={k}>
-              <Field
-                label={`${materialLabels[k] ?? k} \uc2dc\uc7a5\uac00(\uac1c\ub2f9)`}
-                value={s.prices[k]?.market ?? ""}
-                onChange={(v) => setS((p) => ({ ...p, prices: { ...p.prices, [k]: { market: v } } }))}
-                min={0}
-                suffix="원"
-              />
-              <Select
-                label={`${materialLabels[k] ?? k} \uc218\uae09 \ubc29\uc2dd`}
-                value={
-                  ["owned", "opportunity", "buy"].includes(s.modes[k])
-                    ? s.modes[k] === "owned"
-                      ? 0
-                      : s.modes[k] === "buy"
-                        ? 1
-                        : 2
-                    : 0
-                }
-                onChange={(v) => {
-                  const mode = v === 0 ? "owned" : v === 1 ? "buy" : "opportunity";
-                  setS((p) => ({ ...p, modes: { ...p.modes, [k]: mode } }));
-                }}
-                options={[
-                  { value: 0, label: "직접 수급(0)" },
-                  { value: 1, label: "구매 필요" },
-                  { value: 2, label: "포기한 판매 수익(고급)" },
-                ]}
-              />
-            </React.Fragment>
-          ))}
-        </div>
-        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
-          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
-        </div>
-
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
-          {materialPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{materialPriceError}</span> : null}
-          <button
-            onClick={onSaveMaterialPrices}
-            disabled={!authUser || materialPriceSaving}
-            style={{
-              padding: "8px 12px",
-              borderRadius: 10,
-              border: "1px solid var(--input-border)",
-              background: authUser ? "var(--panel-bg)" : "transparent",
-              color: "var(--text)",
-              cursor: !authUser || materialPriceSaving ? "not-allowed" : "pointer",
-              fontWeight: 800,
-              fontSize: 12,
-              opacity: !authUser || materialPriceSaving ? 0.6 : 1,
-            }}
-            title={authUser ? "재료 시세 저장" : "로그인 후 저장할 수 있습니다."}
-          >
-            {materialPriceSaving ? "저장 중..." : "재료 시세 저장"}
-          </button>
-        </div>
-      </Card>
-    </div>
-  );
-}
 
 function FeedbackPage({ s, setS }) {
   const [form, setForm] = useState({
@@ -1343,7 +958,329 @@ function FeedbackPage({ s, setS }) {
   );
 }
 
-function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profiles, setProfiles }) {
+
+function ProfilePage({
+  s,
+  setS,
+  feeRate,
+  priceUpdatedAt,
+  priceUpdatedBy,
+  authUser,
+  userDoc,
+  onSaveNickname,
+  onSaveCommonPrices,
+  commonPriceSaving,
+  commonPriceError,
+  onSaveMaterialPrices,
+  materialPriceSaving,
+  materialPriceError,
+  nicknameSaving,
+  nicknameError,
+}) {
+  const [nickname, setNickname] = useState("");
+
+  useEffect(() => {
+    if (!authUser) {
+      setNickname("");
+      return;
+    }
+    setNickname(userDoc?.nickname ?? authUser.displayName ?? "");
+  }, [authUser, userDoc]);
+  const sageOptions = useMemo(() => {
+    const values = Object.keys(SAGE_SHARDS_BY_ENH).map(Number).sort((a, b) => a - b);
+    return values.map((v) => ({ value: v, label: `${v}강 (조각 ${SAGE_SHARDS_BY_ENH[v]}개)` }));
+  }, []);
+
+  const gemOptions = [
+    { value: 0, label: "0레벨 (스킬 없음)" },
+    { value: 1, label: "1레벨 (3% 확률, 1개)" },
+    { value: 2, label: "2레벨 (7% 확률, 1개)" },
+    { value: 3, label: "3레벨 (10% 확률, 2개)" },
+  ];
+
+  const flameOptions = [
+    { value: 0, label: "0레벨 (스킬 없음)" },
+    ...Array.from({ length: 9 }, (_, i) => {
+      const lv = i + 1;
+      return { value: lv, label: `${lv}레벨 (${lv}% 확률, 조각→주괴 1개 대체)` };
+    }),
+    { value: 10, label: "10레벨 (15% 확률, 조각→주괴 1개 대체)" },
+  ];
+
+
+  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
+  const gemRule = gemExpertRule(s.gemExpertLevel);
+  const flameRule = flamingPickRule(s.flamingPickLevel);
+
+  const materialKeysForUI = [
+    "ingot",
+    "diamond",
+    "gold",
+    "iron",
+    "lapis",
+    "amethyst",
+    "copper",
+    "redstone",
+    "stone",
+    "deepCobble",
+  ];
+
+  const materialLabels = {
+    ingot: "\uc8fc\uad34",
+    diamond: "\ub2e4\uc774\uc544\ubaac\ub4dc",
+    gold: "\uae08",
+    iron: "\ucca0",
+    lapis: "\uccad\uae08\uc11d",
+    amethyst: "\uc790\uc218\uc815",
+    copper: "\uad6c\ub9ac",
+    redstone: "\ub808\ub4dc\uc2a4\ud1a4",
+    stone: "\uc870\uc57d\ub3cc",
+    deepCobble: "\uc2ec\uce35 \uc870\uc57d\ub3cc",
+  };
+
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <Card title="내 정보 입력">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+          <div style={{ gridColumn: "1 / -1", display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <TextField
+              label="온라인 표시 이름"
+              value={nickname}
+              onChange={(v) => setNickname(v)}
+              placeholder="예: 미래24"
+            />
+            <button
+              onClick={() => onSaveNickname(nickname)}
+              disabled={!authUser || nicknameSaving}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                border: "1px solid var(--input-border)",
+                background: "var(--accent)",
+                color: "var(--accent-text)",
+                cursor: !authUser || nicknameSaving ? "not-allowed" : "pointer",
+                fontWeight: 900,
+                fontSize: 12,
+                opacity: !authUser || nicknameSaving ? 0.6 : 1,
+                whiteSpace: "nowrap",
+              }}
+              title={authUser ? "온라인 표시 이름 저장" : "로그인 후 설정할 수 있습니다."}
+            >
+              {nicknameSaving ? "저장 중..." : "저장"}
+            </button>
+          </div>
+          {nicknameError ? (
+            <div style={{ gridColumn: "1 / -1", fontSize: 12, color: "#c0392b" }}>{nicknameError}</div>
+          ) : null}
+          <Select
+            label={"\ud14c\ub9c8"}
+            value={["light", "dark", "purple"].includes(s.themeMode) ? s.themeMode : "light"}
+            onChange={(v) => setS((p) => ({ ...p, themeMode: v }))}
+            options={[
+              { value: "light", label: "\ub77c\uc774\ud2b8 \ubaa8\ub4dc" },
+              { value: "dark", label: "\ub2e4\ud06c \ubaa8\ub4dc" },
+              { value: "purple", label: "\ud37c\ud50c \ubaa8\ub4dc" },
+            ]}
+          />
+          <Select
+            label="세이지 곡괭이 강화 단계"
+            value={s.sageEnhLevel}
+            onChange={(v) => setS((p) => ({ ...p, sageEnhLevel: v }))}
+            options={sageOptions}
+          />
+          <Select
+            label="보석 전문가 레벨"
+            value={s.gemExpertLevel}
+            onChange={(v) => setS((p) => ({ ...p, gemExpertLevel: v }))}
+            options={gemOptions}
+          />
+          <Select
+            label="불붙은 곡괭이 레벨"
+            value={s.flamingPickLevel}
+            onChange={(v) => setS((p) => ({ ...p, flamingPickLevel: v }))}
+            options={flameOptions}
+          />
+          <Field
+            label="광질 1회 스테미나"
+            value={s.staminaPerDig}
+            onChange={(v) => setS((p) => ({ ...p, staminaPerDig: v }))}
+            placeholder="예: 10"
+            min={1}
+          />
+          <Field
+            label="조각→주괴 필요 조각"
+            value={s.shardsPerIngot}
+            onChange={(v) => setS((p) => ({ ...p, shardsPerIngot: v }))}
+            placeholder="예: 16"
+            min={1}
+          />
+        </div>
+
+        <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
+          <div style={{ fontWeight: 900, marginBottom: 6 }}>?꾩옱 ?댁젙蹂??붿빟</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13 }}>
+            <div>
+              조각/회(불붙은 미발동 시): <b>{fmt(shardsPerDig)}</b>
+            </div>
+            <div>
+              보석: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>개
+            <div>
+              불붙은(대체): <b>{fmt(flameRule.prob * 100)}%</b> 확률, <b>주괴 1개</b>
+            </div>
+            <div>
+              판매 수수료: <b>{fmt(toNum(s.feePct))}%</b>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      
+      
+      <Card title="시세 입력 (공통)">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+          <Field
+            label="판매 수수료(%)"
+            value={s.feePct}
+            onChange={(v) => setS((p) => ({ ...p, feePct: v }))}
+            placeholder="예: 5"
+            min={0}
+            max={50}
+            suffix="%"
+          />
+          <Field
+            label="주괴 시장가(원)"
+            value={s.ingotGrossPrice}
+            onChange={(v) =>
+              setS((p) => ({
+                ...p,
+                ingotGrossPrice: v,
+                prices: { ...p.prices, ingot: { market: v } },
+              }))
+            }
+            placeholder="예: 6000"
+            min={0}
+            suffix="원"
+          />
+          <Field
+            label="보석 시장가(원)"
+            value={s.gemGrossPrice}
+            onChange={(v) => setS((p) => ({ ...p, gemGrossPrice: v }))}
+            placeholder="예: 12000"
+            min={0}
+            suffix="원"
+          />
+        </div>
+
+        <div style={{ marginTop: 12, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
+          판매 실수령(수수료 반영):
+          <br />- 주괴 {fmt(toNum(s.ingotGrossPrice))}원 <b>→ {fmt(netSell(toNum(s.ingotGrossPrice), feeRate))}원</b>
+          <br />- 보석 {fmt(toNum(s.gemGrossPrice))}원 <b>→ {fmt(netSell(toNum(s.gemGrossPrice), feeRate))}원</b>
+          <br />
+          구매 비용(수수료 없음): <b>시장가 그대로</b>
+        </div>
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+          {"최근 시세 업데이트: "}
+          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+          {priceUpdatedBy ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
+        </div>
+
+        <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {commonPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{commonPriceError}</span> : null}
+          <button
+            onClick={onSaveCommonPrices}
+            disabled={!authUser || commonPriceSaving}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: authUser ? "var(--panel-bg)" : "transparent",
+              color: "var(--text)",
+              cursor: !authUser || commonPriceSaving ? "not-allowed" : "pointer",
+              fontWeight: 800,
+              fontSize: 12,
+              opacity: !authUser || commonPriceSaving ? 0.6 : 1,
+            }}
+            title={authUser ? "시세 저장" : "로그인 후 저장할 수 있습니다."}
+          >
+            {commonPriceSaving ? "저장 중..." : "시세 저장"}
+          </button>
+        </div>
+      </Card>
+
+
+      <Card title="재료 시세(시장가) + 수급 방식 입력">
+        <div style={{ fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>
+          재료는 시장가 1개만 입력합니다.
+          <br />
+          판매 실수령 = 시장가 x (1-수수료)
+          <br />
+          구매 비용 = 시장가(수수료 없음)
+        </div>
+        <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+          {materialKeysForUI.map((key) => {
+            const label = materialLabels[key] || key;
+            const market = s.prices[key]?.market ?? "";
+            const mode = s.modes[key] || "owned";
+            return (
+              <div key={key} style={{ display: "grid", gap: 8, padding: 10, borderRadius: 10, border: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
+                <Field
+                  label={`${label} 시장가(개당)`}
+                  value={market}
+                  onChange={(v) =>
+                    setS((p) => ({
+                      ...p,
+                      prices: { ...p.prices, [key]: { market: v } },
+                    }))
+                  }
+                  placeholder="예: 1000"
+                  min={0}
+                  suffix="원"
+                />
+                <Select
+                  label={`${label} 수급 방식`}
+                  value={mode}
+                  onChange={(v) => setS((p) => ({ ...p, modes: { ...p.modes, [key]: v } }))}
+                  options={[
+                    { value: "owned", label: "직접 수급(0)" },
+                    { value: "buy", label: "구매" },
+                    { value: "opportunity", label: "포기한 판매 수익" },
+                  ]}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {materialPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{materialPriceError}</span> : null}
+          <button
+            onClick={onSaveMaterialPrices}
+            disabled={!authUser || materialPriceSaving}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: authUser ? "var(--panel-bg)" : "transparent",
+              color: "var(--text)",
+              cursor: !authUser || materialPriceSaving ? "not-allowed" : "pointer",
+              fontWeight: 800,
+              fontSize: 12,
+              opacity: !authUser || materialPriceSaving ? 0.6 : 1,
+            }}
+            title={authUser ? "재료 시세 저장" : "로그인 후 저장할 수 있습니다."}
+          >
+            {materialPriceSaving ? "저장 중..." : "재료 시세 저장"}
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * ==========
+ * Root App
+ * ==========
+ */function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profiles, setProfiles }) {
   const [form, setForm] = useState({
     type: "improve",
     title: "",
@@ -1726,7 +1663,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
                     }}
                   >
                     <div style={{ fontWeight: 900 }}>
-                      {p.nickname || p.mcNickname || "이름 없음"}
+                    .map((p) => p.nickname || p.mcNickname || "이름 없음")
                       {p.mcNickname ? ` (${p.mcNickname})` : ""}
                     </div>
                     {p.rank ? <div style={{ fontSize: 12, opacity: 0.85 }}>직급: {p.rank}</div> : null}
@@ -2012,10 +1949,10 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
 
           <Card title={"현재 접속 중"}>
             <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
-              {`현재 접속: ${onlineUsers.length}명`}
+          {`온라인 ${onlineUsers.length}명`}
             </div>
             {onlineUsers.length === 0 ? (
-              <div style={{ fontSize: 12, opacity: 0.7 }}>접속 중인 사용자가 없습니다.</div>
+          <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>접속 중인 사용자가 없습니다.</div>
             ) : (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {onlineUsers.map((user) => (
@@ -2041,220 +1978,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
     </div>
   );
 }
-function PotionRowDetails({ feeRate, ev, row, shardsPerDig, gemRule, flameRule }) {
-  const stamina = row.stamina;
-  const spd = ev.staminaPerDig;
-  const digs = stamina / spd;
 
-  const ingotFromShardsValue = ev.ingotFromShardsValuePerDig * digs;
-  const ingotFromFlameValue = ev.ingotFromFlameValuePerDig * digs;
-  const gemValue = ev.gemValuePerDig * digs;
-
-  const total = ingotFromShardsValue + ingotFromFlameValue + gemValue;
-
-  return (
-    <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "var(--panel-bg)", border: "1px solid var(--soft-border)" }}>
-      <div style={{ fontWeight: 900, marginBottom: 8 }}>세부내역: {row.label}</div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
-        <div>기준 스태미나</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(stamina)}</div>
-
-        <div>광질 1회 스태미나</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(spd)}</div>
-
-        <div>예상 광질 횟수(스태미나/회)</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{digs.toFixed(4)}회</div>
-
-        <div>주괴 실수령 단가</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.ingotNet)}원</div>
-
-        <div>보석 실수령 단가</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.gemNet)}원</div>
-
-        <div>불붙은 확률 p(대체)</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{(ev.pFlame * 100).toFixed(2)}%</div>
-
-        <div>회당 조각(불붙은 미발동 시)</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(shardsPerDig)}개</div>
-
-        <div>보석 전문가</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>
-          {fmt(gemRule.prob * 100)}% / {fmt(gemRule.count)}개
-        </div>
-
-        <div>불붙은</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(flameRule.prob * 100)}% / 주괴 1개(조각 0 대체)</div>
-
-        <div style={{ marginTop: 6, fontWeight: 900 }}>포션 스태미나 기준 기대매출(실수령) 분해</div>
-        <div />
-
-        <div>조각→주괴 기대가치</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ingotFromShardsValue)}원</div>
-
-        <div>불붙은(대체) 주괴 기대가치</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ingotFromFlameValue)}원</div>
-
-        <div>보석 기대가치(불붙은과 무관)</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(gemValue)}원</div>
-
-        <div>합계 기대매출(실수령)</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(total)}원</div>
-
-        <div>구매가</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(row.cost)}원</div>
-
-        <div>순이익</div>
-        <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(total - row.cost)}원</div>
-      </div>
-
-      <div style={{ marginTop: 10, fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>
-        계산식 요약(불붙은=대체):
-        <br />- 회당 주괴 기대량 = <b>(1-p)×(조각/필요조각)</b> + <b>p×1</b>
-        <br />- 회당 보석 기대가치 = (보석확률 × 보석개수 × 보석실수령단가) <b>(불붙은과 무관)</b>
-        <br />- 포션 기준 기대매출 = (회당 기대가치) × (스태미나 / 광질1회스태미나)
-      </div>
-    </div>
-  );
-}
-
-function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
-  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
-  const gemRule = gemExpertRule(s.gemExpertLevel);
-  const flameRule = flamingPickRule(s.flamingPickLevel);
-
-  const ev = useMemo(() => {
-    return miningEVBreakdown({
-      staminaPerDig: toNum(s.staminaPerDig, 10),
-      shardsPerDig,
-      shardsPerIngot: toNum(s.shardsPerIngot, 16),
-      ingotGrossPrice: toNum(s.ingotGrossPrice, 0),
-      gemDropProb: gemRule.prob,
-      gemDropCount: gemRule.count,
-      gemGrossPrice: toNum(s.gemGrossPrice, 0),
-      flamingIngotProb: flameRule.prob,
-      sellFeeRate: feeRate,
-    });
-  }, [
-    s.staminaPerDig,
-    shardsPerDig,
-    s.shardsPerIngot,
-    s.ingotGrossPrice,
-    gemRule.prob,
-    gemRule.count,
-    s.gemGrossPrice,
-    flameRule.prob,
-    feeRate,
-  ]);
-
-  const results = useMemo(() => {
-    const p = s.potionPrices;
-    const rows = [
-      { key: "p100", label: "100 포션", stamina: 100, cost: toNum(p.p100) },
-      { key: "p300", label: "300 포션", stamina: 300, cost: toNum(p.p300) },
-      { key: "p500", label: "500 포션", stamina: 500, cost: toNum(p.p500) },
-      { key: "p700", label: "700 포션", stamina: 700, cost: toNum(p.p700) },
-    ].map((r) => {
-      const revenue = ev.totalPerStamina * r.stamina;
-      const profit = revenue - r.cost;
-      return { ...r, revenue, profit };
-    });
-    const best = rows.reduce((acc, cur) => (cur.profit > acc.profit ? cur : acc), rows[0]);
-    return { rows, best };
-  }, [s.potionPrices, ev.totalPerStamina]);
-
-  const toggleRow = (key) => {
-    setS((p) => ({
-      ...p,
-      potionRowDetailsOpen: {
-        ...p.potionRowDetailsOpen,
-        [key]: !p.potionRowDetailsOpen?.[key],
-      },
-    }));
-  };
-
-  return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <Card title="스테미나 포션 효율 계산">
-        <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13 }}>
-            <div>조각/회(미발동 시): <b>{fmt(shardsPerDig)}</b></div>
-            <div>보석: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>개</div>
-            <div>불붙은(대체): <b>{fmt(flameRule.prob * 100)}%</b> (주괴 1개)</div>
-            <div>스태미나 1당 기대 수익(실수령): <b>{fmt(ev.totalPerStamina)}</b>원</div>
-          </div>
-        </div>
-      </Card>
-
-      <Card title="포션 가격 입력">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-          <Field label="100 포션 가격" value={s.potionPrices.p100} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p100: v } }))} min={0} suffix="원" />
-          <Field label="300 포션 가격" value={s.potionPrices.p300} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p300: v } }))} min={0} suffix="원" />
-          <Field label="500 포션 가격" value={s.potionPrices.p500} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p500: v } }))} min={0} suffix="원" />
-          <Field label="700 포션 가격" value={s.potionPrices.p700} onChange={(v) => setS((p) => ({ ...p, potionPrices: { ...p.potionPrices, p700: v } }))} min={0} suffix="원" />
-        </div>
-        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
-          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
-        </div>
-      </Card>
-
-      <Card title="결과 (순이익 기준) — 포션별 세부내역 펼치기">
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>포션</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>스태미나</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>기대매출(실수령)</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>구매가</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>순이익</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>세부</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.rows.map((r) => {
-                const open = !!s.potionRowDetailsOpen?.[r.key];
-                return (
-                  <React.Fragment key={r.key}>
-                    <tr>
-                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>{r.label}</td>
-                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(r.stamina)}</td>
-                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(r.revenue)}</td>
-                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>{fmt(r.cost)}</td>
-                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>{fmt(r.profit)}</td>
-                      <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
-                        <ToggleButton isOn={open} onClick={() => toggleRow(r.key)} labelOn="닫기" labelOff="보기" />
-                      </td>
-                    </tr>
-                    {open ? (
-                      <tr>
-                        <td colSpan={6} style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>
-                          <PotionRowDetails
-                            feeRate={feeRate}
-                            ev={ev}
-                            row={r}
-                            shardsPerDig={shardsPerDig}
-                            gemRule={gemRule}
-                            flameRule={flameRule}
-                          />
-                        </td>
-                      </tr>
-                    ) : null}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div style={{ marginTop: 10, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
-          순이익 추천: <b>{results.best.label}</b>
-        </div>
-      </Card>
-    </div>
-  );
-}
 
 function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSharedPrices, priceSaving, priceSaveError, authUser }) {
   const materialLabels = {
@@ -2453,6 +2177,27 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
           {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
         </div>
+        <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
+          <button
+            onClick={onSaveSharedPrices}
+            disabled={!authUser || priceSaving}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: authUser ? "var(--panel-bg)" : "transparent",
+              color: "var(--text)",
+              cursor: !authUser || priceSaving ? "not-allowed" : "pointer",
+              fontWeight: 800,
+              fontSize: 12,
+              opacity: !authUser || priceSaving ? 0.6 : 1,
+            }}
+            title={authUser ? "?? ?? ??" : "??? ? ??? ? ????."}
+          >
+            {priceSaving ? "?? ?..." : "?? ?? ??"}
+          </button>
+        </div>
 
         <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9, lineHeight: 1.5 }}>
           표의 의미:
@@ -2535,12 +2280,12 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
                 <div key={row.key} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
                   <div style={{ fontWeight: 900, marginBottom: 6 }}>{row.name} — 비용 분해(선택 기준)</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
-                    <div>구매로 나간 돈(실지출)</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.buySpend)}원</div>
-                    <div>포기한 판매 수익(기회비용)</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.foregone)}원</div>
-                    <div>직접 수급 재료 수량 합</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.ownedQty)}개</div>
+                    <div>??? ? ??(??)</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.buySpend)}?</div>
+                    <div>??? ?? ??(????)</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.foregone)}?</div>
+                    <div>?? ?? ?? ?? ?</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.ownedQty)}?</div>
                   </div>
                 </div>
               );
@@ -2552,13 +2297,15 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
   );
 }
 
+
 /**
  * ==========
  * Root App
  * ==========
  */
+
 export default function App() {
-  // 키를 v4->v6로 변경(이전 값 충돌 최소화) + 마이그레이션으로 흡수
+  // ?ㅻ? v4->v6濡?蹂寃??댁쟾 媛?異⑸룎 理쒖냼?? + 留덉씠洹몃젅?댁뀡?쇰줈 ?≪닔
   const [s, setS] = useLocalStorageState("miner_eff_v6", defaultState);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [adminPass, setAdminPass] = useState("");
@@ -2685,12 +2432,12 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted") {
         enqueuePending(pendingNicknameKey(authUser.uid), { nickname: trimmed });
-        setNicknameError("저장량이 잠시 초과되었습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
+        setNicknameError("??λ웾???좎떆 珥덇낵?섏뿀?듬땲?? 濡쒖뺄???꾩떆 ??ν뻽怨??먮룞 ?ъ떆?꾪빀?덈떎.");
       } else if (err?.message === "timeout") {
         enqueuePending(pendingNicknameKey(authUser.uid), { nickname: trimmed });
-        setNicknameError("저장이 지연되고 있습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
+        setNicknameError("??μ씠 吏?곕릺怨??덉뒿?덈떎. 濡쒖뺄???꾩떆 ??ν뻽怨??먮룞 ?ъ떆?꾪빀?덈떎.");
       } else {
-        setNicknameError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+        setNicknameError("??μ뿉 ?ㅽ뙣?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??");
       }
     } finally {
       setNicknameSaving(false);
@@ -2898,7 +2645,7 @@ export default function App() {
       } catch (err) {
         setUserDoc({ uid: authUser.uid, status: "pending" });
         if (err?.code === "resource-exhausted") {
-          setAuthError("로그인이 되었지만 서버 동기화가 지연됩니다. 잠시 후 다시 시도해 주세요.");
+          setAuthError("濡쒓렇?몄씠 ?섏뿀吏留??쒕쾭 ?숆린?붽? 吏?곕맗?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??");
         }
       }
     })();
@@ -3008,9 +2755,9 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
         enqueuePending("pendingCommonPrices", payload);
-        setCommonPriceError("??? ???? ????. ?? ? ?? ??????.");
+        setCommonPriceError("??? ???? ????. ?? ? ?? 익명?.");
       } else {
-        setCommonPriceError("??? ??????. ?? ? ?? ??????.");
+        setCommonPriceError("??? 익명?. ?? ? ?? 익명?.");
       }
     } finally {
       setCommonPriceSaving(false);
@@ -3038,9 +2785,9 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
         enqueuePending("pendingProcessPrices", payload);
-        setProcessPriceError("??? ???? ????. ?? ? ?? ??????.");
+        setProcessPriceError("??? ???? ????. ?? ? ?? 익명?.");
       } else {
-        setProcessPriceError("??? ??????. ?? ? ?? ??????.");
+        setProcessPriceError("??? 익명?. ?? ? ?? 익명?.");
       }
     } finally {
       setProcessPriceSaving(false);
@@ -3068,9 +2815,9 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
         enqueuePending("pendingMaterialPrices", payload);
-        setMaterialPriceError("??? ???? ????. ?? ? ?? ??????.");
+        setMaterialPriceError("??? ???? ????. ?? ? ?? 익명?.");
       } else {
-        setMaterialPriceError("??? ??????. ?? ? ?? ??????.");
+        setMaterialPriceError("??? 익명?. ?? ? ?? 익명?.");
       }
     } finally {
       setMaterialPriceSaving(false);
@@ -3112,7 +2859,7 @@ export default function App() {
       closeAdminModal();
       return;
     }
-    setAdminError("비밀번호가 올바르지 않습니다.");
+    setAdminError("鍮꾨?踰덊샇媛 ?щ컮瑜댁? ?딆뒿?덈떎.");
   };
 
   const logoutAdmin = () => {
@@ -3154,8 +2901,7 @@ export default function App() {
     setIntroOpen(false);
   };
 
-  // IngotPage에서 판매가 입력을 막고(placeholder), 실제 입력은 profile에서만 하려고
-  // 단, 기존 구조를 크게 바꾸지 않기 위해 “입력 위치 이동”만 하고, 값은 그대로 사용합니다.
+  // IngotPage?먯꽌 ?먮ℓ媛 ?낅젰??留됯퀬(placeholder), ?ㅼ젣 ?낅젰? profile?먯꽌留??섎젮怨?  // ?? 湲곗〈 援ъ“瑜??ш쾶 諛붽씀吏 ?딄린 ?꾪빐 ?쒖엯???꾩튂 ?대룞?앸쭔 ?섍퀬, 媛믪? 洹몃?濡??ъ슜?⑸땲??
   const setActive = (key) => setS((p) => ({ ...p, activeMenu: key }));
   const isPending = !!authUser && !canUseApp && userDoc?.status !== "rejected";
   const isRejected = userDoc?.status === "rejected";
@@ -3390,7 +3136,7 @@ export default function App() {
                   <div style={{ fontSize: 20, fontWeight: 900 }}>{"\uAD11\uBD80 \uD6A8\uC728 \uACC4\uC0B0\uAE30"}</div>
                   <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
                     {"\uD310\uB9E4 \uC218\uC218\uB8CC "}
-                    {fmt(toNum(s.feePct))}
+              판매 수수료: <b>{fmt(toNum(s.feePct))}%</b>
                     {"% \uC801\uC6A9(\uD310\uB9E4 \uC2E4\uC218\uB839 \uAE30\uC900)"}
                   </div>
                 </div>
