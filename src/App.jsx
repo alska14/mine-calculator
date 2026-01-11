@@ -821,6 +821,27 @@ function ProfilePage({
           {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
         </div>
+        <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
+          <button
+            onClick={saveSharedPrices}
+            disabled={!authUser || priceSaving}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: authUser ? "var(--panel-bg)" : "transparent",
+              color: "var(--text)",
+              cursor: !authUser || priceSaving ? "not-allowed" : "pointer",
+              fontWeight: 800,
+              fontSize: 12,
+              opacity: !authUser || priceSaving ? 0.6 : 1,
+            }}
+            title={authUser ? "시세/옵션 수동 저장" : "로그인 후 저장할 수 있습니다."}
+          >
+            {priceSaving ? "저장 중..." : "시세/옵션 저장"}
+          </button>
+        </div>
       </Card>
 
       <Card title="재료 시세(시장가) + 수급 방식 입력">
@@ -2412,6 +2433,8 @@ export default function App() {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [presenceDocs, setPresenceDocs] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [priceSaving, setPriceSaving] = useState(false);
+  const [priceSaveError, setPriceSaveError] = useState("");
   const [nicknameSaving, setNicknameSaving] = useState(false);
   const [nicknameError, setNicknameError] = useState("");
   const presenceWriteAtRef = useRef(0);
@@ -2420,6 +2443,7 @@ export default function App() {
 
   const pendingNicknameKey = (uid) => `pendingNickname:${uid}`;
   const pendingProfileKey = (uid) => `pendingProfile:${uid}`;
+  const pendingSharedKey = "pendingSharedPrices";
   const enqueuePending = (key, payload) => {
     try {
       localStorage.setItem(key, JSON.stringify({ payload, ts: Date.now() }));
@@ -2514,6 +2538,17 @@ export default function App() {
           if (payload) {
             await setDoc(doc(db, "villageProfiles", authUser.uid), payload, { merge: true });
             localStorage.removeItem(profileKey);
+          }
+        }
+
+        const sharedRaw = localStorage.getItem(pendingSharedKey);
+        if (sharedRaw) {
+          const parsed = JSON.parse(sharedRaw);
+          const payload = parsed?.payload;
+          if (payload) {
+            await setDoc(doc(db, "shared", "prices"), payload, { merge: true });
+            localStorage.removeItem(pendingSharedKey);
+            setPriceSaveError("");
           }
         }
       } catch {
@@ -2711,33 +2746,38 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  useEffect(() => {
-    if (suppressPriceWrite.current) {
-      suppressPriceWrite.current = false;
+  const saveSharedPrices = async () => {
+    if (!authUser) {
+      setPriceSaveError("로그인 후 저장할 수 있습니다.");
       return;
     }
-    if (priceUpdateTimer.current) {
-      clearTimeout(priceUpdateTimer.current);
-    }
-    priceUpdateTimer.current = setTimeout(() => {
-      setDoc(
-        doc(db, "shared", "prices"),
-        {
-          ingotGrossPrice: s.ingotGrossPrice,
-          gemGrossPrice: s.gemGrossPrice,
-          prices: s.prices,
-          abilityGrossSell: s.abilityGrossSell,
-          lifeGrossSell: s.lifeGrossSell,
-          potionPrices: s.potionPrices,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-    }, 800);
-    return () => {
-      if (priceUpdateTimer.current) clearTimeout(priceUpdateTimer.current);
+    setPriceSaving(true);
+    setPriceSaveError("");
+    const payload = {
+      ingotGrossPrice: s.ingotGrossPrice,
+      gemGrossPrice: s.gemGrossPrice,
+      prices: s.prices,
+      abilityGrossSell: s.abilityGrossSell,
+      lifeGrossSell: s.lifeGrossSell,
+      potionPrices: s.potionPrices,
+      updatedAt: serverTimestamp(),
     };
-  }, [s.ingotGrossPrice, s.gemGrossPrice, s.prices, s.abilityGrossSell, s.lifeGrossSell, s.potionPrices]);
+    try {
+      await Promise.race([
+        setDoc(doc(db, "shared", "prices"), payload, { merge: true }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
+    } catch (err) {
+      if (err?.code === "resource-exhausted" || err?.message === "timeout") {
+        enqueuePending(pendingSharedKey, payload);
+        setPriceSaveError("저장이 지연됩니다. 로컬에 임시 저장했고 자동 재시도합니다.");
+      } else {
+        setPriceSaveError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      }
+    } finally {
+      setPriceSaving(false);
+    }
+  };
 
   const handleLogin = async () => {
     setAuthError("");
