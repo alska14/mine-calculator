@@ -644,9 +644,15 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
               const dayKey = String(day).padStart(2, "0");
               const key = `${monthKey}-${dayKey}`;
               const list = birthdayMap?.[key] || [];
+              const title = list.length
+                ? list
+                    .map((p) => p.nickname || p.mcNickname || "이름 없음")
+                    .join(", ")
+                : "";
               return (
                 <div
                   key={`day-${day}`}
+                  title={title}
                   style={{
                     minHeight: 26,
                     borderRadius: 8,
@@ -1649,10 +1655,9 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
       {showProfiles ? (
         <Card title="마을원 프로필">
           <div style={{ display: "grid", gap: 12 }}>
-
             <div style={{ display: "grid", gap: 10 }}>
               {sortedProfiles.length === 0 ? (
-                <div style={{ fontSize: 13, opacity: 0.7 }}>??? ??? ???? ????.</div>
+                <div style={{ fontSize: 13, opacity: 0.7 }}>등록된 마을원 프로필이 없습니다.</div>
               ) : (
                 sortedProfiles.map((p) => (
                   <div
@@ -1667,18 +1672,18 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
                     }}
                   >
                     <div style={{ fontWeight: 900 }}>
-                      {p.nickname || p.mcNickname || "?? ??"}
+                      {p.nickname || p.mcNickname || "이름 없음"}
                       {p.mcNickname ? ` (${p.mcNickname})` : ""}
                     </div>
-                    {p.rank ? <div style={{ fontSize: 12, opacity: 0.85 }}>??: {p.rank}</div> : null}
+                    {p.rank ? <div style={{ fontSize: 12, opacity: 0.85 }}>직급: {p.rank}</div> : null}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, fontSize: 12 }}>
-                      <div>??: {p.birthday || "-"}</div>
-                      <div>??: {p.age || "-"}</div>
+                      <div>생일: {p.birthday || "-"}</div>
+                      <div>나이: {p.age || "-"}</div>
                       <div>MBTI: {p.mbti || "-"}</div>
-                      <div>?? ??: {p.job || "-"}</div>
+                      <div>마크 직업: {p.job || "-"}</div>
                     </div>
-                    {p.likes ? <div style={{ fontSize: 12 }}>???? ?: {p.likes}</div> : null}
-                    {p.dislikes ? <div style={{ fontSize: 12 }}>???? ?: {p.dislikes}</div> : null}
+                    {p.likes ? <div style={{ fontSize: 12 }}>좋아하는 것: {p.likes}</div> : null}
+                    {p.dislikes ? <div style={{ fontSize: 12 }}>싫어하는 것: {p.dislikes}</div> : null}
                   </div>
                 ))
               )}
@@ -1763,7 +1768,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
             {profileError ? <div style={{ fontSize: 12, color: "#c0392b" }}>{profileError}</div> : null}
 
             <div style={{ fontSize: 12, opacity: 0.75 }}>
-              {existingProfile ? "? ???? ????. ??/??? ? ????." : "???? ??????."}
+              {existingProfile ? "내 프로필이 있습니다. 수정/삭제할 수 있습니다." : "프로필을 생성해주세요."}
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
@@ -1781,7 +1786,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
                   opacity: !authUser || profileSaving ? 0.6 : 1,
                 }}
               >
-                {"? ???"}
+                {"새 프로필"}
               </button>
               <button
                 onClick={saveProfile}
@@ -1798,7 +1803,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
                   opacity: !authUser || profileSaving ? 0.6 : 1,
                 }}
               >
-                {profileSaving ? "?? ?..." : existingProfile ? "??? ??" : "??? ??"}
+                {profileSaving ? "저장 중..." : existingProfile ? "프로필 수정" : "프로필 생성"}
               </button>
               <button
                 onClick={deleteProfile}
@@ -1814,10 +1819,9 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
                   opacity: !authUser || profileSaving || !existingProfile ? 0.6 : 1,
                 }}
               >
-                {"??? ??"}
+                {"프로필 삭제"}
               </button>
             </div>
-
           </div>
         </Card>
       ) : null}
