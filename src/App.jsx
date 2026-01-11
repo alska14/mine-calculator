@@ -694,9 +694,12 @@ function ProfilePage({
   authUser,
   userDoc,
   onSaveNickname,
-  onSaveSharedPrices,
-  priceSaving,
-  priceSaveError,
+  onSaveCommonPrices,
+  commonPriceSaving,
+  commonPriceError,
+  onSaveMaterialPrices,
+  materialPriceSaving,
+  materialPriceError,
   nicknameSaving,
   nicknameError,
 }) {
@@ -910,23 +913,25 @@ function ProfilePage({
 
         <div style={{ marginTop: "10px", display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
           {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
+        <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {commonPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{commonPriceError}</span> : null}
           <button
-            onClick={onSaveSharedPrices}
-            disabled={!authUser || priceSaving}
+            onClick={onSaveCommonPrices}
+            disabled={!authUser || commonPriceSaving}
             style={{
               padding: "8px 12px",
               borderRadius: 10,
               border: "1px solid var(--input-border)",
               background: authUser ? "var(--panel-bg)" : "transparent",
               color: "var(--text)",
-              cursor: !authUser || priceSaving ? "not-allowed" : "pointer",
+              cursor: !authUser || commonPriceSaving ? "not-allowed" : "pointer",
               fontWeight: 800,
               fontSize: 12,
-              opacity: !authUser || priceSaving ? 0.6 : 1,
+              opacity: !authUser || commonPriceSaving ? 0.6 : 1,
             }}
-            title={authUser ? "시세/옵션 저장" : "로그인 후 저장할 수 있습니다."}
+            title={authUser ? "?? ??" : "??? ? ??? ? ????."}
           >
-            {priceSaving ? "저장 중..." : "시세 저장"}
+            {commonPriceSaving ? "?? ?..." : "?? ??"}
           </button>
         </div>
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
@@ -1018,6 +1023,28 @@ function ProfilePage({
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
           {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+        </div>
+
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {materialPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{materialPriceError}</span> : null}
+          <button
+            onClick={onSaveMaterialPrices}
+            disabled={!authUser || materialPriceSaving}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: authUser ? "var(--panel-bg)" : "transparent",
+              color: "var(--text)",
+              cursor: !authUser || materialPriceSaving ? "not-allowed" : "pointer",
+              fontWeight: 800,
+              fontSize: 12,
+              opacity: !authUser || materialPriceSaving ? 0.6 : 1,
+            }}
+            title={authUser ? "재료 시세 저장" : "로그인 후 저장할 수 있습니다."}
+          >
+            {materialPriceSaving ? "저장 중..." : "재료 시세 저장"}
+          </button>
         </div>
       </Card>
     </div>
@@ -2538,6 +2565,18 @@ export default function App() {
   const [adminError, setAdminError] = useState("");
   const [priceUpdatedAt, setPriceUpdatedAt] = useState(null);
   const [priceUpdatedBy, setPriceUpdatedBy] = useState(null);
+  const [commonUpdatedAt, setCommonUpdatedAt] = useState(null);
+  const [commonUpdatedBy, setCommonUpdatedBy] = useState(null);
+  const [processUpdatedAt, setProcessUpdatedAt] = useState(null);
+  const [processUpdatedBy, setProcessUpdatedBy] = useState(null);
+  const [materialUpdatedAt, setMaterialUpdatedAt] = useState(null);
+  const [materialUpdatedBy, setMaterialUpdatedBy] = useState(null);
+  const [commonPriceSaving, setCommonPriceSaving] = useState(false);
+  const [commonPriceError, setCommonPriceError] = useState("");
+  const [processPriceSaving, setProcessPriceSaving] = useState(false);
+  const [processPriceError, setProcessPriceError] = useState("");
+  const [materialPriceSaving, setMaterialPriceSaving] = useState(false);
+  const [materialPriceError, setMaterialPriceError] = useState("");
   const priceUpdateTimer = useRef(null);
   const suppressPriceWrite = useRef(false);
   const [authUser, setAuthUser] = useState(null);
@@ -2566,8 +2605,7 @@ export default function App() {
 
   const pendingNicknameKey = (uid) => `pendingNickname:${uid}`;
   const pendingProfileKey = (uid) => `pendingProfile:${uid}`;
-  const pendingSharedKey = "pendingSharedPrices";
-  const enqueuePending = (key, payload) => {
+    const enqueuePending = (key, payload) => {
     try {
       localStorage.setItem(key, JSON.stringify({ payload, ts: Date.now() }));
     } catch {
@@ -2701,14 +2739,14 @@ export default function App() {
           }
         }
 
-        const sharedRaw = localStorage.getItem(pendingSharedKey);
-        if (sharedRaw) {
-          const parsed = JSON.parse(sharedRaw);
+        for (const key of ["pendingCommonPrices", "pendingProcessPrices", "pendingMaterialPrices"]) {
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          const parsed = JSON.parse(raw);
           const payload = parsed?.payload;
           if (payload) {
             await setDoc(doc(db, "shared", "prices"), payload, { merge: true });
-            localStorage.removeItem(pendingSharedKey);
-            setPriceSaveError("");
+            localStorage.removeItem(key);
           }
         }
       } catch {
@@ -2914,8 +2952,20 @@ export default function App() {
       const data = snap.data();
       const ts = data?.updatedAt?.toDate ? data.updatedAt.toDate() : null;
       const by = data?.updatedBy || null;
+      const commonTs = data?.updatedAtCommon?.toDate ? data.updatedAtCommon.toDate() : ts;
+      const commonBy = data?.updatedByCommon || by;
+      const processTs = data?.updatedAtProcess?.toDate ? data.updatedAtProcess.toDate() : null;
+      const processBy = data?.updatedByProcess || null;
+      const materialTs = data?.updatedAtMaterial?.toDate ? data.updatedAtMaterial.toDate() : null;
+      const materialBy = data?.updatedByMaterial || null;
       setPriceUpdatedAt(ts);
       setPriceUpdatedBy(by);
+      setCommonUpdatedAt(commonTs);
+      setCommonUpdatedBy(commonBy);
+      setProcessUpdatedAt(processTs);
+      setProcessUpdatedBy(processBy);
+      setMaterialUpdatedAt(materialTs);
+      setMaterialUpdatedBy(materialBy);
       if (!data) return;
       suppressPriceWrite.current = true;
       setS((p) => ({
@@ -2931,26 +2981,24 @@ export default function App() {
     return () => unsub();
   }, []);
 
-  const saveSharedPrices = async () => {
+  const buildUpdater = () => ({
+    uid: authUser?.uid || "",
+    name: authUser?.displayName || "",
+    email: authUser?.email || "",
+  });
+
+  const saveCommonPrices = async () => {
     if (!authUser) {
-      setPriceSaveError("로그인 후 저장할 수 있습니다.");
+      setCommonPriceError("??? ? ??? ? ????.");
       return;
     }
-    setPriceSaving(true);
-    setPriceSaveError("");
+    setCommonPriceSaving(true);
+    setCommonPriceError("");
     const payload = {
       ingotGrossPrice: s.ingotGrossPrice,
       gemGrossPrice: s.gemGrossPrice,
-      prices: s.prices,
-      abilityGrossSell: s.abilityGrossSell,
-      lifeGrossSell: s.lifeGrossSell,
-      potionPrices: s.potionPrices,
-      updatedBy: {
-        uid: authUser.uid,
-        name: authUser.displayName || "",
-        email: authUser.email || "",
-      },
-      updatedAt: serverTimestamp(),
+      updatedByCommon: buildUpdater(),
+      updatedAtCommon: serverTimestamp(),
     };
     try {
       await Promise.race([
@@ -2959,13 +3007,73 @@ export default function App() {
       ]);
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
-        enqueuePending(pendingSharedKey, payload);
-        setPriceSaveError("저장이 지연됩니다. 로컬에 임시 저장했고 자동 재시도합니다.");
+        enqueuePending("pendingCommonPrices", payload);
+        setCommonPriceError("??? ???? ????. ?? ? ?? ??????.");
       } else {
-        setPriceSaveError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+        setCommonPriceError("??? ??????. ?? ? ?? ??????.");
       }
     } finally {
-      setPriceSaving(false);
+      setCommonPriceSaving(false);
+    }
+  };
+
+  const saveProcessPrices = async () => {
+    if (!authUser) {
+      setProcessPriceError("??? ? ??? ? ????.");
+      return;
+    }
+    setProcessPriceSaving(true);
+    setProcessPriceError("");
+    const payload = {
+      abilityGrossSell: s.abilityGrossSell,
+      lifeGrossSell: s.lifeGrossSell,
+      updatedByProcess: buildUpdater(),
+      updatedAtProcess: serverTimestamp(),
+    };
+    try {
+      await Promise.race([
+        setDoc(doc(db, "shared", "prices"), payload, { merge: true }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
+    } catch (err) {
+      if (err?.code === "resource-exhausted" || err?.message === "timeout") {
+        enqueuePending("pendingProcessPrices", payload);
+        setProcessPriceError("??? ???? ????. ?? ? ?? ??????.");
+      } else {
+        setProcessPriceError("??? ??????. ?? ? ?? ??????.");
+      }
+    } finally {
+      setProcessPriceSaving(false);
+    }
+  };
+
+  const saveMaterialPrices = async () => {
+    if (!authUser) {
+      setMaterialPriceError("??? ? ??? ? ????.");
+      return;
+    }
+    setMaterialPriceSaving(true);
+    setMaterialPriceError("");
+    const payload = {
+      prices: s.prices,
+      modes: s.modes,
+      updatedByMaterial: buildUpdater(),
+      updatedAtMaterial: serverTimestamp(),
+    };
+    try {
+      await Promise.race([
+        setDoc(doc(db, "shared", "prices"), payload, { merge: true }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
+    } catch (err) {
+      if (err?.code === "resource-exhausted" || err?.message === "timeout") {
+        enqueuePending("pendingMaterialPrices", payload);
+        setMaterialPriceError("??? ???? ????. ?? ? ?? ??????.");
+      } else {
+        setMaterialPriceError("??? ??????. ?? ? ?? ??????.");
+      }
+    } finally {
+      setMaterialPriceSaving(false);
     }
   };
 
@@ -3381,14 +3489,17 @@ export default function App() {
                 s={s}
                 setS={setS}
                 feeRate={feeRate}
-                priceUpdatedAt={priceUpdatedAt}
-                priceUpdatedBy={priceUpdatedBy}
+                priceUpdatedAt={commonUpdatedAt}
+                priceUpdatedBy={commonUpdatedBy}
                 authUser={authUser}
                 userDoc={userDoc}
                 onSaveNickname={saveNickname}
-                onSaveSharedPrices={saveSharedPrices}
-                priceSaving={priceSaving}
-                priceSaveError={priceSaveError}
+                onSaveCommonPrices={saveCommonPrices}
+                commonPriceSaving={commonPriceSaving}
+                commonPriceError={commonPriceError}
+                onSaveMaterialPrices={saveMaterialPrices}
+                materialPriceSaving={materialPriceSaving}
+                materialPriceError={materialPriceError}
                 nicknameSaving={nicknameSaving}
                 nicknameError={nicknameError}
               />
@@ -3401,11 +3512,11 @@ export default function App() {
                 s={s}
                 setS={setS}
                 feeRate={feeRate}
-                priceUpdatedAt={priceUpdatedAt}
-                priceUpdatedBy={priceUpdatedBy}
-                onSaveSharedPrices={saveSharedPrices}
-                priceSaving={priceSaving}
-                priceSaveError={priceSaveError}
+                priceUpdatedAt={processUpdatedAt}
+                priceUpdatedBy={processUpdatedBy}
+                onSaveSharedPrices={saveProcessPrices}
+                priceSaving={processPriceSaving}
+                priceSaveError={processPriceError}
                 authUser={authUser}
               />
             ) : null}
