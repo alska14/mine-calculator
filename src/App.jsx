@@ -1234,6 +1234,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
     age: "",
     mbti: "",
     job: "",
+    rank: "",
     likes: "",
     dislikes: "",
   });
@@ -1274,6 +1275,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
         age: "",
         mbti: "",
         job: "",
+        rank: "",
         likes: "",
         dislikes: "",
       });
@@ -1286,6 +1288,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
       age: mine.age || "",
       mbti: mine.mbti || "",
       job: mine.job || "",
+      rank: mine.rank || "",
       likes: mine.likes || "",
       dislikes: mine.dislikes || "",
     });
@@ -1368,6 +1371,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
       age: profileForm.age.trim(),
       mbti: profileForm.mbti.trim(),
       job: profileForm.job.trim(),
+      rank: profileForm.rank || "",
       likes: profileForm.likes.trim(),
       dislikes: profileForm.dislikes.trim(),
       updatedAt: serverTimestamp(),
@@ -1434,6 +1438,19 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
       map[key].push(p);
     });
     return map;
+  }, [profiles]);
+
+  const rankOrder = ["이장", "부이장", "주민대표", "거주민", "입주자", "알바"];
+  const sortedProfiles = useMemo(() => {
+    const order = new Map(rankOrder.map((rank, idx) => [rank, idx]));
+    return [...profiles].sort((a, b) => {
+      const ra = order.has(a.rank) ? order.get(a.rank) : rankOrder.length;
+      const rb = order.has(b.rank) ? order.get(b.rank) : rankOrder.length;
+      if (ra !== rb) return ra - rb;
+      const an = a.nickname || a.mcNickname || "";
+      const bn = b.nickname || b.mcNickname || "";
+      return an.localeCompare(bn);
+    });
   }, [profiles]);
 
   const calendarInfo = useMemo(() => {
@@ -1665,6 +1682,19 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                 onChange={(v) => handleProfileChange("job", v)}
                 placeholder="예: 건축가"
               />
+              <Select
+                label="직급"
+                value={profileForm.rank}
+                onChange={(v) => handleProfileChange("rank", v)}
+                options={[
+                  { value: "이장", label: "이장" },
+                  { value: "부이장", label: "부이장" },
+                  { value: "주민대표", label: "주민대표" },
+                  { value: "거주민", label: "거주민" },
+                  { value: "입주자", label: "입주자" },
+                  { value: "알바", label: "알바" },
+                ]}
+              />
               <div style={{ gridColumn: "1 / -1" }}>
                 <TextArea
                   label="좋아하는 것"
@@ -1708,10 +1738,10 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
             </div>
 
             <div style={{ display: "grid", gap: 10 }}>
-              {profiles.length === 0 ? (
+              {sortedProfiles.length === 0 ? (
                 <div style={{ fontSize: 13, opacity: 0.7 }}>등록된 마을원 프로필이 없습니다.</div>
               ) : (
-                profiles.map((p) => (
+                sortedProfiles.map((p) => (
                   <div
                     key={p.uid}
                     style={{
@@ -1723,10 +1753,11 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles }) {
                       gap: 6,
                     }}
                   >
-                    <div style={{ fontWeight: 900 }}>
-                      {p.nickname || p.mcNickname || "이름 없음"}
-                      {p.mcNickname ? ` (${p.mcNickname})` : ""}
-                    </div>
+                  <div style={{ fontWeight: 900 }}>
+                    {p.nickname || p.mcNickname || "이름 없음"}
+                    {p.mcNickname ? ` (${p.mcNickname})` : ""}
+                  </div>
+                  {p.rank ? <div style={{ fontSize: 12, opacity: 0.85 }}>직급: {p.rank}</div> : null}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, fontSize: 12 }}>
                       <div>생일: {p.birthday || "-"}</div>
                       <div>나이: {p.age || "-"}</div>
