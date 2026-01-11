@@ -2472,7 +2472,7 @@ export default function App() {
   const [nicknameSaving, setNicknameSaving] = useState(false);
   const [nicknameError, setNicknameError] = useState("");
   const presenceWriteAtRef = useRef(0);
-  const presenceEnabled = false;
+  const presenceEnabled = true;
   const retryInFlightRef = useRef(false);
 
   const pendingNicknameKey = (uid) => `pendingNickname:${uid}`;
@@ -2593,7 +2593,7 @@ export default function App() {
     };
 
     retryPending();
-    const timer = setInterval(retryPending, 120000);
+    const timer = setInterval(retryPending, 30000);
     return () => clearInterval(timer);
   }, [authUser]);
 
@@ -2611,7 +2611,7 @@ export default function App() {
     const ref = doc(db, "presence", authUser.uid);
     const writePresence = () => {
       const now = Date.now();
-      if (now - presenceWriteAtRef.current < 25000) return;
+      if (now - presenceWriteAtRef.current < 10000) return;
       presenceWriteAtRef.current = now;
       return setDoc(
         ref,
@@ -2641,7 +2641,7 @@ export default function App() {
       else next.push(fallback);
       return next;
     });
-    const timer = setInterval(writePresence, 60000);
+    const timer = setInterval(writePresence, 15000);
     return () => clearInterval(timer);
   }, [authUser, userDoc]);
 
