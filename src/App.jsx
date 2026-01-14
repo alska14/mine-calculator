@@ -1373,6 +1373,21 @@ function ProfilePage({
           <br />
           구매 비용 = 시장가(수수료 없음)
         </div>
+        <div
+          style={{
+            marginTop: 10,
+            padding: "8px 10px",
+            borderRadius: 10,
+            border: "1px solid #f39c12",
+            background: "rgba(243, 156, 18, 0.12)",
+            color: "#f1c40f",
+            fontSize: 12,
+            fontWeight: 700,
+          }}
+        >
+          {"재료 시세는 입력만으로는 공유되지 않습니다. “재료 시세 저장” 버튼을 눌러야 전체에 동기화됩니다."}
+        </div>
+
         <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
           {materialKeysForUI.map((key) => {
             const label = materialLabels[key] || key;
