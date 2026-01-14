@@ -1021,7 +1021,7 @@ function PotionPage({
 
   const best = rows
     .filter((r) => r.price > 0)
-    .sort((a, b) => a.perStamina - b.perStamina)[0];
+    .sort((a, b) => b.netProfit - a.netProfit)[0];
 
   const lastUpdatedAt = potionUpdatedAt ?? priceUpdatedAt;
   const lastUpdatedBy = potionUpdatedBy;
@@ -1036,7 +1036,7 @@ function PotionPage({
           {potions.map((p) => (
             <Field
               key={p.key}
-              label={`${p.label} (원)`}
+              label={p.label}
               value={s.potionPrices?.[p.key] ?? ""}
               onChange={(v) =>
                 setS((prev) => ({
