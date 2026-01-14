@@ -1019,9 +1019,9 @@ function PotionPage({
     return { ...p, price, perStamina, netProfit };
   });
 
-  const best = rows
-    .filter((r) => r.price > 0)
-    .sort((a, b) => b.netProfit - a.netProfit)[0];
+  const ranked = rows.filter((r) => r.price > 0).sort((a, b) => b.netProfit - a.netProfit);
+  const best = ranked[0];
+  const worst = ranked[ranked.length - 1];
 
   const lastUpdatedAt = potionUpdatedAt ?? priceUpdatedAt;
   const lastUpdatedBy = potionUpdatedBy;
@@ -1105,9 +1105,15 @@ function PotionPage({
                   <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
                     {r.price > 0 ? `${fmt(r.netProfit)}원` : "-"}
                   </td>
-                  <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
-                    {best && best.key === r.key ? "최저" : "-"}
-                  </td>
+                    <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
+                      {best && best.key === r.key ? (
+                        "추천"
+                      ) : worst && worst.key === r.key ? (
+                        <span style={{ color: "#e74c3c" }}>위험</span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
                 </tr>
               ))}
             </tbody>
