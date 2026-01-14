@@ -545,7 +545,7 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 6 }}>메뉴</div>
       <div style={{ fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>
-        {"\ub2e4\ud06c\ubaa8\ub4dc\ub294 \ub0b4\uc815\ubcf4\uc5d0\uc11c \uc124\uc815\ud560 \uc218 \uc788\uace0, \ubb38\uc81c\uc810\uc740 \ubb38\uc758/\ud53c\ub4dc\ubc31\uc5d0 \ub0a8\uaca8\uc8fc\uc138\uc694."}
+        {"다크모드는 내정보에서 설정할 수 있고, 문제점은 문의/피드백에 남겨주세요."}
       </div>
       <div style={itemStyle("potion")} onClick={() => onSelect("potion")}>스테미나 포션 효율 계산</div>
       <div style={itemStyle("ingot")} onClick={() => onSelect("ingot")}>주괴/가공 비교</div>
@@ -1027,16 +1027,16 @@ function ProfilePage({
   ];
 
   const materialLabels = {
-    ingot: "\uc8fc\uad34",
-    diamond: "\ub2e4\uc774\uc544\ubaac\ub4dc",
-    gold: "\uae08",
-    iron: "\ucca0",
-    lapis: "\uccad\uae08\uc11d",
-    amethyst: "\uc790\uc218\uc815",
-    copper: "\uad6c\ub9ac",
-    redstone: "\ub808\ub4dc\uc2a4\ud1a4",
-    stone: "\uc870\uc57d\ub3cc",
-    deepCobble: "\uc2ec\uce35 \uc870\uc57d\ub3cc",
+    ingot: "주괴",
+    diamond: "다이아몬드",
+    gold: "금",
+    iron: "철",
+    lapis: "청금석",
+    amethyst: "자수정",
+    copper: "구리",
+    redstone: "레드스톤",
+    stone: "조약돌",
+    deepCobble: "심층 조약돌",
   };
 
   return (
@@ -1074,45 +1074,45 @@ function ProfilePage({
             <div style={{ gridColumn: "1 / -1", fontSize: 12, color: "#c0392b" }}>{nicknameError}</div>
           ) : null}
           <Select
-            label={"\ud14c\ub9c8"}
+            label={"테마"}
             value={["light", "dark", "purple"].includes(s.themeMode) ? s.themeMode : "light"}
             onChange={(v) => setS((p) => ({ ...p, themeMode: v }))}
             options={[
-              { value: "light", label: "\ub77c\uc774\ud2b8 \ubaa8\ub4dc" },
-              { value: "dark", label: "\ub2e4\ud06c \ubaa8\ub4dc" },
-              { value: "purple", label: "\ud37c\ud50c \ubaa8\ub4dc" },
+              { value: "light", label: "라이트 모드" },
+              { value: "dark", label: "다크 모드" },
+              { value: "purple", label: "퍼플 모드" },
             ]}
           />
           <Select
-            label="\uc138\uc774\uc9c0 \uace1\uad2d\uc774 \uac15\ud654 \ub2e8\uacc4"
+            label="세이지 곡괭이 강화 단계"
             value={s.sageEnhLevel}
             onChange={(v) => setS((p) => ({ ...p, sageEnhLevel: v }))}
             options={sageOptions}
           />
           <Select
-            label="\ubcf4\uc11d \uc804\ubb38\uac00 \ub808\ubca8"
+            label="보석 전문가 레벨"
             value={s.gemExpertLevel}
             onChange={(v) => setS((p) => ({ ...p, gemExpertLevel: v }))}
             options={gemOptions}
           />
           <Select
-            label="\ubd88\ubd99\uc740 \uace1\uad2d\uc774 \ub808\ubca8"
+            label="불붙은 곡괭이 레벨"
             value={s.flamingPickLevel}
             onChange={(v) => setS((p) => ({ ...p, flamingPickLevel: v }))}
             options={flameOptions}
           />
           <Field
-            label="\uc2a4\ud0dc\ubbf8\ub098 1\ud68c \uc18c\ubaa8\ub7c9"
+            label="스태미나 1회 소모량"
             value={s.staminaPerDig}
             onChange={(v) => setS((p) => ({ ...p, staminaPerDig: v }))}
-            placeholder="\uc608: 10"
+            placeholder="예: 10"
             min={1}
           />
           <Field
-            label="\uc870\uac01->\uc8fc\uad34 \ud544\uc694 \uc870\uac01"
+            label="조각->주괴 필요 조각"
             value={s.shardsPerIngot}
             onChange={(v) => setS((p) => ({ ...p, shardsPerIngot: v }))}
-            placeholder="\uc608: 16"
+            placeholder="예: 16"
             min={1}
           />
         </div>
@@ -1179,9 +1179,9 @@ function ProfilePage({
           구매 비용(수수료 없음): <b>시장가 그대로</b>
         </div>
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
+          {"최근 시세 업데이트: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
-          {priceUpdatedBy ? ` (\uc800\uc7a5\uc790: ${priceUpdatedBy.name || priceUpdatedBy.email || "\uc54c \uc218 \uc5c6\uc74c"})` : ""}
+          {priceUpdatedBy ? ` (\uc800\uc7a5\uc790: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
         </div>
 
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
@@ -1200,9 +1200,9 @@ function ProfilePage({
               fontSize: 12,
               opacity: !authUser || commonPriceSaving ? 0.6 : 1,
             }}
-            title={authUser ? "\uc2dc\uc138/\uc635\uc158 \uc800\uc7a5" : "\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."}
+            title={authUser ? "시세/옵션 저장" : "로그인 후 저장할 수 있습니다."}
           >
-            {commonPriceSaving ? "\uc800\uc7a5 \uc911..." : "\uc2dc\uc138/\uc635\uc158 \uc800\uc7a5"}
+            {commonPriceSaving ? "저장 중..." : "시세/옵션 저장"}
           </button>
         </div>
       </Card>
@@ -1404,12 +1404,12 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
     });
   };
 
-  const typeLabel = (type) => (type ? String(type) : "\uae30\ud0c0");
+  const typeLabel = (type) => (type ? String(type) : "기타");
 
   const statusLabel = (status) => {
-    if (status === "progress") return "\uc9c4\ud589\uc911";
-    if (status === "done") return "\uc644\ub8cc";
-    return "\uc811\uc218";
+    if (status === "progress") return "진행중";
+    if (status === "done") return "완료";
+    return "접수";
   };
 
   const handleProfileChange = (key, value) => {
@@ -1664,7 +1664,7 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
                     }}
                   >
                     <div style={{ fontWeight: 900 }}>
-                      {p.nickname || p.mcNickname || "\uc774\ub984 \uc5c6\uc74c"}
+                      {p.nickname || p.mcNickname || "이름 없음"}
                       {p.mcNickname ? ` (${p.mcNickname})` : ""}
                     </div>
                     {p.rank ? <div style={{ fontSize: 12, opacity: 0.85 }}>직급: {p.rank}</div> : null}
@@ -1983,16 +1983,16 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
 
 function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSharedPrices, priceSaving, priceSaveError, authUser }) {
   const materialLabels = {
-    ingot: "\uc8fc\uad34",
-    stone: "\uc870\uc57d\ub3cc",
-    deepCobble: "\uc2ec\uce35 \uc870\uc57d\ub3cc",
-    redstone: "\ub808\ub4dc\uc2a4\ud1a4",
-    copper: "\uad6c\ub9ac",
-    diamond: "\ub2e4\uc774\uc544\ubaac\ub4dc \ube14\ub7ed",
-    iron: "\ucca0",
-    lapis: "\uccad\uae08\uc11d",
-    gold: "\uae08 \ube14\ub7ed",
-    amethyst: "\uc790\uc218\uc815",
+    ingot: "주괴",
+    stone: "조약돌",
+    deepCobble: "심층 조약돌",
+    redstone: "레드스톤",
+    copper: "구리",
+    diamond: "다이아몬드 블럭",
+    iron: "철",
+    lapis: "청금석",
+    gold: "금 블럭",
+    amethyst: "자수정",
   };
 
   const formatBuySummary = (list) => {
@@ -2010,7 +2010,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     const items = Object.entries(recipe || {})
       .map(([k, qty]) => ({ key: k, qty: qty || 0, mode: s.modes[k] || "owned" }))
       .filter((x) => x.qty > 0 && x.mode !== "buy");
-    if (items.length === 0) return "\ud310\ub9e4 \uc5c6\uc74c";
+    if (items.length === 0) return "판매 없음";
     return items
       .map((x) => {
         const name = materialLabels[x.key] ?? x.key;
@@ -2175,9 +2175,9 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
           />
         </div>
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
+          {"최근 시세 업데이트: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
-          {priceUpdatedBy ? ` (\uc800\uc7a5\uc790: ${priceUpdatedBy.name || priceUpdatedBy.email || "\uc54c \uc218 \uc5c6\uc74c"})` : ""}
+          {priceUpdatedBy ? ` (\uc800\uc7a5\uc790: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
         </div>
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
           {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
@@ -2195,9 +2195,9 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
               fontSize: 12,
               opacity: !authUser || priceSaving ? 0.6 : 1,
             }}
-            title={authUser ? "\uac00\uacf5 \uc2dc\uc138 \uc800\uc7a5" : "\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."}
+            title={authUser ? "가공 시세 저장" : "로그인 후 저장할 수 있습니다."}
           >
-            {priceSaving ? "\uc800\uc7a5 \uc911..." : "\uac00\uacf5 \uc2dc\uc138 \uc800\uc7a5"}
+            {priceSaving ? "저장 중..." : "가공 시세 저장"}
           </button>
         </div>
 
@@ -2263,31 +2263,31 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
           <ToggleButton
             isOn={detailOpen}
             onClick={() => setDetailOpen((v) => !v)}
-            labelOn="\uC790\uC138\uD788\uBCF4\uAE30 \uB2EB\uAE30"
-            labelOff="\uC790\uC138\uD788\uBCF4\uAE30(\uD3EC\uAE30\uD55C \uD310\uB9E4 \uC218\uC775)"
+            labelOn="자세히보기 닫기"
+            labelOff="자세히보기(포기한 판매 수익)"
           />
         </div>
 
         {detailOpen ? (
           <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
             {[
-              { name: "\uC5B4\uBE4C\uB9AC\uD2F0 \uC2A4\uD1A4", key: "ability" },
-              { name: "\uD558\uAE09 \uB77C\uC774\uD504\uC2A4\uD1A4", key: "low" },
-              { name: "\uC911\uAE09 \uB77C\uC774\uD504\uC2A4\uD1A4", key: "mid" },
-              { name: "\uC0C1\uAE09 \uB77C\uC774\uD504\uC2A4\uD1A4", key: "high" },
+              { name: "어빌리티 스톤", key: "ability" },
+              { name: "하급 라이프스톤", key: "low" },
+              { name: "중급 라이프스톤", key: "mid" },
+              { name: "상급 라이프스톤", key: "high" },
             ].map((row) => {
               const x = compare[row.key];
               const ex = explain(x);
               return (
                 <div key={row.key} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
-                  <div style={{ fontWeight: 900, marginBottom: 6 }}>{row.name} {"\uC0C1\uC138 \uACC4\uC0B0(\uC218\uAE09 \uAE30\uC900)"}</div>
+                  <div style={{ fontWeight: 900, marginBottom: 6 }}>{row.name} {"상세 계산(수급 기준)"}</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
-                    <div>{"\uAD6C\uB9E4 \uBE44\uC6A9(\uC2DC\uC7A5\uAC00)"}</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.buySpend)}{"\uC6D0"}</div>
-                    <div>{"\uD3EC\uAE30\uD55C \uD310\uB9E4 \uC218\uC775(\uC218\uC218\uB8CC \uBC18\uC601)"}</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.foregone)}{"\uC6D0"}</div>
-                    <div>{"\uBCF4\uC720 \uC7AC\uB8CC \uC218\uB7C9"}</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.ownedQty)}{"\uAC1C"}</div>
+                    <div>{"구매 비용(시장가)"}</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.buySpend)}{"원"}</div>
+                    <div>{"포기한 판매 수익(수수료 반영)"}</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.foregone)}{"원"}</div>
+                    <div>{"보유 재료 수량"}</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.ownedQty)}{"개"}</div>
                   </div>
                 </div>
               );
@@ -2435,12 +2435,12 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted") {
         enqueuePending(pendingNicknameKey(authUser.uid), { nickname: trimmed });
-        setNicknameError("\uc800\uc7a5\ub7c9/\uc694\uccad \uc81c\ud55c\uc744 \ucd08\uacfc\ud588\uc2b5\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
+        setNicknameError("저장량/요청 제한을 초과했습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
       } else if (err?.message === "timeout") {
         enqueuePending(pendingNicknameKey(authUser.uid), { nickname: trimmed });
-        setNicknameError("\uc800\uc7a5\uc774 \uc9c0\uc5f0\ub418\uace0 \uc788\uc2b5\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
+        setNicknameError("저장이 지연되고 있습니다. 로컬에 임시 저장했고 자동 재시도합니다.");
       } else {
-        setNicknameError("\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
+        setNicknameError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
     } finally {
       setNicknameSaving(false);
@@ -2648,7 +2648,7 @@ export default function App() {
       } catch (err) {
         setUserDoc({ uid: authUser.uid, status: "pending" });
         if (err?.code === "resource-exhausted") {
-          setAuthError("\ub85c\uadf8\uc778\uc740 \uc131\uacf5\ud588\uc9c0\ub9cc \uc11c\ubc84 \uc5f0\uacb0\uc744 \ud655\uc778\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
+          setAuthError("로그인은 성공했지만 서버 연결을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
         }
       }
     })();
@@ -2739,7 +2739,7 @@ export default function App() {
 
   const saveCommonPrices = async () => {
     if (!authUser) {
-      setCommonPriceError("\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
+      setCommonPriceError("로그인 후 저장할 수 있습니다.");
       return;
     }
     setCommonPriceSaving(true);
@@ -2758,9 +2758,9 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
         enqueuePending("pendingCommonPrices", payload);
-        setCommonPriceError("\uc800\uc7a5 \uc694\uccad\uc774 \ub9ce\uc544 \uc9c0\uc5f0\ub429\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
+        setCommonPriceError("저장 요청이 많아 지연됩니다. 로컬에 임시 저장했고 자동 재시도합니다.");
       } else {
-        setCommonPriceError("\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
+        setCommonPriceError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
     } finally {
       setCommonPriceSaving(false);
@@ -2769,7 +2769,7 @@ export default function App() {
 
   const saveProcessPrices = async () => {
     if (!authUser) {
-      setProcessPriceError("\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
+      setProcessPriceError("로그인 후 저장할 수 있습니다.");
       return;
     }
     setProcessPriceSaving(true);
@@ -2788,9 +2788,9 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
         enqueuePending("pendingProcessPrices", payload);
-        setProcessPriceError("\uc800\uc7a5 \uc694\uccad\uc774 \ub9ce\uc544 \uc9c0\uc5f0\ub429\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
+        setProcessPriceError("저장 요청이 많아 지연됩니다. 로컬에 임시 저장했고 자동 재시도합니다.");
       } else {
-        setProcessPriceError("\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
+        setProcessPriceError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
     } finally {
       setProcessPriceSaving(false);
@@ -2799,7 +2799,7 @@ export default function App() {
 
   const saveMaterialPrices = async () => {
     if (!authUser) {
-      setMaterialPriceError("\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
+      setMaterialPriceError("로그인 후 저장할 수 있습니다.");
       return;
     }
     setMaterialPriceSaving(true);
@@ -2818,9 +2818,9 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
         enqueuePending("pendingMaterialPrices", payload);
-        setMaterialPriceError("\uc800\uc7a5 \uc694\uccad\uc774 \ub9ce\uc544 \uc9c0\uc5f0\ub429\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
+        setMaterialPriceError("저장 요청이 많아 지연됩니다. 로컬에 임시 저장했고 자동 재시도합니다.");
       } else {
-        setMaterialPriceError("\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
+        setMaterialPriceError("저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
       }
     } finally {
       setMaterialPriceSaving(false);
@@ -2832,7 +2832,7 @@ export default function App() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch {
-      setAuthError("\uAD6C\uAE00 \uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.");
+      setAuthError("구글 로그인에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
@@ -2940,17 +2940,17 @@ export default function App() {
       <div style={{ padding: 16, background: "var(--app-bg)" }}>
         <div style={{ maxWidth: 1200 }}>
           {authLoading ? (
-            <Card title={"\uB85C\uADF8\uC778 \uD655\uC778 \uC911"}>
-              <div style={{ fontSize: 13, opacity: 0.8 }}>{"\uB85C\uADF8\uC778 \uC0C1\uD0DC\uB97C \uD655\uC778\uD558\uACE0 \uC788\uC2B5\uB2C8\uB2E4."}</div>
+            <Card title={"로그인 확인 중"}>
+              <div style={{ fontSize: 13, opacity: 0.8 }}>{"로그인 상태를 확인하고 있습니다."}</div>
             </Card>
           ) : null}
 
           {authUser && s.adminMode ? (
             <div style={{ marginBottom: 12 }}>
-              <Card title={"\uAC00\uC785 \uC2B9\uC778 \uAD00\uB9AC"}>
+              <Card title={"가입 승인 관리"}>
                 {pendingUsers.length === 0 ? (
                   <div style={{ fontSize: 13, opacity: 0.8 }}>
-                    {"\uB300\uAE30 \uC911\uC778 \uC694\uCCAD\uC774 \uC5C6\uC2B5\uB2C8\uB2E4."}
+                    {"대기 중인 요청이 없습니다."}
                   </div>
                 ) : (
                   <div style={{ display: "grid", gap: 10 }}>
@@ -2986,7 +2986,7 @@ export default function App() {
                               fontWeight: 900,
                             }}
                           >
-                            {"\uC2B9\uC778"}
+                            {"승인"}
                           </button>
                           <button
                             onClick={() => rejectUser(u.id)}
@@ -3000,7 +3000,7 @@ export default function App() {
                               fontWeight: 900,
                             }}
                           >
-                            {"\uAC70\uC808"}
+                            {"거절"}
                           </button>
                         </div>
                       </div>
@@ -3014,9 +3014,9 @@ export default function App() {
           {!authLoading && !canUseApp ? (
             <div style={{ display: "grid", gap: 12, marginBottom: 12 }}>
               {!authUser ? (
-                <Card title={"\uB85C\uADF8\uC778 \uD544\uC694"}>
+                <Card title={"로그인 필요"}>
                   <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
-                    {"\uB85C\uADF8\uC778\uB41C \uC0AC\uC6A9\uC790\uB9CC \uC2DC\uC138\uC640 \uC635\uC158\uC744 \uBCC0\uACBD\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4."}
+                    {"로그인된 사용자만 시세와 옵션을 변경할 수 있습니다."}
                   </div>
                   {authError ? <div style={{ fontSize: 12, color: "#c0392b", marginBottom: 8 }}>{authError}</div> : null}
                   <button
@@ -3032,13 +3032,13 @@ export default function App() {
                       fontSize: 13,
                     }}
                   >
-                    {"\uAD6C\uAE00\uB85C \uB85C\uADF8\uC778"}
+                    {"구글로 로그인"}
                   </button>
                 </Card>
               ) : isRejected ? (
-                <Card title={"\uC811\uADFC \uBD88\uAC00"}>
+                <Card title={"접근 불가"}>
                   <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
-                    {"\uC2B9\uC778\uC774 \uAC70\uC808\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uAD00\uB9AC\uC790\uC5D0\uAC8C \uBB38\uC758\uD574\uC8FC\uC138\uC694."}
+                    {"승인이 거절되었습니다. 관리자에게 문의해주세요."}
                   </div>
                   <button
                     onClick={handleLogout}
@@ -3052,16 +3052,16 @@ export default function App() {
                       fontSize: 13,
                     }}
                   >
-                    {"\uB85C\uADF8\uC544\uC6C3"}
+                    {"로그아웃"}
                   </button>
                 </Card>
               ) : isPending ? (
-                <Card title={"\uC2B9\uC778 \uB300\uAE30"}>
+                <Card title={"승인 대기"}>
                   <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 10 }}>
-                    {"\uAD00\uB9AC\uC790 \uC2B9\uC778 \uD6C4 \uC0AC\uC6A9 \uAC00\uB2A5\uD569\uB2C8\uB2E4."}
+                    {"관리자 승인 후 사용 가능합니다."}
                   </div>
                   <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 10 }}>
-                    {"\uB0B4 \uACC4\uC815: "}
+                    {"내 계정: "}
                     {authUser.email || "-"}
                   </div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -3077,7 +3077,7 @@ export default function App() {
                         fontSize: 13,
                       }}
                     >
-                      {"\uB85C\uADF8\uC544\uC6C3"}
+                      {"로그아웃"}
                     </button>
                     {!s.adminMode ? (
                       <button
@@ -3092,7 +3092,7 @@ export default function App() {
                           fontSize: 13,
                         }}
                       >
-                        {"\uAD00\uB9AC\uC790 \uB85C\uADF8\uC778"}
+                        {"관리자 로그인"}
                       </button>
                     ) : null}
                   </div>
@@ -3114,13 +3114,13 @@ export default function App() {
                   fontWeight: 900,
                 }}
               >
-                {"\uC2DC\uC138/\uC635\uC158 \uBCC0\uACBD\uC740 \uB85C\uADF8\uC778 \uD6C4 \uAC00\uB2A5\uD569\uB2C8\uB2E4. \uB85C\uADF8\uC778 \uD574\uC8FC\uC138\uC694."}
+                {"시세/옵션 변경은 로그인 후 가능합니다. 로그인 해주세요."}
               </div>
             ) : null}
             <div style={{ marginBottom: 14 }}>
               <img
                 src="/banner.png"
-                alt="\uC131\uBD81\uAD6C \uB9C8\uC744 \uBC30\uB108"
+                alt="성북구 마을 배너"
               style={{
                 width: "100%",
                 height: "min(40vw, 220px)",
@@ -3136,11 +3136,11 @@ export default function App() {
           </div>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 900 }}>{"\uAD11\uBD80 \uD6A8\uC728 \uACC4\uC0B0\uAE30"}</div>
+                  <div style={{ fontSize: 20, fontWeight: 900 }}>{"광부 효율 계산기"}</div>
                   <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
-                    {"\uD310\uB9E4 \uC218\uC218\uB8CC "}
+                    {"판매 수수료 "}
               판매 수수료: <b>{fmt(toNum(s.feePct))}%</b>
-                    {"% \uC801\uC6A9(\uD310\uB9E4 \uC2E4\uC218\uB839 \uAE30\uC900)"}
+                    {"% 적용(판매 실수령 기준)"}
                   </div>
                 </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -3155,9 +3155,9 @@ export default function App() {
                   fontWeight: 700,
                   fontSize: 12,
                 }}
-                title="\uc800\uc7a5\ub41c \uc785\ub825\uac12\uc744 \ucd08\uae30\uac12\uc73c\ub85c \ub418\ub3cc\ub9bd\ub2c8\ub2e4."
+                title="저장된 입력값을 초기값으로 되돌립니다."
               >
-                {"\ucd08\uae30\ud654"}
+                {"초기화"}
               </button>
               {s.adminMode ? (
                 <button
@@ -3171,9 +3171,9 @@ export default function App() {
                     fontWeight: 900,
                     fontSize: 12,
                   }}
-                  title="\uad00\ub9ac\uc790 \ub85c\uadf8\uc544\uc6c3"
+                  title="관리자 로그아웃"
                 >
-                  {"\uad00\ub9ac\uc790 \ub85c\uadf8\uc544\uc6c3"}
+                  {"관리자 로그아웃"}
                 </button>
               ) : (
                 <button
@@ -3188,9 +3188,9 @@ export default function App() {
                     fontSize: 12,
                     opacity: 0.7,
                   }}
-                  title="\uad00\ub9ac\uc790 \ub85c\uadf8\uc778"
+                  title="관리자 로그인"
                 >
-                  {"\uad00\ub9ac\uc790"}
+                  {"관리자"}
                 </button>
               )}
               {authUser ? (
@@ -3206,9 +3206,9 @@ export default function App() {
                     fontWeight: 700,
                     fontSize: 12,
                   }}
-                  title={"\uB85C\uADF8\uC544\uC6C3"}
+                  title={"로그아웃"}
                 >
-                  {"\uB85C\uADF8\uC544\uC6C3"}
+                  {"로그아웃"}
                 </button>
               ) : (
                 <button
@@ -3224,9 +3224,9 @@ export default function App() {
                     fontWeight: 700,
                     fontSize: 12,
                   }}
-                  title={"\uB85C\uADF8\uC778"}
+                  title={"로그인"}
                 >
-                  {"\uB85C\uADF8\uC778"}
+                  {"로그인"}
                 </button>
               )}
             </div>
@@ -3293,7 +3293,7 @@ export default function App() {
           </div>
 
             <div style={{ marginTop: 14, fontSize: 12, opacity: 0.7 }}>
-              {"\ub0b4\uc815\ubcf4/\uc2dc\uc138 \ubcc0\uacbd\uc740 \ud3ec\uc158/\uc8fc\uad34 \ud6a8\uc728 \uacc4\uc0b0\uc5d0\ub3c4 \uc790\ub3d9 \ubc18\uc601\ub429\ub2c8\ub2e4. \u00b7 made by mirae24"}
+              {"내정보/시세 변경은 포션/주괴 효율 계산에도 자동 반영됩니다. · made by mirae24"}
             </div>
           </div>
         </div>
@@ -3327,13 +3327,13 @@ export default function App() {
             }}
           >
             <div style={{ fontWeight: 900, marginBottom: 10 }}>
-              {"\uad00\ub9ac\uc790 \ub85c\uadf8\uc778"}
+              {"관리자 로그인"}
             </div>
             <TextField
-              label="\ube44\ubc00\ubc88\ud638"
+              label="비밀번호"
               value={adminPass}
               onChange={(v) => setAdminPass(v)}
-              placeholder="\ube44\ubc00\ubc88\ud638 \uc785\ub825"
+              placeholder="비밀번호 입력"
               type="password"
             />
             {adminError ? (
@@ -3353,7 +3353,7 @@ export default function App() {
                   fontWeight: 700,
                 }}
               >
-                {"\ucde8\uc18c"}
+                {"취소"}
               </button>
               <button
                 onClick={loginAdmin}
@@ -3368,7 +3368,7 @@ export default function App() {
                   fontWeight: 900,
                 }}
               >
-                {"\ub85c\uadf8\uc778"}
+                {"로그인"}
               </button>
             </div>
           </div>
@@ -3400,12 +3400,12 @@ export default function App() {
             }}
           >
             <div style={{ fontWeight: 900, marginBottom: 10 }}>
-              {"\uc548\ub0b4"}
+              {"안내"}
             </div>
             <div style={{ fontSize: 13, lineHeight: 1.6, opacity: 0.9 }}>
-              {"\ub2e4\ud06c\ubaa8\ub4dc\ub294 \ub0b4\uc815\ubcf4\uc5d0\uc11c \uc124\uc815\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."}
+              {"다크모드는 내정보에서 설정할 수 있습니다."}
               <br />
-              {"\ubb38\uc81c\uc810\uc774\ub098 \uac1c\uc120 \uc544\uc774\ub514\uc5b4\ub294 \ubb38\uc758/\ud53c\ub4dc\ubc31\uc5d0 \ub0a8\uaca8\uc8fc\uc138\uc694."}
+              {"문제점이나 개선 아이디어는 문의/피드백에 남겨주세요."}
             </div>
             <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
               <button
@@ -3421,7 +3421,7 @@ export default function App() {
                   fontWeight: 900,
                 }}
               >
-                {"\ud655\uc778"}
+                {"확인"}
               </button>
             </div>
           </div>
