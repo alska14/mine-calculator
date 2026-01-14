@@ -598,7 +598,7 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
                 fontWeight: 700,
               }}
             >
-              {"?댁쟾"}
+              {"이전"}
             </button>
             <div style={{ fontSize: 12, fontWeight: 900 }}>{`${calendarInfo.year}년 ${calendarInfo.month}월 생일`}</div>
             <button
@@ -613,7 +613,7 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
                 fontWeight: 700,
               }}
             >
-              {"?ㅼ쓬"}
+              {"다음"}
             </button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
