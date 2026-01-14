@@ -1185,24 +1185,24 @@ function ProfilePage({
         </div>
 
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
-          {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
+          {commonPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{commonPriceError}</span> : null}
           <button
-            onClick={onSaveSharedPrices}
-            disabled={!authUser || priceSaving}
+            onClick={onSaveCommonPrices}
+            disabled={!authUser || commonPriceSaving}
             style={{
               padding: "8px 12px",
               borderRadius: 10,
               border: "1px solid var(--input-border)",
               background: authUser ? "var(--panel-bg)" : "transparent",
               color: "var(--text)",
-              cursor: !authUser || priceSaving ? "not-allowed" : "pointer",
+              cursor: !authUser || commonPriceSaving ? "not-allowed" : "pointer",
               fontWeight: 800,
               fontSize: 12,
-              opacity: !authUser || priceSaving ? 0.6 : 1,
+              opacity: !authUser || commonPriceSaving ? 0.6 : 1,
             }}
             title={authUser ? "\uc2dc\uc138/\uc635\uc158 \uc800\uc7a5" : "\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."}
           >
-            {priceSaving ? "\uc800\uc7a5 \uc911..." : "\uc2dc\uc138/\uc635\uc158 \uc800\uc7a5"}
+            {commonPriceSaving ? "\uc800\uc7a5 \uc911..." : "\uc2dc\uc138/\uc635\uc158 \uc800\uc7a5"}
           </button>
         </div>
       </Card>
