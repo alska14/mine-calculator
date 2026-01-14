@@ -960,6 +960,92 @@ function FeedbackPage({ s, setS }) {
 }
 
 
+
+function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
+  const potions = [
+    { key: "p100", label: "???? ?? 100", stamina: 100 },
+    { key: "p300", label: "???? ?? 300", stamina: 300 },
+    { key: "p500", label: "???? ?? 500", stamina: 500 },
+    { key: "p700", label: "???? ?? 700", stamina: 700 },
+  ];
+
+  const rows = potions.map((p) => {
+    const price = toNum(s.potionPrices?.[p.key] ?? 0);
+    const perStamina = price > 0 ? price / p.stamina : 0;
+    return { ...p, price, perStamina };
+  });
+
+  const best = rows
+    .filter((r) => r.price > 0)
+    .sort((a, b) => a.perStamina - b.perStamina)[0];
+
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <Card title="???? ?? ?? ??">
+        <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
+          ???? ???? ??, ?? ?? ?? ???? ??? ?????.
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+          {potions.map((p) => (
+            <Field
+              key={p.key}
+              label={`${p.label} (?)`}
+              value={s.potionPrices?.[p.key] ?? ""}
+              onChange={(v) =>
+                setS((prev) => ({
+                  ...prev,
+                  potionPrices: { ...prev.potionPrices, [p.key]: v },
+                }))
+              }
+              placeholder="?: 14000"
+              min={0}
+              suffix="?"
+            />
+          ))}
+        </div>
+
+        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
+          {"?? ?? ????: "}
+          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+        </div>
+      </Card>
+
+      <Card title="?? ?? ??">
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>??</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>??</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>???? 1? ??</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>??</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.key}>
+                  <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", fontWeight: 900 }}>
+                    {r.label}
+                  </td>
+                  <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
+                    {r.price > 0 ? `${fmt(r.price)}?` : "-"}
+                  </td>
+                  <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
+                    {r.price > 0 ? `${r.perStamina.toFixed(1)}?` : "-"}
+                  </td>
+                  <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
+                    {best && best.key === r.key ? "??" : ""}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function ProfilePage({
   s,
   setS,
