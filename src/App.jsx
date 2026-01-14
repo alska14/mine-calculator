@@ -73,7 +73,7 @@ function isPlainObject(x) {
   return x != null && typeof x === "object" && !Array.isArray(x);
 }
 function deepMerge(base, patch) {
-  if (!isPlainObject(base) || !isPlainObject(patch)) return patch ? base;
+  if (!isPlainObject(base) || !isPlainObject(patch)) return patch ?? base;
   const out = { ...base };
   for (const [k, v] of Object.entries(patch)) {
     if (isPlainObject(out[k]) && isPlainObject(v)) out[k] = deepMerge(out[k], v);
@@ -109,10 +109,10 @@ function migrateState(raw, defaults) {
     for (const [k, v] of Object.entries(oldPrices)) {
       // prefer market, then grossSell, then buy
       if (isPlainObject(v)) {
-        const market = v.market ? v.grossSell ? v.buy ? 0;
-        normalized[k] = { market: String(market ? "") };
+        const market = v.market ?? v.grossSell ?? v.buy ?? 0;
+        normalized[k] = { market: String(market ?? "") };
       } else {
-        normalized[k] = { market: String(v ? "") };
+        normalized[k] = { market: String(v ?? "") };
       }
     }
     s = { ...s, prices: deepMerge(defaults.prices, normalized) };
@@ -924,7 +924,7 @@ function FeedbackPage({ s, setS }) {
                   <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
                     <TextArea
                       label="관리자 답변"
-                      value={replyDrafts[item.id] ? ""}
+                      value={replyDrafts[item.id] ?? ""}
                       onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
                       placeholder="답변을 입력하세요"
                       rows={3}
@@ -932,7 +932,7 @@ function FeedbackPage({ s, setS }) {
                     <div style={{ display: "flex", justifyContent: "flex-end" }}>
                       <button
                         onClick={() => {
-                          saveReply(item.id, replyDrafts[item.id] ? "");
+                          saveReply(item.id, replyDrafts[item.id] ?? "");
                         }}
                         style={{
                           padding: "8px 10px",
@@ -1072,7 +1072,7 @@ function ProfilePage({
       setNickname("");
       return;
     }
-    setNickname(userDoc?.nickname ? authUser.displayName ? "");
+    setNickname(userDoc?.nickname ?? authUser.displayName ?? "");
   }, [authUser, userDoc]);
   const sageOptions = useMemo(() => {
     const values = Object.keys(SAGE_SHARDS_BY_ENH).map(Number).sort((a, b) => a - b);
@@ -1096,7 +1096,7 @@ function ProfilePage({
   ];
 
 
-  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ? 0;
+  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
   const flameRule = flamingPickRule(s.flamingPickLevel);
 
@@ -1306,7 +1306,7 @@ function ProfilePage({
         <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
           {materialKeysForUI.map((key) => {
             const label = materialLabels[key] || key;
-            const market = s.prices[key]?.market ? "";
+            const market = s.prices[key]?.market ?? "";
             const mode = s.modes[key] || "owned";
             return (
               <div key={key} style={{ display: "grid", gap: 8, padding: 10, borderRadius: 10, border: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
@@ -2005,14 +2005,14 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
                       <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
                         <TextArea
                           label="관리자 답변"
-                          value={replyDrafts[item.id] ? ""}
+                          value={replyDrafts[item.id] ?? ""}
                           onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
                           placeholder="답변을 입력하세요"
                           rows={3}
                         />
                         <div style={{ display: "flex", justifyContent: "flex-end" }}>
                           <button
-                            onClick={() => saveReply(item.id, replyDrafts[item.id] ? "")}
+                            onClick={() => saveReply(item.id, replyDrafts[item.id] ?? "")}
                             style={{
                               padding: "8px 10px",
                               borderRadius: 10,
@@ -2087,8 +2087,8 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     if (items.length === 0) return "";
     return items
       .map((x) => {
-        const name = materialLabels[x.key] ? x.key;
-        return `${name} ${x.qty}개`;
+        const name = materialLabels[x.key] ?? x.key;
+        return `${name} ${x.qty}?`;
       })
       .join(", ");
   };
@@ -2097,17 +2097,17 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     const items = Object.entries(recipe || {})
       .map(([k, qty]) => ({ key: k, qty: qty || 0, mode: s.modes[k] || "owned" }))
       .filter((x) => x.qty > 0 && x.mode !== "buy");
-    if (items.length === 0) return "판매 없음";
+    if (items.length === 0) return "?? ??";
     return items
       .map((x) => {
-        const name = materialLabels[x.key] ? x.key;
-        return `${name} ${x.qty}개`;
+        const name = materialLabels[x.key] ?? x.key;
+        return `${name} ${x.qty}?`;
       })
       .join(", ");
   };
 
   // gem expert rule by level
-  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ? 0;
+  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
   const flameRule = flamingPickRule(s.flamingPickLevel);
 
@@ -2142,7 +2142,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
         Object.entries(recipe).map(([k, qty]) => {
           const mode = s.modes[k] || "owned";
           if (mode === "buy") return 0;
-          const market = toNum(s.prices[k]?.market ? 0);
+          const market = toNum(s.prices[k]?.market ?? 0);
           return (qty || 0) * netSell(market, feeRate);
         })
       );
@@ -2151,7 +2151,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     const craft = (productGrossPrice, recipe) => {
       const costs = Object.entries(recipe).map(([k, qty]) => {
         const mode = s.modes[k] || "owned";
-        const market = toNum(s.prices[k]?.market ? 0);
+        const market = toNum(s.prices[k]?.market ?? 0);
         const unitCost = unitCostByMode({ mode, marketPrice: market, feeRate });
         return { key: k, qty: qty || 0, unitCost, mode, market };
       });
@@ -2807,12 +2807,12 @@ export default function App() {
       suppressPriceWrite.current = true;
       setS((p) => ({
         ...p,
-        ingotGrossPrice: data.ingotGrossPrice ? p.ingotGrossPrice,
-        gemGrossPrice: data.gemGrossPrice ? p.gemGrossPrice,
-        prices: data.prices ? p.prices,
-        abilityGrossSell: data.abilityGrossSell ? p.abilityGrossSell,
-        lifeGrossSell: data.lifeGrossSell ? p.lifeGrossSell,
-        potionPrices: data.potionPrices ? p.potionPrices,
+        ingotGrossPrice: data.ingotGrossPrice ?? p.ingotGrossPrice,
+        gemGrossPrice: data.gemGrossPrice ?? p.gemGrossPrice,
+        prices: data.prices ?? p.prices,
+        abilityGrossSell: data.abilityGrossSell ?? p.abilityGrossSell,
+        lifeGrossSell: data.lifeGrossSell ?? p.lifeGrossSell,
+        potionPrices: data.potionPrices ?? p.potionPrices,
       }));
     });
     return () => unsub();
