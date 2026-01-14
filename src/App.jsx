@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   addDoc,
   collection,
@@ -52,9 +52,10 @@ function getClientId() {
 }
 
 /**
- * ?レ옄 ?낅젰 ?덉젙?붿슜
- * - ?곹깭??string?쇰줈 ???鍮덇컪/?낅젰以??곹깭 蹂댄샇)
- * - 怨꾩궛???뚮쭔 ?レ옄 蹂?? */
+ * Numeric input guard
+ * - preserve string state while typing
+ * - cast numbers only during calculation
+ */
 function toNum(v, fallback = 0) {
   if (typeof v === "number") return Number.isFinite(v) ? v : fallback;
   if (typeof v !== "string") return fallback;
@@ -101,11 +102,12 @@ function migrateState(raw, defaults) {
     };
   }
 
-  // v1 -> v2 : prices 援ъ“瑜?{grossSell,buy} -> {market} 濡??뺢퇋??  if (incomingVer < 2) {
+  // v1 -> v2: normalize price shape
+  if (incomingVer < 2) {
     const oldPrices = s.prices || {};
     const normalized = {};
     for (const [k, v] of Object.entries(oldPrices)) {
-      // 湲곗〈 援ъ“硫?grossSell ?곗꽑, ?놁쑝硫?buy, ?놁쑝硫?0
+      // prefer market, then grossSell, then buy
       if (isPlainObject(v)) {
         const market = v.market ?? v.grossSell ?? v.buy ?? 0;
         normalized[k] = { market: String(market ?? "") };
@@ -116,7 +118,7 @@ function migrateState(raw, defaults) {
     s = { ...s, prices: deepMerge(defaults.prices, normalized) };
   }
 
-  // v2 -> v3 : feedbacks 湲곕낯媛?異붽?
+  // v2 -> v3: feedback defaults
   if (incomingVer < 3) {
     s = {
       ...s,
@@ -128,7 +130,7 @@ function migrateState(raw, defaults) {
     };
   }
 
-  // v3 -> v4 : adminMode 湲곕낯媛?異붽?
+  // v3 -> v4: adminMode default
   if (incomingVer < 4) {
     s = {
       ...s,
@@ -330,7 +332,8 @@ function ToggleButton({ isOn, onClick, labelOn, labelOff }) {
  * =========================
  */
 
-// ?몄씠吏 怨↔눌??媛뺥솕 ?④퀎蹂?議곌컖 ?쒕엻 ??const SAGE_SHARDS_BY_ENH = {
+// SAGE pick upgrade shards per level
+const SAGE_SHARDS_BY_ENH = {
   5: 4,
   6: 4,
   7: 4,
@@ -344,7 +347,7 @@ function ToggleButton({ isOn, onClick, labelOn, labelOff }) {
   15: 12,
 };
 
-// 蹂댁꽍 ?꾨Ц媛 ?덈꺼蹂?(?뺣쪧, 媛쒖닔)
+// gem expert rule by level
 function gemExpertRule(level) {
   if (level === 1) return { prob: 0.03, count: 1 };
   if (level === 2) return { prob: 0.07, count: 1 };
@@ -352,7 +355,7 @@ function gemExpertRule(level) {
   return { prob: 0, count: 0 };
 }
 
-// 遺덈텤? 怨↔눌???덈꺼蹂?(?뺣쪧, 二쇨눼 1媛?吏곷뱶??
+// flaming pick rule by level (prob, ingots)
 // 1~9?덈꺼: 1~9% / 10?덈꺼: 15%
 function flamingPickRule(level) {
   if (!Number.isFinite(level) || level <= 0) return { prob: 0, ingots: 1 };
@@ -366,7 +369,7 @@ function flamingPickRule(level) {
  * ======================
  * ?듭떖 洹쒖튃(?뺤젙):
  * - 遺덈텤? 怨↔눌?닿? 諛쒕룞?섎㈃: 議곌컖 0媛?+ 二쇨눼 1媛??泥?
- * - 蹂댁꽍 ?쒕엻 ?먯젙(蹂댁꽍 ?꾨Ц媛)? 遺덈텤????좊룄 洹몃?濡??좎?
+ * - keep gem expert ordering same as flaming pick values
  */
 function miningEVBreakdown({
   staminaPerDig,
@@ -422,13 +425,13 @@ function miningEVBreakdown({
  * ======================
  * 蹂寃쎌젏(以묒슂):
  * - ?щ즺 媛寃⑹? market 1媛쒕쭔 ?낅젰
- * - ?먮ℓ ?쒖뿉???섏닔猷?諛섏쁺(?ㅼ닔??
+ * - purchase cost uses market value (no fee)
  * - 援щℓ 鍮꾩슜? market 洹몃?濡??섏닔猷??놁쓬)
  */
 function unitCostByMode({ mode, marketPrice, feeRate }) {
   if (mode === "owned") return 0;
-  if (mode === "buy") return Math.max(0, marketPrice); // 援щℓ 鍮꾩슜 = ?쒖옣媛(?섏닔猷??놁쓬)
-  // opportunity(湲고쉶鍮꾩슜) = ?대떦 ?щ즺瑜??붿븯????諛쏅뒗 ?ㅼ닔?뱀쓣 ?ш린??媛?  return netSell(Math.max(0, marketPrice), feeRate);
+  if (mode === "buy") return Math.max(0, marketPrice); // gem expert rule by level
+  // gem expert rule by level: level -> prob/count
 }
 
 function craftProfit({ productGrossSellPrice, feeRate, costs }) {
@@ -455,7 +458,7 @@ const defaultState = {
   staminaPerDig: "10",
   shardsPerIngot: "16",
 
-  // ?쒖꽭(?쒖옣媛, gross)
+  // gem expert rule by level
   ingotGrossPrice: "6000",
   gemGrossPrice: "12000",
 
@@ -475,7 +478,7 @@ const defaultState = {
     p700: false,
   },
 
-  // ?쒖옉/?먮ℓ媛 (gross)
+  // gem expert rule by level
   abilityGrossSell: "18000",
   lifeGrossSell: {
     low: "9000", // ?섍툒
@@ -483,11 +486,11 @@ const defaultState = {
     high: "60000", // ?곴툒
   },
 
-  // ?щ즺 ?쒖꽭(媛쒕떦, ?쒖옣媛 1媛쒕쭔)
+  // gem expert rule by level
   prices: {
     ingot: { market: "6000" },
     stone: { market: "773" }, // ?뚮춬移??섍툒)
-    deepCobble: { market: "281" }, // ?ъ링??議곗빟??萸됱튂(以묎툒)
+    deepCobble: { market: "281" }, // gem expert rule by level
     redstone: { market: "97" },
     copper: { market: "100" },
     diamond: { market: "2900" },
@@ -497,7 +500,7 @@ const defaultState = {
     amethyst: { market: "78" },
   },
 
-  // ?щ즺 泥섎━ 諛⑹떇(吏곸젒?섍툒/援щℓ/怨좉툒:?ш린???먮ℓ?섏씡)
+  // gem expert rule by level
   modes: {
     ingot: "opportunity",
     stone: "owned",
@@ -627,9 +630,7 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
               const dayKey = String(day).padStart(2, "0");
               const key = `${monthKey}-${dayKey}`;
               const list = birthdayMap?.[key] || [];
-              const title = list.length
-                    .map((p) => p.nickname || p.mcNickname || "이름 없음")
-                : "";
+              const title = list.length ? list.map((p) => p.nickname || p.mcNickname || "이름 없음").join(", ") : "";
               return (
                 <div
                   key={`day-${day}`}
@@ -1083,59 +1084,58 @@ function ProfilePage({
             ]}
           />
           <Select
-            label="세이지 곡괭이 강화 단계"
+            label="\uc138\uc774\uc9c0 \uace1\uad2d\uc774 \uac15\ud654 \ub2e8\uacc4"
             value={s.sageEnhLevel}
             onChange={(v) => setS((p) => ({ ...p, sageEnhLevel: v }))}
             options={sageOptions}
           />
           <Select
-            label="보석 전문가 레벨"
+            label="\ubcf4\uc11d \uc804\ubb38\uac00 \ub808\ubca8"
             value={s.gemExpertLevel}
             onChange={(v) => setS((p) => ({ ...p, gemExpertLevel: v }))}
             options={gemOptions}
           />
           <Select
-            label="불붙은 곡괭이 레벨"
+            label="\ubd88\ubd99\uc740 \uace1\uad2d\uc774 \ub808\ubca8"
             value={s.flamingPickLevel}
             onChange={(v) => setS((p) => ({ ...p, flamingPickLevel: v }))}
             options={flameOptions}
           />
           <Field
-            label="광질 1회 스테미나"
+            label="\uc2a4\ud0dc\ubbf8\ub098 1\ud68c \uc18c\ubaa8\ub7c9"
             value={s.staminaPerDig}
             onChange={(v) => setS((p) => ({ ...p, staminaPerDig: v }))}
-            placeholder="예: 10"
+            placeholder="\uc608: 10"
             min={1}
           />
           <Field
-            label="조각→주괴 필요 조각"
+            label="\uc870\uac01->\uc8fc\uad34 \ud544\uc694 \uc870\uac01"
             value={s.shardsPerIngot}
             onChange={(v) => setS((p) => ({ ...p, shardsPerIngot: v }))}
-            placeholder="예: 16"
+            placeholder="\uc608: 16"
             min={1}
           />
         </div>
 
         <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
-          <div style={{ fontWeight: 900, marginBottom: 6 }}>?꾩옱 ?댁젙蹂??붿빟</div>
+          <div style={{ fontWeight: 900, marginBottom: 6 }}>\ud604\uc7ac \ub0b4\uc815\ubcf4 \uc694\uc57d</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13 }}>
             <div>
-              조각/회(불붙은 미발동 시): <b>{fmt(shardsPerDig)}</b>
+              \uc870\uac01/\ud68c(\ubd88\ubd99\uc740 \ubbf8\ubc1c\ub3d9 \uc2dc): <b>{fmt(shardsPerDig)}</b>
             </div>
             <div>
-              보석: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>개
-            <div>
-              불붙은(대체): <b>{fmt(flameRule.prob * 100)}%</b> 확률, <b>주괴 1개</b>
+              \ubcf4\uc11d: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>\uac1c
             </div>
             <div>
-              판매 수수료: <b>{fmt(toNum(s.feePct))}%</b>
+              \ubd88\ubd99\uc740(\ub300\uccb4): <b>{fmt(flameRule.prob * 100)}%</b> \ud655\ub960, <b>\uc8fc\uad34 1\uac1c</b>
+            </div>
+            <div>
+              \ud310\ub9e4 \uc218\uc218\ub8cc: <b>{fmt(toNum(s.feePct))}%</b>
             </div>
           </div>
         </div>
       </Card>
 
-      
-      
       <Card title="시세 입력 (공통)">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
           <Field
@@ -1179,30 +1179,30 @@ function ProfilePage({
           구매 비용(수수료 없음): <b>시장가 그대로</b>
         </div>
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          {"최근 시세 업데이트: "}
+          {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
-          {priceUpdatedBy ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
+          {priceUpdatedBy ? ` (\uc800\uc7a5\uc790: ${priceUpdatedBy.name || priceUpdatedBy.email || "\uc54c \uc218 \uc5c6\uc74c"})` : ""}
         </div>
 
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
-          {commonPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{commonPriceError}</span> : null}
+          {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
           <button
-            onClick={onSaveCommonPrices}
-            disabled={!authUser || commonPriceSaving}
+            onClick={onSaveSharedPrices}
+            disabled={!authUser || priceSaving}
             style={{
               padding: "8px 12px",
               borderRadius: 10,
               border: "1px solid var(--input-border)",
               background: authUser ? "var(--panel-bg)" : "transparent",
               color: "var(--text)",
-              cursor: !authUser || commonPriceSaving ? "not-allowed" : "pointer",
+              cursor: !authUser || priceSaving ? "not-allowed" : "pointer",
               fontWeight: 800,
               fontSize: 12,
-              opacity: !authUser || commonPriceSaving ? 0.6 : 1,
+              opacity: !authUser || priceSaving ? 0.6 : 1,
             }}
-            title={authUser ? "시세 저장" : "로그인 후 저장할 수 있습니다."}
+            title={authUser ? "\uc2dc\uc138/\uc635\uc158 \uc800\uc7a5" : "\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."}
           >
-            {commonPriceSaving ? "저장 중..." : "시세 저장"}
+            {priceSaving ? "\uc800\uc7a5 \uc911..." : "\uc2dc\uc138/\uc635\uc158 \uc800\uc7a5"}
           </button>
         </div>
       </Card>
@@ -1280,7 +1280,8 @@ function ProfilePage({
  * ==========
  * Root App
  * ==========
- */function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profiles, setProfiles }) {
+ */
+function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profiles, setProfiles }) {
   const [form, setForm] = useState({
     type: "improve",
     title: "",
@@ -1663,7 +1664,7 @@ function ProfilePage({
                     }}
                   >
                     <div style={{ fontWeight: 900 }}>
-                    .map((p) => p.nickname || p.mcNickname || "이름 없음")
+                      {p.nickname || p.mcNickname || "\uc774\ub984 \uc5c6\uc74c"}
                       {p.mcNickname ? ` (${p.mcNickname})` : ""}
                     </div>
                     {p.rank ? <div style={{ fontSize: 12, opacity: 0.85 }}>직급: {p.rank}</div> : null}
@@ -2018,7 +2019,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
       .join(", ");
   };
 
-  // 내정보 기반 기대값(주괴/보석)
+  // gem expert rule by level
   const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
   const flameRule = flamingPickRule(s.flamingPickLevel);
@@ -2047,7 +2048,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     feeRate,
   ]);
 
-  // 비교 계산(제작 vs 재료판매)
+  // gem expert rule by level
   const compare = useMemo(() => {
     const sellIndivNet = (recipe) => {
       return sum(
@@ -2109,7 +2110,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     };
   }, [s.prices, s.modes, s.recipes, s.abilityGrossSell, s.lifeGrossSell, feeRate]);
 
-  // 자세히보기(포기한 판매 수익) 토글: 화면을 복잡하게 만들지 않기 위해 여기만 둠
+  // gem expert rule by level 토글: 화면을 복잡하게 만들지 않기 위해 여기만 둠
   const [detailOpen, setDetailOpen] = useState(false);
 
   const explain = (x) => {
@@ -2176,6 +2177,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
           {"\ucd5c\uadfc \uc2dc\uc138 \uc5c5\ub370\uc774\ud2b8: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+          {priceUpdatedBy ? ` (\uc800\uc7a5\uc790: ${priceUpdatedBy.name || priceUpdatedBy.email || "\uc54c \uc218 \uc5c6\uc74c"})` : ""}
         </div>
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
           {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
@@ -2193,9 +2195,9 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
               fontSize: 12,
               opacity: !authUser || priceSaving ? 0.6 : 1,
             }}
-            title={authUser ? "?? ?? ??" : "??? ? ??? ? ????."}
+            title={authUser ? "\uac00\uacf5 \uc2dc\uc138 \uc800\uc7a5" : "\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4."}
           >
-            {priceSaving ? "?? ?..." : "?? ?? ??"}
+            {priceSaving ? "\uc800\uc7a5 \uc911..." : "\uac00\uacf5 \uc2dc\uc138 \uc800\uc7a5"}
           </button>
         </div>
 
@@ -2261,37 +2263,38 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
           <ToggleButton
             isOn={detailOpen}
             onClick={() => setDetailOpen((v) => !v)}
-            labelOn="자세히보기 닫기"
-            labelOff="자세히보기(포기한 판매 수익)"
+            labelOn="\uC790\uC138\uD788\uBCF4\uAE30 \uB2EB\uAE30"
+            labelOff="\uC790\uC138\uD788\uBCF4\uAE30(\uD3EC\uAE30\uD55C \uD310\uB9E4 \uC218\uC775)"
           />
         </div>
 
         {detailOpen ? (
           <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
             {[
-              { name: "어빌리티 스톤", key: "ability" },
-              { name: "하급 라이프스톤", key: "low" },
-              { name: "중급 라이프스톤", key: "mid" },
-              { name: "상급 라이프스톤", key: "high" },
+              { name: "\uC5B4\uBE4C\uB9AC\uD2F0 \uC2A4\uD1A4", key: "ability" },
+              { name: "\uD558\uAE09 \uB77C\uC774\uD504\uC2A4\uD1A4", key: "low" },
+              { name: "\uC911\uAE09 \uB77C\uC774\uD504\uC2A4\uD1A4", key: "mid" },
+              { name: "\uC0C1\uAE09 \uB77C\uC774\uD504\uC2A4\uD1A4", key: "high" },
             ].map((row) => {
               const x = compare[row.key];
               const ex = explain(x);
               return (
                 <div key={row.key} style={{ padding: 12, borderRadius: 12, border: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
-                  <div style={{ fontWeight: 900, marginBottom: 6 }}>{row.name} — 비용 분해(선택 기준)</div>
+                  <div style={{ fontWeight: 900, marginBottom: 6 }}>{row.name} {"\uC0C1\uC138 \uACC4\uC0B0(\uC218\uAE09 \uAE30\uC900)"}</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
-                    <div>??? ? ??(??)</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.buySpend)}?</div>
-                    <div>??? ?? ??(????)</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.foregone)}?</div>
-                    <div>?? ?? ?? ?? ?</div>
-                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.ownedQty)}?</div>
+                    <div>{"\uAD6C\uB9E4 \uBE44\uC6A9(\uC2DC\uC7A5\uAC00)"}</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.buySpend)}{"\uC6D0"}</div>
+                    <div>{"\uD3EC\uAE30\uD55C \uD310\uB9E4 \uC218\uC775(\uC218\uC218\uB8CC \uBC18\uC601)"}</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.foregone)}{"\uC6D0"}</div>
+                    <div>{"\uBCF4\uC720 \uC7AC\uB8CC \uC218\uB7C9"}</div>
+                    <div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ex.ownedQty)}{"\uAC1C"}</div>
                   </div>
                 </div>
               );
             })}
           </div>
         ) : null}
+
       </Card>
     </div>
   );
@@ -2305,7 +2308,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
  */
 
 export default function App() {
-  // ?ㅻ? v4->v6濡?蹂寃??댁쟾 媛?異⑸룎 理쒖냼?? + 留덉씠洹몃젅?댁뀡?쇰줈 ?≪닔
+  // useLocalStorageState v4->v6 migration fix
   const [s, setS] = useLocalStorageState("miner_eff_v6", defaultState);
   const [adminModalOpen, setAdminModalOpen] = useState(false);
   const [adminPass, setAdminPass] = useState("");
@@ -2432,12 +2435,12 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted") {
         enqueuePending(pendingNicknameKey(authUser.uid), { nickname: trimmed });
-        setNicknameError("??λ웾???좎떆 珥덇낵?섏뿀?듬땲?? 濡쒖뺄???꾩떆 ??ν뻽怨??먮룞 ?ъ떆?꾪빀?덈떎.");
+        setNicknameError("\uc800\uc7a5\ub7c9/\uc694\uccad \uc81c\ud55c\uc744 \ucd08\uacfc\ud588\uc2b5\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
       } else if (err?.message === "timeout") {
         enqueuePending(pendingNicknameKey(authUser.uid), { nickname: trimmed });
-        setNicknameError("??μ씠 吏?곕릺怨??덉뒿?덈떎. 濡쒖뺄???꾩떆 ??ν뻽怨??먮룞 ?ъ떆?꾪빀?덈떎.");
+        setNicknameError("\uc800\uc7a5\uc774 \uc9c0\uc5f0\ub418\uace0 \uc788\uc2b5\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
       } else {
-        setNicknameError("??μ뿉 ?ㅽ뙣?덉뒿?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??");
+        setNicknameError("\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
       }
     } finally {
       setNicknameSaving(false);
@@ -2645,7 +2648,7 @@ export default function App() {
       } catch (err) {
         setUserDoc({ uid: authUser.uid, status: "pending" });
         if (err?.code === "resource-exhausted") {
-          setAuthError("濡쒓렇?몄씠 ?섏뿀吏留??쒕쾭 ?숆린?붽? 吏?곕맗?덈떎. ?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??");
+          setAuthError("\ub85c\uadf8\uc778\uc740 \uc131\uacf5\ud588\uc9c0\ub9cc \uc11c\ubc84 \uc5f0\uacb0\uc744 \ud655\uc778\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
         }
       }
     })();
@@ -2736,7 +2739,7 @@ export default function App() {
 
   const saveCommonPrices = async () => {
     if (!authUser) {
-      setCommonPriceError("??? ? ??? ? ????.");
+      setCommonPriceError("\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
       return;
     }
     setCommonPriceSaving(true);
@@ -2755,9 +2758,9 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
         enqueuePending("pendingCommonPrices", payload);
-        setCommonPriceError("??? ???? ????. ?? ? ?? 익명?.");
+        setCommonPriceError("\uc800\uc7a5 \uc694\uccad\uc774 \ub9ce\uc544 \uc9c0\uc5f0\ub429\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
       } else {
-        setCommonPriceError("??? 익명?. ?? ? ?? 익명?.");
+        setCommonPriceError("\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
       }
     } finally {
       setCommonPriceSaving(false);
@@ -2766,7 +2769,7 @@ export default function App() {
 
   const saveProcessPrices = async () => {
     if (!authUser) {
-      setProcessPriceError("??? ? ??? ? ????.");
+      setProcessPriceError("\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
       return;
     }
     setProcessPriceSaving(true);
@@ -2785,9 +2788,9 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
         enqueuePending("pendingProcessPrices", payload);
-        setProcessPriceError("??? ???? ????. ?? ? ?? 익명?.");
+        setProcessPriceError("\uc800\uc7a5 \uc694\uccad\uc774 \ub9ce\uc544 \uc9c0\uc5f0\ub429\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
       } else {
-        setProcessPriceError("??? 익명?. ?? ? ?? 익명?.");
+        setProcessPriceError("\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
       }
     } finally {
       setProcessPriceSaving(false);
@@ -2796,7 +2799,7 @@ export default function App() {
 
   const saveMaterialPrices = async () => {
     if (!authUser) {
-      setMaterialPriceError("??? ? ??? ? ????.");
+      setMaterialPriceError("\ub85c\uadf8\uc778 \ud6c4 \uc800\uc7a5\ud560 \uc218 \uc788\uc2b5\ub2c8\ub2e4.");
       return;
     }
     setMaterialPriceSaving(true);
@@ -2815,9 +2818,9 @@ export default function App() {
     } catch (err) {
       if (err?.code === "resource-exhausted" || err?.message === "timeout") {
         enqueuePending("pendingMaterialPrices", payload);
-        setMaterialPriceError("??? ???? ????. ?? ? ?? 익명?.");
+        setMaterialPriceError("\uc800\uc7a5 \uc694\uccad\uc774 \ub9ce\uc544 \uc9c0\uc5f0\ub429\ub2c8\ub2e4. \ub85c\uceec\uc5d0 \uc784\uc2dc \uc800\uc7a5\ud588\uace0 \uc790\ub3d9 \uc7ac\uc2dc\ub3c4\ud569\ub2c8\ub2e4.");
       } else {
-        setMaterialPriceError("??? 익명?. ?? ? ?? 익명?.");
+        setMaterialPriceError("\uc800\uc7a5\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4. \uc7a0\uc2dc \ud6c4 \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.");
       }
     } finally {
       setMaterialPriceSaving(false);
@@ -2901,7 +2904,7 @@ export default function App() {
     setIntroOpen(false);
   };
 
-  // IngotPage?먯꽌 ?먮ℓ媛 ?낅젰??留됯퀬(placeholder), ?ㅼ젣 ?낅젰? profile?먯꽌留??섎젮怨?  // ?? 湲곗〈 援ъ“瑜??ш쾶 諛붽씀吏 ?딄린 ?꾪빐 ?쒖엯???꾩튂 ?대룞?앸쭔 ?섍퀬, 媛믪? 洹몃?濡??ъ슜?⑸땲??
+  // gem expert rule by level: keep raw profile values without normalization
   const setActive = (key) => setS((p) => ({ ...p, activeMenu: key }));
   const isPending = !!authUser && !canUseApp && userDoc?.status !== "rejected";
   const isRejected = userDoc?.status === "rejected";
