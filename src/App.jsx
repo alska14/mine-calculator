@@ -73,7 +73,7 @@ function isPlainObject(x) {
   return x != null && typeof x === "object" && !Array.isArray(x);
 }
 function deepMerge(base, patch) {
-  if (!isPlainObject(base) || !isPlainObject(patch)) return patch ?? base;
+  if (!isPlainObject(base) || !isPlainObject(patch)) return patch ? base;
   const out = { ...base };
   for (const [k, v] of Object.entries(patch)) {
     if (isPlainObject(out[k]) && isPlainObject(v)) out[k] = deepMerge(out[k], v);
@@ -109,10 +109,10 @@ function migrateState(raw, defaults) {
     for (const [k, v] of Object.entries(oldPrices)) {
       // prefer market, then grossSell, then buy
       if (isPlainObject(v)) {
-        const market = v.market ?? v.grossSell ?? v.buy ?? 0;
-        normalized[k] = { market: String(market ?? "") };
+        const market = v.market ? v.grossSell ? v.buy ? 0;
+        normalized[k] = { market: String(market ? "") };
       } else {
-        normalized[k] = { market: String(v ?? "") };
+        normalized[k] = { market: String(v ? "") };
       }
     }
     s = { ...s, prices: deepMerge(defaults.prices, normalized) };
@@ -368,7 +368,7 @@ function flamingPickRule(level) {
  * Expected value function
  * ======================
  * ?듭떖 洹쒖튃(?뺤젙):
- * - 遺덈텤? 怨↔눌?닿? 諛쒕룞?섎㈃: 議곌컖 0媛?+ 二쇨눼 1媛??泥?
+ * - 遺덈텤? 怨↔눌?닿? 諛쒕룞?섎㈃: 議곌컖 0媛?+ 二쇨눼 1媛?泥?
  * - keep gem expert ordering same as flaming pick values
  */
 function miningEVBreakdown({
@@ -390,14 +390,14 @@ function miningEVBreakdown({
   const ingotNet = netSell(Math.max(0, ingotGrossPrice), sellFeeRate);
   const gemNet = netSell(Math.max(0, gemGrossPrice), sellFeeRate);
 
-  // ??遺덈텤?? "異붽?"媛 ?꾨땲??"?泥?
+  // ?遺덈텤?? "異붽?"媛 ?꾨땲?"?泥?
   const ingotFromShardsPerDig = (1 - p) * (Math.max(0, shardsPerDig) / spi);
   const ingotFromShardsValuePerDig = ingotFromShardsPerDig * ingotNet;
 
   const ingotFromFlamePerDig = p * 1;
   const ingotFromFlameValuePerDig = ingotFromFlamePerDig * ingotNet;
 
-  // 蹂댁꽍? 遺덈텤? ?щ?? 臾닿??섍쾶 洹몃?濡??먯젙
+  // 蹂댁꽍? 遺덈텤? ?щ? 臾닿?섍쾶 洹몃?濡?먯젙
   const gemValuePerDig = clamp01(gemDropProb) * Math.max(0, gemDropCount) * gemNet;
 
   const totalPerDig = ingotFromShardsValuePerDig + ingotFromFlameValuePerDig + gemValuePerDig;
@@ -426,7 +426,7 @@ function miningEVBreakdown({
  * 蹂寃쎌젏(以묒슂):
  * - ?щ즺 媛寃⑹? market 1媛쒕쭔 ?낅젰
  * - purchase cost uses market value (no fee)
- * - 援щℓ 鍮꾩슜? market 洹몃?濡??섏닔猷??놁쓬)
+ * - 援щℓ 鍮꾩슜? market 洹몃?濡?섏닔猷?놁쓬)
  */
 function unitCostByMode({ mode, marketPrice, feeRate }) {
   if (mode === "owned") return 0;
@@ -470,7 +470,7 @@ const defaultState = {
     p700: "210000",
   },
 
-  // ?ъ뀡 寃곌낵 ?됰퀎 ?몃??댁뿭 ?ㅽ뵂 ?곹깭
+  // ?ъ뀡 寃곌낵 ?됰퀎 ?몃?댁뿭 ?ㅽ뵂 ?곹깭
   potionRowDetailsOpen: {
     p100: false,
     p300: false,
@@ -489,7 +489,7 @@ const defaultState = {
   // gem expert rule by level
   prices: {
     ingot: { market: "6000" },
-    stone: { market: "773" }, // ?뚮춬移??섍툒)
+    stone: { market: "773" }, // ?뚮춬移?섍툒)
     deepCobble: { market: "281" }, // gem expert rule by level
     redstone: { market: "97" },
     copper: { market: "100" },
@@ -514,7 +514,7 @@ const defaultState = {
     amethyst: "owned",
   },
 
-  // ?덉떆??湲곕낯媛?
+  // ?덉떆?湲곕낯媛?
   recipes: {
     ability: { ingot: 3 },
     low: { ingot: 1, stone: 2, redstone: 3, copper: 8 },
@@ -924,7 +924,7 @@ function FeedbackPage({ s, setS }) {
                   <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
                     <TextArea
                       label="관리자 답변"
-                      value={replyDrafts[item.id] ?? ""}
+                      value={replyDrafts[item.id] ? ""}
                       onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
                       placeholder="답변을 입력하세요"
                       rows={3}
@@ -932,7 +932,7 @@ function FeedbackPage({ s, setS }) {
                     <div style={{ display: "flex", justifyContent: "flex-end" }}>
                       <button
                         onClick={() => {
-                          saveReply(item.id, replyDrafts[item.id] ?? "");
+                          saveReply(item.id, replyDrafts[item.id] ? "");
                         }}
                         style={{
                           padding: "8px 10px",
@@ -963,10 +963,10 @@ function FeedbackPage({ s, setS }) {
 
 function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
   const potions = [
-    { key: "p100", label: "???? ?? 100", stamina: 100 },
-    { key: "p300", label: "???? ?? 300", stamina: 300 },
-    { key: "p500", label: "???? ?? 500", stamina: 500 },
-    { key: "p700", label: "???? ?? 700", stamina: 700 },
+    { key: "p100", label: "스태미나 포션 100", stamina: 100 },
+    { key: "p300", label: "스태미나 포션 300", stamina: 300 },
+    { key: "p500", label: "스태미나 포션 500", stamina: 500 },
+    { key: "p700", label: "스태미나 포션 700", stamina: 700 },
   ];
 
   const rows = potions.map((p) => {
@@ -981,15 +981,15 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <Card title="???? ?? ?? ??">
+      <Card title="스태미나 포션 효율 계산">
         <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
-          ???? ???? ??, ?? ?? ?? ???? ??? ?????.
+          수수료를 고려하지 않고, 포션 가격 대비 스태미나 효율을 비교합니다.
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
           {potions.map((p) => (
             <Field
               key={p.key}
-              label={`${p.label} (?)`}
+              label={`${p.label} (원)`}
               value={s.potionPrices?.[p.key] ?? ""}
               onChange={(v) =>
                 setS((prev) => ({
@@ -997,28 +997,28 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
                   potionPrices: { ...prev.potionPrices, [p.key]: v },
                 }))
               }
-              placeholder="?: 14000"
+              placeholder="예: 14000"
               min={0}
-              suffix="?"
+              suffix="원"
             />
           ))}
         </div>
 
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          {"?? ?? ????: "}
+          {"최근 시세 업데이트: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
         </div>
       </Card>
 
-      <Card title="?? ?? ??">
+      <Card title="포션 효율 비교">
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr>
-                <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>??</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>??</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>???? 1? ??</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>??</th>
+                <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>포션</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>가격</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>스태미나 1당 비용</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>추천</th>
               </tr>
             </thead>
             <tbody>
@@ -1028,13 +1028,13 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
                     {r.label}
                   </td>
                   <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
-                    {r.price > 0 ? `${fmt(r.price)}?` : "-"}
+                    {r.price > 0 ? `${fmt(r.price)}원` : "-"}
                   </td>
                   <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
-                    {r.price > 0 ? `${r.perStamina.toFixed(1)}?` : "-"}
+                    {r.price > 0 ? `${r.perStamina.toFixed(1)}원` : "-"}
                   </td>
                   <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
-                    {best && best.key === r.key ? "??" : ""}
+                    {best && best.key === r.key ? "최저" : ""}
                   </td>
                 </tr>
               ))}
@@ -1045,6 +1045,7 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
     </div>
   );
 }
+
 
 function ProfilePage({
   s,
@@ -1071,7 +1072,7 @@ function ProfilePage({
       setNickname("");
       return;
     }
-    setNickname(userDoc?.nickname ?? authUser.displayName ?? "");
+    setNickname(userDoc?.nickname ? authUser.displayName ? "");
   }, [authUser, userDoc]);
   const sageOptions = useMemo(() => {
     const values = Object.keys(SAGE_SHARDS_BY_ENH).map(Number).sort((a, b) => a - b);
@@ -1095,7 +1096,7 @@ function ProfilePage({
   ];
 
 
-  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
+  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
   const flameRule = flamingPickRule(s.flamingPickLevel);
 
@@ -1305,7 +1306,7 @@ function ProfilePage({
         <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
           {materialKeysForUI.map((key) => {
             const label = materialLabels[key] || key;
-            const market = s.prices[key]?.market ?? "";
+            const market = s.prices[key]?.market ? "";
             const mode = s.modes[key] || "owned";
             return (
               <div key={key} style={{ display: "grid", gap: 8, padding: 10, borderRadius: 10, border: "1px solid var(--soft-border)", background: "var(--panel-bg)" }}>
@@ -2004,14 +2005,14 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
                       <div style={{ marginTop: 6, display: "grid", gap: 8 }}>
                         <TextArea
                           label="관리자 답변"
-                          value={replyDrafts[item.id] ?? ""}
+                          value={replyDrafts[item.id] ? ""}
                           onChange={(v) => setReplyDrafts((p) => ({ ...p, [item.id]: v }))}
                           placeholder="답변을 입력하세요"
                           rows={3}
                         />
                         <div style={{ display: "flex", justifyContent: "flex-end" }}>
                           <button
-                            onClick={() => saveReply(item.id, replyDrafts[item.id] ?? "")}
+                            onClick={() => saveReply(item.id, replyDrafts[item.id] ? "")}
                             style={{
                               padding: "8px 10px",
                               borderRadius: 10,
@@ -2086,7 +2087,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     if (items.length === 0) return "";
     return items
       .map((x) => {
-        const name = materialLabels[x.key] ?? x.key;
+        const name = materialLabels[x.key] ? x.key;
         return `${name} ${x.qty}개`;
       })
       .join(", ");
@@ -2099,14 +2100,14 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     if (items.length === 0) return "판매 없음";
     return items
       .map((x) => {
-        const name = materialLabels[x.key] ?? x.key;
+        const name = materialLabels[x.key] ? x.key;
         return `${name} ${x.qty}개`;
       })
       .join(", ");
   };
 
   // gem expert rule by level
-  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
+  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ? 0;
   const gemRule = gemExpertRule(s.gemExpertLevel);
   const flameRule = flamingPickRule(s.flamingPickLevel);
 
@@ -2141,7 +2142,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
         Object.entries(recipe).map(([k, qty]) => {
           const mode = s.modes[k] || "owned";
           if (mode === "buy") return 0;
-          const market = toNum(s.prices[k]?.market ?? 0);
+          const market = toNum(s.prices[k]?.market ? 0);
           return (qty || 0) * netSell(market, feeRate);
         })
       );
@@ -2150,7 +2151,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     const craft = (productGrossPrice, recipe) => {
       const costs = Object.entries(recipe).map(([k, qty]) => {
         const mode = s.modes[k] || "owned";
-        const market = toNum(s.prices[k]?.market ?? 0);
+        const market = toNum(s.prices[k]?.market ? 0);
         const unitCost = unitCostByMode({ mode, marketPrice: market, feeRate });
         return { key: k, qty: qty || 0, unitCost, mode, market };
       });
@@ -2806,12 +2807,12 @@ export default function App() {
       suppressPriceWrite.current = true;
       setS((p) => ({
         ...p,
-        ingotGrossPrice: data.ingotGrossPrice ?? p.ingotGrossPrice,
-        gemGrossPrice: data.gemGrossPrice ?? p.gemGrossPrice,
-        prices: data.prices ?? p.prices,
-        abilityGrossSell: data.abilityGrossSell ?? p.abilityGrossSell,
-        lifeGrossSell: data.lifeGrossSell ?? p.lifeGrossSell,
-        potionPrices: data.potionPrices ?? p.potionPrices,
+        ingotGrossPrice: data.ingotGrossPrice ? p.ingotGrossPrice,
+        gemGrossPrice: data.gemGrossPrice ? p.gemGrossPrice,
+        prices: data.prices ? p.prices,
+        abilityGrossSell: data.abilityGrossSell ? p.abilityGrossSell,
+        lifeGrossSell: data.lifeGrossSell ? p.lifeGrossSell,
+        potionPrices: data.potionPrices ? p.potionPrices,
       }));
     });
     return () => unsub();
