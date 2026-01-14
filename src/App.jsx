@@ -392,7 +392,7 @@ function miningEVBreakdown({
   const gemNet = netSell(Math.max(0, gemGrossPrice), sellFeeRate);
 
   // ?遺덈텤?? "異붽?"媛 ?꾨땲?"?泥?
-  const ingotFromShardsPerDig = (1 - p) * (Math.max(0, shardsPerDig) / spi);
+  const ingotFromShardsPerDig = Math.max(0, shardsPerDig) / spi;
   const ingotFromShardsValuePerDig = ingotFromShardsPerDig * ingotNet;
 
   const ingotFromFlamePerDig = p * 1;
@@ -1160,9 +1160,9 @@ function ProfilePage({
     { value: 0, label: "0레벨 (스킬 없음)" },
     ...Array.from({ length: 9 }, (_, i) => {
       const lv = i + 1;
-      return { value: lv, label: `${lv}레벨 (${lv}% 확률, 조각→주괴 1개 대체)` };
+      return { value: lv, label: `${lv}레벨 (${lv}% 확률, 주괴 1개 추가)` };
     }),
-    { value: 10, label: "10레벨 (15% 확률, 조각→주괴 1개 대체)" },
+    { value: 10, label: "10레벨 (15% 확률, 주괴 1개 추가)" },
   ];
 
 
@@ -1284,7 +1284,7 @@ function ProfilePage({
               보석: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>개
             </div>
             <div>
-              불붙은(대체): <b>{fmt(flameRule.prob * 100)}%</b> 확률, <b>주괴 1개</b>
+              불붙은(추가): <b>{fmt(flameRule.prob * 100)}%</b> 확률, <b>주괴 1개</b>
             </div>
             <div>
               판매 수수료: <b>{fmt(toNum(s.feePct))}%</b>
@@ -2298,9 +2298,9 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
         <div style={{ padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, fontSize: 13 }}>
             <div>회당 조각(미발동 시)</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(shardsPerDig)}개</div>
-            <div>불붙은 확률 p(대체)</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(flameRule.prob * 100)}%</div>
+            <div>불붙은 확률 p(추가)</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(flameRule.prob * 100)}%</div>
             <div>회당 주괴(조각→환산) 기대</div><div style={{ textAlign: "right", fontWeight: 900 }}>{ev.ingotFromShardsPerDig.toFixed(4)}개</div>
-            <div>회당 주괴(불붙은 대체) 기대</div><div style={{ textAlign: "right", fontWeight: 900 }}>{ev.ingotFromFlamePerDig.toFixed(4)}개</div>
+            <div>회당 주괴(불붙은 추가) 기대</div><div style={{ textAlign: "right", fontWeight: 900 }}>{ev.ingotFromFlamePerDig.toFixed(4)}개</div>
             <div>회당 보석 기대가치</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.gemValuePerDig)}원</div>
             <div>회당 총 기대가치</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.totalPerDig)}원</div>
             <div>스태미나 1당 기대가치</div><div style={{ textAlign: "right", fontWeight: 900 }}>{fmt(ev.totalPerStamina)}원</div>
