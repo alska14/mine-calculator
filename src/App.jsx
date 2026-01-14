@@ -97,6 +97,7 @@ function migrateState(raw, defaults) {
         p300: false,
         p500: false,
         p700: false,
+    p1000: false,
         ...(s.potionRowDetailsOpen || {}),
       },
     };
@@ -468,6 +469,7 @@ const defaultState = {
     p300: "70000",
     p500: "160000",
     p700: "210000",
+    p1000: "320000",
   },
 
   // ?ъ뀡 寃곌낵 ?됰퀎 ?몃?댁뿭 ?ㅽ뵂 ?곹깭
@@ -476,6 +478,7 @@ const defaultState = {
     p300: false,
     p500: false,
     p700: false,
+    p1000: false,
   },
 
   // gem expert rule by level
@@ -967,6 +970,7 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
     { key: "p300", label: "스태미나 포션 300", stamina: 300 },
     { key: "p500", label: "스태미나 포션 500", stamina: 500 },
     { key: "p700", label: "스태미나 포션 700", stamina: 700 },
+    { key: "p1000", label: "스태미나 포션 1000", stamina: 1000 },
   ];
 
   const rows = potions.map((p) => {
@@ -978,6 +982,8 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
   const best = rows
     .filter((r) => r.price > 0)
     .sort((a, b) => a.perStamina - b.perStamina)[0];
+
+  const baseline = rows.find((r) => r.key === "p100") || rows[0];
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
@@ -1018,6 +1024,7 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
                 <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>포션</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>가격</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>스태미나 1당 비용</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>순이익(100 기준)</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>추천</th>
               </tr>
             </thead>
@@ -1033,8 +1040,13 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
                   <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
                     {r.price > 0 ? `${r.perStamina.toFixed(1)}원` : "-"}
                   </td>
+                  <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
+                    {baseline && baseline.price > 0 && r.price > 0
+                      ? `${fmt((baseline.perStamina - r.perStamina) * r.stamina)}원`
+                      : "-"}
+                  </td>
                   <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
-                    {best && best.key === r.key ? "최저" : ""}
+                    {best && best.key === r.key ? "최저" : "-"}
                   </td>
                 </tr>
               ))}
