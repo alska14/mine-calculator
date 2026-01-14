@@ -964,7 +964,18 @@ function FeedbackPage({ s, setS }) {
 
 
 
-function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
+function PotionPage({
+  s,
+  setS,
+  feeRate,
+  priceUpdatedAt,
+  potionUpdatedAt,
+  potionUpdatedBy,
+  onSavePotionPrices,
+  potionPriceSaving,
+  potionPriceError,
+  authUser,
+}) {
   const potions = [
     { key: "p100", label: "스태미나 포션 100", stamina: 100 },
     { key: "p300", label: "스태미나 포션 300", stamina: 300 },
@@ -1012,6 +1023,9 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
     .filter((r) => r.price > 0)
     .sort((a, b) => a.perStamina - b.perStamina)[0];
 
+  const lastUpdatedAt = potionUpdatedAt ?? priceUpdatedAt;
+  const lastUpdatedBy = potionUpdatedBy;
+
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <Card title="스태미나 포션 효율 계산">
@@ -1038,7 +1052,29 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
         </div>
 
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          최근 시세 업데이트: {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+          최근 시세 업데이트: {lastUpdatedAt ? lastUpdatedAt.toLocaleString("ko-KR") : "-"}
+          {lastUpdatedBy ? ` (${lastUpdatedBy.name || lastUpdatedBy.email || "업데이트 사용자"})` : ""}
+        </div>
+        <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
+          {potionPriceError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{potionPriceError}</span> : null}
+          <button
+            onClick={onSavePotionPrices}
+            disabled={!authUser || potionPriceSaving}
+            style={{
+              padding: "8px 12px",
+              borderRadius: 10,
+              border: "1px solid var(--input-border)",
+              background: authUser ? "var(--panel-bg)" : "transparent",
+              color: "var(--text)",
+              cursor: !authUser || potionPriceSaving ? "not-allowed" : "pointer",
+              fontWeight: 800,
+              fontSize: 12,
+              opacity: !authUser || potionPriceSaving ? 0.6 : 1,
+            }}
+            title={authUser ? "포션 시세를 저장합니다." : "로그인 후 저장할 수 있습니다."}
+          >
+            {potionPriceSaving ? "저장 중..." : "포션 시세 저장"}
+          </button>
         </div>
       </Card>
 
@@ -2442,12 +2478,16 @@ export default function App() {
   const [processUpdatedBy, setProcessUpdatedBy] = useState(null);
   const [materialUpdatedAt, setMaterialUpdatedAt] = useState(null);
   const [materialUpdatedBy, setMaterialUpdatedBy] = useState(null);
+  const [potionUpdatedAt, setPotionUpdatedAt] = useState(null);
+  const [potionUpdatedBy, setPotionUpdatedBy] = useState(null);
   const [commonPriceSaving, setCommonPriceSaving] = useState(false);
   const [commonPriceError, setCommonPriceError] = useState("");
   const [processPriceSaving, setProcessPriceSaving] = useState(false);
   const [processPriceError, setProcessPriceError] = useState("");
   const [materialPriceSaving, setMaterialPriceSaving] = useState(false);
   const [materialPriceError, setMaterialPriceError] = useState("");
+  const [potionPriceSaving, setPotionPriceSaving] = useState(false);
+  const [potionPriceError, setPotionPriceError] = useState("");
   const priceUpdateTimer = useRef(null);
   const suppressPriceWrite = useRef(false);
   const [authUser, setAuthUser] = useState(null);
@@ -2610,7 +2650,7 @@ export default function App() {
           }
         }
 
-        for (const key of ["pendingCommonPrices", "pendingProcessPrices", "pendingMaterialPrices"]) {
+        for (const key of ["pendingCommonPrices", "pendingProcessPrices", "pendingMaterialPrices", "pendingPotionPrices"]) {
           const raw = localStorage.getItem(key);
           if (!raw) continue;
           const parsed = JSON.parse(raw);
@@ -2829,6 +2869,8 @@ export default function App() {
       const processBy = data?.updatedByProcess || null;
       const materialTs = data?.updatedAtMaterial?.toDate ? data.updatedAtMaterial.toDate() : null;
       const materialBy = data?.updatedByMaterial || null;
+      const potionTs = data?.updatedAtPotion?.toDate ? data.updatedAtPotion.toDate() : null;
+      const potionBy = data?.updatedByPotion || null;
       setPriceUpdatedAt(ts);
       setPriceUpdatedBy(by);
       setCommonUpdatedAt(commonTs);
@@ -2837,6 +2879,8 @@ export default function App() {
       setProcessUpdatedBy(processBy);
       setMaterialUpdatedAt(materialTs);
       setMaterialUpdatedBy(materialBy);
+      setPotionUpdatedAt(potionTs);
+      setPotionUpdatedBy(potionBy);
       if (!data) return;
       suppressPriceWrite.current = true;
       setS((p) => ({
@@ -2945,6 +2989,35 @@ export default function App() {
       }
     } finally {
       setMaterialPriceSaving(false);
+    }
+  };
+
+  const savePotionPrices = async () => {
+    if (!authUser) {
+      setPotionPriceError("로그인 후 저장할 수 있습니다.");
+      return;
+    }
+    setPotionPriceSaving(true);
+    setPotionPriceError("");
+    const payload = {
+      potionPrices: s.potionPrices,
+      updatedByPotion: buildUpdater(),
+      updatedAtPotion: serverTimestamp(),
+    };
+    try {
+      await Promise.race([
+        setDoc(doc(db, "shared", "prices"), payload, { merge: true }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
+      ]);
+    } catch (err) {
+      if (err?.code === "resource-exhausted" || err?.message === "timeout") {
+        enqueuePending("pendingPotionPrices", payload);
+        setPotionPriceError("저장이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.");
+      } else {
+        setPotionPriceError("저장에 실패했습니다. 다시 시도해 주세요.");
+      }
+    } finally {
+      setPotionPriceSaving(false);
     }
   };
 
@@ -3375,7 +3448,18 @@ export default function App() {
               />
             ) : null}
             {s.activeMenu === "potion" ? (
-              <PotionPage s={s} setS={setS} feeRate={feeRate} priceUpdatedAt={priceUpdatedAt} />
+              <PotionPage
+                s={s}
+                setS={setS}
+                feeRate={feeRate}
+                priceUpdatedAt={priceUpdatedAt}
+                potionUpdatedAt={potionUpdatedAt}
+                potionUpdatedBy={potionUpdatedBy}
+                onSavePotionPrices={savePotionPrices}
+                potionPriceSaving={potionPriceSaving}
+                potionPriceError={potionPriceError}
+                authUser={authUser}
+              />
             ) : null}
             {s.activeMenu === "ingot" ? (
               <IngotPage
