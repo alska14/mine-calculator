@@ -973,23 +973,50 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
     { key: "p1000", label: "스태미나 포션 1000", stamina: 1000 },
   ];
 
+  const shardsPerDig = SAGE_SHARDS_BY_ENH[s.sageEnhLevel] ?? 0;
+  const gemRule = gemExpertRule(s.gemExpertLevel);
+  const flameRule = flamingPickRule(s.flamingPickLevel);
+
+  const ev = useMemo(() => {
+    return miningEVBreakdown({
+      staminaPerDig: toNum(s.staminaPerDig, 10),
+      shardsPerDig,
+      shardsPerIngot: toNum(s.shardsPerIngot, 16),
+      ingotGrossPrice: toNum(s.ingotGrossPrice, 0),
+      gemDropProb: gemRule.prob,
+      gemDropCount: gemRule.count,
+      gemGrossPrice: toNum(s.gemGrossPrice, 0),
+      flamingIngotProb: flameRule.prob,
+      sellFeeRate: feeRate,
+    });
+  }, [
+    s.staminaPerDig,
+    shardsPerDig,
+    s.shardsPerIngot,
+    s.ingotGrossPrice,
+    gemRule.prob,
+    gemRule.count,
+    s.gemGrossPrice,
+    flameRule.prob,
+    feeRate,
+  ]);
+
   const rows = potions.map((p) => {
     const price = toNum(s.potionPrices?.[p.key] ?? 0);
     const perStamina = price > 0 ? price / p.stamina : 0;
-    return { ...p, price, perStamina };
+    const netProfit = ev.totalPerStamina * p.stamina - price;
+    return { ...p, price, perStamina, netProfit };
   });
 
   const best = rows
     .filter((r) => r.price > 0)
     .sort((a, b) => a.perStamina - b.perStamina)[0];
 
-  const baseline = rows.find((r) => r.key === "p100") || rows[0];
-
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <Card title="스태미나 포션 효율 계산">
         <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
-          수수료를 고려하지 않고, 포션 가격 대비 스태미나 효율을 비교합니다.
+          수수료를 고려하지 않고, 광부 효율 결과(스태미나 1당 기대가치)로 순수익을 계산합니다.
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
           {potions.map((p) => (
@@ -1011,8 +1038,7 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
         </div>
 
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
-          {"최근 시세 업데이트: "}
-          {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
+          최근 시세 업데이트: {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
         </div>
       </Card>
 
@@ -1024,7 +1050,7 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
                 <th style={{ textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>포션</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>가격</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>스태미나 1당 비용</th>
-                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>순이익(100 기준)</th>
+                <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>순수익</th>
                 <th style={{ textAlign: "right", padding: "8px 6px", borderBottom: "1px solid var(--soft-border)" }}>추천</th>
               </tr>
             </thead>
@@ -1041,9 +1067,7 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
                     {r.price > 0 ? `${r.perStamina.toFixed(1)}원` : "-"}
                   </td>
                   <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right" }}>
-                    {baseline && baseline.price > 0 && r.price > 0
-                      ? `${fmt((baseline.perStamina - r.perStamina) * r.stamina)}원`
-                      : "-"}
+                    {r.price > 0 ? `${fmt(r.netProfit)}원` : "-"}
                   </td>
                   <td style={{ padding: "8px 6px", borderBottom: "1px solid var(--soft-border)", textAlign: "right", fontWeight: 900 }}>
                     {best && best.key === r.key ? "최저" : "-"}
@@ -1057,8 +1081,6 @@ function PotionPage({ s, setS, feeRate, priceUpdatedAt }) {
     </div>
   );
 }
-
-
 function ProfilePage({
   s,
   setS,
