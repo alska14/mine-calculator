@@ -1204,19 +1204,19 @@ function ProfilePage({
         </div>
 
         <div style={{ marginTop: 12, padding: 12, borderRadius: 12, background: "var(--soft-bg)", border: "1px solid var(--soft-border)" }}>
-          <div style={{ fontWeight: 900, marginBottom: 6 }}>\ud604\uc7ac \ub0b4\uc815\ubcf4 \uc694\uc57d</div>
+          <div style={{ fontWeight: 900, marginBottom: 6 }}>현재 내정보 요약</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 18, fontSize: 13 }}>
             <div>
-              \uc870\uac01/\ud68c(\ubd88\ubd99\uc740 \ubbf8\ubc1c\ub3d9 \uc2dc): <b>{fmt(shardsPerDig)}</b>
+              조각/회(불붙은 미발동 시): <b>{fmt(shardsPerDig)}</b>
             </div>
             <div>
-              \ubcf4\uc11d: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>\uac1c
+              보석: <b>{fmt(gemRule.prob * 100)}%</b>, <b>{fmt(gemRule.count)}</b>개
             </div>
             <div>
-              \ubd88\ubd99\uc740(\ub300\uccb4): <b>{fmt(flameRule.prob * 100)}%</b> \ud655\ub960, <b>\uc8fc\uad34 1\uac1c</b>
+              불붙은(대체): <b>{fmt(flameRule.prob * 100)}%</b> 확률, <b>주괴 1개</b>
             </div>
             <div>
-              \ud310\ub9e4 \uc218\uc218\ub8cc: <b>{fmt(toNum(s.feePct))}%</b>
+              판매 수수료: <b>{fmt(toNum(s.feePct))}%</b>
             </div>
           </div>
         </div>
@@ -1267,7 +1267,7 @@ function ProfilePage({
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
           {"최근 시세 업데이트: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
-          {priceUpdatedBy ? ` (\uc800\uc7a5\uc790: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
+          {priceUpdatedBy ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
         </div>
 
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
@@ -2087,7 +2087,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     return items
       .map((x) => {
         const name = materialLabels[x.key] ?? x.key;
-        return `${name} ${x.qty}\uac1c`;
+        return `${name} ${x.qty}개`;
       })
       .join(", ");
   };
@@ -2100,7 +2100,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
     return items
       .map((x) => {
         const name = materialLabels[x.key] ?? x.key;
-        return `${name} ${x.qty}\uac1c`;
+        return `${name} ${x.qty}개`;
       })
       .join(", ");
   };
@@ -2263,7 +2263,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
         <div style={{ marginTop: 8, fontSize: 12, opacity: 0.75 }}>
           {"최근 시세 업데이트: "}
           {priceUpdatedAt ? priceUpdatedAt.toLocaleString("ko-KR") : "-"}
-          {priceUpdatedBy ? ` (\uc800\uc7a5\uc790: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
+          {priceUpdatedBy ? ` (저장자: ${priceUpdatedBy.name || priceUpdatedBy.email || "알 수 없음"})` : ""}
         </div>
         <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center" }}>
           {priceSaveError ? <span style={{ fontSize: 12, color: "#c0392b" }}>{priceSaveError}</span> : null}
