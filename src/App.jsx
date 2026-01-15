@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addDoc,
   collection,
@@ -347,6 +347,7 @@ const SAGE_SHARDS_BY_ENH = {
   14: 7,
   15: 12,
 };
+const RANK_ORDER = ["이장", "부이장", "주민대표", "거주민", "입주자", "알바"];
 
 // gem expert rule by level
 function gemExpertRule(level) {
@@ -429,7 +430,7 @@ function miningEVBreakdown({
  * - purchase cost uses market value (no fee)
  * - 援щℓ 鍮꾩슜? market 洹몃?濡?섏닔猷?놁쓬)
  */
-function unitCostByMode({ mode, marketPrice, feeRate }) {
+function unitCostByMode({ mode, marketPrice }) {
   if (mode === "owned") return 0;
   if (mode === "buy") return Math.max(0, marketPrice); // gem expert rule by level
   // gem expert rule by level: level -> prob/count
@@ -670,7 +671,7 @@ function Sidebar({ active, onSelect, onlineUsers, birthdayMap, calendarInfo, onP
  * =======================
  */
 
-function FeedbackPage({ s, setS }) {
+function FeedbackPage({ s }) {
   const [form, setForm] = useState({
     type: "improve",
     title: "",
@@ -678,7 +679,6 @@ function FeedbackPage({ s, setS }) {
     contact: "",
     visibility: "public",
   });
-  const [customType, setCustomType] = useState("");
 
   const [items, setItems] = useState([]);
   const [replyDrafts, setReplyDrafts] = useState({});
@@ -699,6 +699,7 @@ function FeedbackPage({ s, setS }) {
   }, [isAdmin, clientId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReplyDrafts((prev) => {
       let changed = false;
       const next = { ...prev };
@@ -1141,15 +1142,9 @@ function ProfilePage({
   nicknameSaving,
   nicknameError,
 }) {
-  const [nickname, setNickname] = useState("");
-
-  useEffect(() => {
-    if (!authUser) {
-      setNickname("");
-      return;
-    }
-    setNickname(userDoc?.nickname ?? authUser.displayName ?? "");
-  }, [authUser, userDoc]);
+  const [nickname, setNickname] = useState(
+    () => userDoc?.nickname ?? authUser?.displayName ?? ""
+  );
   const sageOptions = useMemo(() => {
     const values = Object.keys(SAGE_SHARDS_BY_ENH).map(Number).sort((a, b) => a - b);
     return values.map((v) => ({ value: v, label: `${v}강 (조각 ${SAGE_SHARDS_BY_ENH[v]}개)` }));
@@ -1716,12 +1711,11 @@ function VillageSuggestionPage({ s, onlineUsers, authUser, showProfiles, profile
     setProfileTouched(true);
   };
 
-  const rankOrder = ["이장", "부이장", "주민대표", "거주민", "입주자", "알바"];
   const sortedProfiles = useMemo(() => {
-    const order = new Map(rankOrder.map((rank, idx) => [rank, idx]));
+    const order = new Map(RANK_ORDER.map((rank, idx) => [rank, idx]));
     return [...profiles].sort((a, b) => {
-      const ra = order.has(a.rank) ? order.get(a.rank) : rankOrder.length;
-      const rb = order.has(b.rank) ? order.get(b.rank) : rankOrder.length;
+      const ra = order.has(a.rank) ? order.get(a.rank) : RANK_ORDER.length;
+      const rb = order.has(b.rank) ? order.get(b.rank) : RANK_ORDER.length;
       if (ra !== rb) return ra - rb;
       const an = a.nickname || a.mcNickname || "";
       const bn = b.nickname || b.mcNickname || "";
@@ -2243,7 +2237,7 @@ function IngotPage({ s, setS, feeRate, priceUpdatedAt, priceUpdatedBy, onSaveSha
       const costs = Object.entries(recipe).map(([k, qty]) => {
         const mode = s.modes[k] || "owned";
         const market = toNum(s.prices[k]?.market ?? 0);
-        const unitCost = unitCostByMode({ mode, marketPrice: market, feeRate });
+        const unitCost = unitCostByMode({ mode, marketPrice: market });
         return { key: k, qty: qty || 0, unitCost, mode, market };
       });
       const buyList = costs.filter((c) => c.mode === "buy").map((c) => ({ key: c.key, qty: c.qty || 0 }));
@@ -2492,13 +2486,10 @@ export default function App() {
   const [adminPass, setAdminPass] = useState("");
   const [adminError, setAdminError] = useState("");
   const [priceUpdatedAt, setPriceUpdatedAt] = useState(null);
-  const [priceUpdatedBy, setPriceUpdatedBy] = useState(null);
   const [commonUpdatedAt, setCommonUpdatedAt] = useState(null);
   const [commonUpdatedBy, setCommonUpdatedBy] = useState(null);
   const [processUpdatedAt, setProcessUpdatedAt] = useState(null);
   const [processUpdatedBy, setProcessUpdatedBy] = useState(null);
-  const [materialUpdatedAt, setMaterialUpdatedAt] = useState(null);
-  const [materialUpdatedBy, setMaterialUpdatedBy] = useState(null);
   const [potionUpdatedAt, setPotionUpdatedAt] = useState(null);
   const [potionUpdatedBy, setPotionUpdatedBy] = useState(null);
   const [commonPriceSaving, setCommonPriceSaving] = useState(false);
@@ -2509,7 +2500,6 @@ export default function App() {
   const [materialPriceError, setMaterialPriceError] = useState("");
   const [potionPriceSaving, setPotionPriceSaving] = useState(false);
   const [potionPriceError, setPotionPriceError] = useState("");
-  const priceUpdateTimer = useRef(null);
   const suppressPriceWrite = useRef(false);
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -2520,8 +2510,6 @@ export default function App() {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
-  const [priceSaving, setPriceSaving] = useState(false);
-  const [priceSaveError, setPriceSaveError] = useState("");
   const [nicknameSaving, setNicknameSaving] = useState(false);
   const [nicknameError, setNicknameError] = useState("");
   const [presencePaused, setPresencePaused] = useState(false);
@@ -2586,7 +2574,7 @@ export default function App() {
     setS(defaultState);
   };
 
-  const pausePresence = () => {
+  const pausePresence = useCallback(() => {
     if (presencePauseTimerRef.current) {
       clearTimeout(presencePauseTimerRef.current);
     }
@@ -2594,7 +2582,7 @@ export default function App() {
     presencePauseTimerRef.current = setTimeout(() => {
       setPresencePaused(false);
     }, PRESENCE_PAUSE_MS);
-  };
+  }, [PRESENCE_PAUSE_MS]);
 
   const saveNickname = async (nextName) => {
     if (!authUser) return;
@@ -2745,7 +2733,7 @@ export default function App() {
     });
     const timer = setInterval(writePresence, PRESENCE_WRITE_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [authUser, userDoc, presenceEnabled]);
+  }, [authUser, userDoc, presenceEnabled, pausePresence]);
 
   useEffect(() => {
     if (!presenceEnabled) {
@@ -2765,7 +2753,7 @@ export default function App() {
       }
     );
     return () => unsub();
-  }, [presenceEnabled]);
+  }, [presenceEnabled, pausePresence]);
 
   useEffect(() => {
     if (!presenceEnabled) {
@@ -2803,7 +2791,7 @@ export default function App() {
     update();
     const timer = setInterval(update, 30000);
     return () => clearInterval(timer);
-  }, [presenceDocs, authUser, userDoc, presenceEnabled]);
+  }, [presenceDocs, authUser, userDoc, presenceEnabled, PRESENCE_ONLINE_WINDOW_MS]);
 
   useEffect(() => {
     if (!authUser) {
@@ -2888,18 +2876,13 @@ export default function App() {
       const commonBy = data?.updatedByCommon || by;
       const processTs = data?.updatedAtProcess?.toDate ? data.updatedAtProcess.toDate() : null;
       const processBy = data?.updatedByProcess || null;
-      const materialTs = data?.updatedAtMaterial?.toDate ? data.updatedAtMaterial.toDate() : null;
-      const materialBy = data?.updatedByMaterial || null;
       const potionTs = data?.updatedAtPotion?.toDate ? data.updatedAtPotion.toDate() : null;
       const potionBy = data?.updatedByPotion || null;
       setPriceUpdatedAt(ts);
-      setPriceUpdatedBy(by);
       setCommonUpdatedAt(commonTs);
       setCommonUpdatedBy(commonBy);
       setProcessUpdatedAt(processTs);
       setProcessUpdatedBy(processBy);
-      setMaterialUpdatedAt(materialTs);
-      setMaterialUpdatedBy(materialBy);
       setPotionUpdatedAt(potionTs);
       setPotionUpdatedBy(potionBy);
       if (!data) return;
@@ -2915,7 +2898,7 @@ export default function App() {
       }));
     });
     return () => unsub();
-  }, []);
+  }, [setS]);
 
   const buildUpdater = () => ({
     uid: authUser?.uid || "",
@@ -3450,6 +3433,7 @@ export default function App() {
             <div style={{ marginTop: 14 }}>
             {s.activeMenu === "profile" ? (
               <ProfilePage
+                key={`${authUser?.uid || "guest"}:${userDoc?.nickname || ""}`}
                 s={s}
                 setS={setS}
                 feeRate={feeRate}
@@ -3495,7 +3479,7 @@ export default function App() {
                 authUser={authUser}
               />
             ) : null}
-            {s.activeMenu === "feedback" ? <FeedbackPage s={s} setS={setS} /> : null}
+            {s.activeMenu === "feedback" ? <FeedbackPage s={s} /> : null}
             {s.activeMenu === "village" ? (
               <VillageSuggestionPage
                 s={s}
